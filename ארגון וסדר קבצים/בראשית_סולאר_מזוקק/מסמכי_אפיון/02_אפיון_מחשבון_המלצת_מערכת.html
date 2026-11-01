@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון המלצת מערכת — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 02 מתוך 6 · בראשית סולאר</div>
+    <h1>מחשבון המלצת מערכת</h1>
+    <p class="lede">כלי מהיר לאיש המכירות: השוואת עשרות גדלי מערכת אפשריים תוך שניות, עם תיוג שקוף של רמת הביטחון בנתונים, כדי להגיע ל"מה לקנות?" — לפני שעוברים לניתוח העומק.</p>
+    <div class="hero-meta"><div><b>1</b>קובץ קוד שנשמר</div><div><b>5</b>רמות ביטחון בנתונים</div><div><b>2</b>שלבי אופטימיזציה</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip current" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תפקיד ותפוקה — מה מבדיל אותו מהמחשבון הגדול</a></li><li><a href="#p2">2 · קובץ הקוד שנשמר</a></li><li><a href="#p3">3 · מנגנון רמת הביטחון בנתונים</a></li><li><a href="#p4">4 · שלב א׳ — גודל סולארי אופטימלי</a></li><li><a href="#p5">5 · שלב ב׳ — גודל אגירה אופטימלי</a></li><li><a href="#p6">6 · טופס הקלט המהיר</a></li><li><a href="#p7">7 · מה במפורש מחוץ לתחום</a></li><li><a href="#p8">8 · פערים פתוחים</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תפקיד ותפוקה</h2></div>
+  <p class="part-sub">מה מייחד את מחשבון ההמלצה מהמחשבון הגדול (מסמך 01).</p>
+  
+<p>לבראשית סולאר יש בפועל <strong>שני מחשבונים שונים לחלוטין</strong> שקל להתבלבל ביניהם. מסמך זה עוסק ב<strong>מחשבון הראשון</strong>: כלי מהיר לאיש המכירות שעונה על שאלה אחת — <strong>״איזה גודל מערכת (סולארי + אגירה) הכי משתלם ללקוח הספציפי הזה?״</strong></p>
+<p>המחשבון השני (מתועד במסמך 01) מניח שכבר הוחלט על גודל מסוים, ועונה על ״מה בדיוק תהיה התשואה על ההחלטה הזו?״ — עם כל העומק ההנדסי (סימולציה שעתית, לוח עברי, טבלת מס מלאה).</p>
+<div class="callout-strip"><b>ההבדל בתמצית:</b>&nbsp; מחשבון 1 = <em>"מה לקנות?"</em> (השוואת עשרות גדלים אפשריים במהירות)&nbsp; ·&nbsp; מחשבון 2 = <em>"מה יקרה בפועל?"</em> (ניתוח עומק לגודל שנבחר)</div>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>קובץ הקוד שנשמר</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge success">הגרסה שנשמרה</span>
+  <div><div class="fname">מחשבון_המלצת_מערכת_1 (1).html</div><div class="fnote">140KB · 1,962 שורות · 21 חישובי IRR. אומת בהשוואת קוד ישירה מול הגרסה הקודמת (127KB) — התוספות הן עיבוי לוגיקה, לא שינוי גישה.</div></div>
+</li>
+</ul>
+<div class="card decision">
+  <div class="card-head"><div><span class="card-title">ממצא מרכזי: הקוד כבר מיישם את מה שמסמכי התכנון סימנו כ׳חסר׳</span></div><span class="badge decision">אומת בקוד בפועל</span></div>
+  <p>מסמך תכנון מוקדם (שיחה 3) הגדיר את הצורך ב״לולאת אופטימיזציה שעדיין לא קיימת וצריך לבנות״. בדיקת הקובץ ששרד מראה שהלולאה <strong>קיימת ומיושמת במלואה</strong>: <code class="inline">for(let kwp=minKwp; kwp&lt;=maxKwp; kwp+=1)</code> וכן לולאה מקבילה על נפחי סוללה, כולל מנגנון שובר-שוויון (IRR זהה עד כדי %0.1 → בוחר לפי רווח שקלי). כלומר <strong>הפער שתועד בתכנון כבר נסגר בפועל</strong> — הכלי המתואר במסמכי התכנון קיים היום, לא רק כתוכנית.</p>
+</div>
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>מנגנון רמת הביטחון בנתונים</h2></div>
+  <p class="part-sub">תיוג שקוף של כל תוצאה לפי איכות המידע שהוזן.</p>
+  
+<p>מנגנון מרכזי וייחודי לקובץ הזה: לכל חישוב מוצמד <strong>תג רמת ביטחון</strong> שמשתנה לפי איכות הנתונים שהוזנו, ומוצג ללקוח בשקיפות:</p>
+<table>
+<tr><th>מקור נתונים</th><th>רמת ביטחון</th><th>מתי זמין</th></tr>
+<tr><td>קובץ CSV מחברת החשמל</td><td><span class="badge success">גבוהה (high)</span></td><td>הלקוח צירף קובץ צריכה אמיתי</td></tr>
+<tr><td>ייבוא מטופס האיסוף</td><td><span class="badge success">formImport</span></td><td>נתונים הגיעו ממסמך 04 (טופס איסוף נתונים)</td></tr>
+<tr><td>מטריצה מפורטת שהוזנה ידנית</td><td><span class="badge warning">detailed</span></td><td>איש המכירות מילא טבלת עונה/שעה</td></tr>
+<tr><td>סה״כ שנתי + סוג נכס</td><td><span class="badge warning">בינונית (mid)</span></td><td>רק חשבון שנתי כולל וסוג המבנה</td></tr>
+<tr><td>ברירת מחדל כללית</td><td><span class="badge danger">נמוכה (low)</span></td><td>אין נתונים כלל — הערכה גסה בלבד</td></tr>
+</table>
+<p>העיצוב הזה חשוב מסחרית: הלקוח/איש המכירות רואה מיד עד כמה לסמוך על המספר שקיבל, ומתומרץ לספק יותר נתונים (למשל למלא את טופס האיסוף) כדי לשפר את רמת הביטחון לפני שהוא מקבל החלטת רכש.</p>
+
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>שלב א׳ — גודל סולארי אופטימלי</h2></div>
+  <p class="part-sub">לולאת חיפוש רשת (Grid Search) על גודל הפאנלים, ללא אגירה.</p>
+  
+<p>המחשבון סורק טווח שלם של גדלי מערכת (kWp) — מהמינימום המעשי ועד המקסימום שמאפשר שטח הגג או מגבלת ההזרמה — ומחשב עבור כל גודל את ה-IRR הצפוי <strong>ללא אגירה כלל</strong>, כדי לבודד את ההחלטה הראשונה (גודל פאנלים) מהחלטת האגירה.</p>
+<pre>for (let kwp = minKwp; kwp <= maxKwp + 1e-9; kwp += 1) {
+  const candidate = simulateSolarOnly(kwp, consumerProfile, confidenceLevel);
+  if (isMeaningfullyBetter(candidate.irr, best.irr) ||
+      (isTied(candidate.irr, best.irr) && candidate.annualProfit > best.annualProfit)) {
+    best = candidate;
+  }
+}</pre>
+<p>כלל שובר השוויון (<code class="inline">isTied</code> + עדיפות לרווח שקלי) מונע מצב שבו המערכת ״נועלת״ על גודל קטן מדי רק בגלל הבדל שולי וחסר משמעות ב-IRR, כאשר גודל גדול יותר מניב אותה תשואה אחוזית אך הרבה יותר רווח מוחלט.</p>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>שלב ב׳ — גודל אגירה אופטימלי</h2></div>
+  <p class="part-sub">לולאה שנייה שמוסיפה אגירה מעל הגודל שנבחר בשלב א׳.</p>
+  
+<p>לאחר נעילת גודל הסולארי האופטימלי משלב א׳, לולאה שנייה סורקת נפחי סוללה אפשריים (<code class="inline">bkwh</code>) ומוסיפה את שכבת האגירה מעל הגודל שכבר נבחר — במקום לסרוק את כל השילובים האפשריים של סולארי×אגירה יחד (מרחב חיפוש דו-ממדי), מה שהיה יקר חישובית והרבה יותר איטי עבור כלי שאמור לתת תשובה תוך שניות מול לקוח.</p>
+<div class="callout-strip">⚠ <b>פישוט מודע:</b> הגישה החד-ממדית (קודם קבע גודל סולארי, רק אז סרוק אגירה) יכולה במקרי קצה לפספס שילוב גלובלי אופטימלי — למשל מקרה שבו סולארי מעט קטן יותר + סוללה גדולה יותר משתלם יותר. זהו פשרון מכוון בין מהירות תגובה לדיוק מוחלט, סביר לחלוטין לכלי המלצה ראשוני.</div>
+
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>טופס הקלט המהיר</h2></div>
+  <p class="part-sub">השדות המומלצים וסדר העדיפות שלהם.</p>
+  
+<p>לפי מסמכי התכנון, טופס הקלט המהיר של מחשבון זה אמור לכלול, לפי סדר עדיפות:</p>
+<table class="compact">
+<tr><th>שדה</th><th>חשיבות</th><th>ברירת מחדל אם חסר</th></tr>
+<tr><td>סוג נכס (בית/עסק/מוסד/ישיבה/בית כנסת...)</td><td><span class="badge danger">קריטי</span></td><td>אין — שדה חובה, קובע את פרופיל הצריכה</td></tr>
+<tr><td>סה״כ צריכה שנתית (קוט״ש)</td><td><span class="badge danger">קריטי</span></td><td>אין — שדה חובה</td></tr>
+<tr><td>עיר/יישוב (לזכאות פרמיה אורבנית)</td><td><span class="badge warning">חשוב</span></td><td>מניח לא-עירוני (שמרני)</td></tr>
+<tr><td>מערכת סולארית קיימת (P0)</td><td><span class="badge warning">חשוב</span></td><td>0</td></tr>
+<tr><td>שטח גג זמין</td><td><span class="badge neutral">נחמד שיהיה</span></td><td>ללא הגבלה (מוגבל רק ע״י מגבלת הזרמה)</td></tr>
+<tr><td>קובץ CSV / ייבוא מטופס</td><td><span class="badge neutral">משפר דיוק</span></td><td>נופל לסינתזה לפי סוג נכס</td></tr>
+</table>
+
+</section><section class="part" id="p7">
+  <div class="part-head"><span class="part-num">07</span><h2>מה במפורש מחוץ לתחום</h2></div>
+  <p class="part-sub">החלטת עיצוב מכוונת: מה נשאר למחשבון השני.</p>
+  
+<p>כדי לשמור על הכלי הזה מהיר וממוקד, הוחלט במפורש להשאיר את הנושאים הבאים <strong>למחשבון השני בלבד</strong> (מסמך 01):</p>
+<div class="two-col">
+<div class="card neutral">
+  <div class="card-head"><div><span class="card-title">סימולציית דיספאץ׳ שעתית מלאה</span></div><span class="badge neutral">מחוץ לתחום</span></div>
+  <p>מחשבון 1 עובד על רזולוציה עונתית/פסגה-שפל בלבד לצורך מהירות; הדיוק השעתי המלא (SoC שעה-אחר-שעה) שמור למחשבון 2.</p>
+</div>
+<div class="card neutral">
+  <div class="card-head"><div><span class="card-title">לוח עברי, שקיעה וזמני שבת</span></div><span class="badge neutral">מחוץ לתחום</span></div>
+  <p>אין צורך במנוע Zmanim מלא לצורך המלצת גודל ראשונית — משפיע רק על הדיוק העדין של הרווח מאגירה, לא על סדר הגודל.</p>
+</div>
+<div class="card neutral">
+  <div class="card-head"><div><span class="card-title">טבלת מס מלאה ופחת</span></div><span class="badge neutral">מחוץ לתחום</span></div>
+  <p>מחשבון 1 עובד עם IRR מוערך; טבלת המס הדו-מסלולית המלאה (סעיף 8 במסמך 01) מיושמת רק בניתוח העומק.</p>
+</div>
+<div class="card neutral">
+  <div class="card-head"><div><span class="card-title">ייצוא אקסל ודוח מלא</span></div><span class="badge neutral">מחוץ לתחום</span></div>
+  <p>הפלט של מחשבון 1 הוא מסך תוצאה מיידי; ייצוא מקצועי (SheetJS/ExcelJS) שייך למחשבון 2 ולמחולל הצעת המחיר (מסמך 03).</p>
+</div>
+</div>
+
+</section><section class="part" id="p8">
+  <div class="part-head"><span class="part-num">08</span><h2>פערים פתוחים</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge warning">פער אינטגרציה</span>
+  <div><div class="fname">מעבר חלק בין מחשבון 1 למחשבון 2</div><div class="fnote">כאשר הלקוח מאשר את ההמלצה, יש להעביר את הגודל שנבחר (kWp + kWh) אוטומטית למחשבון 2 להמשך ניתוח עומק — כרגע לא ברור אם קיים מנגנון העברה, או שהמשתמש מזין ידנית מחדש.</div></div>
+</li>
+<li><span class="ftag badge warning">שיפור אפשרי</span>
+  <div><div class="fname">היעדר בדיקת רגישות (Sensitivity)</div><div class="fnote">המלצה בודדת ("הגודל האופטימלי הוא X") עלולה להיראות שרירותית ללקוח. הצגת 2-3 האפשרויות הקרובות (מסמך 01, חלק 9 — "קוביות גדלים") עשויה לחזק אמון, ולפי הבדיקה זו אכן אסטרטגיה שאומתה כטובה במחשבון השני.</div></div>
+</li>
+</ul>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>

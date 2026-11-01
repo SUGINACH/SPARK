@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפיון דרישות: ניתוח צריכת חשמל</title>
+    <!-- ייבוא ספריות לתרשימים -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        p {
+            font-size: 16px;
+        }
+        .highlight {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-right: 4px solid #3498db;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 30px auto;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>מסמך דרישות: עיבוד נתוני צריכת חשמל</h1>
+
+        <div class="highlight">
+            <strong>המטרה המרכזית:</strong><br>
+            קליטת קובץ נתונים גולמי המכיל פירוט צריכת חשמל (כולל תאריך ושעה, סוג תעריף, וכמות), והפקת דוח מסוכם המציג את <strong>סך כל הצריכה היומית בשעות הפסגה בלבד</strong>.
+        </div>
+
+        <h2>1. מבנה הנתונים הנדרש</h2>
+        <p>התהליך לוקח טבלה מפורטת מאוד והופך אותה לטבלת סיכום פשוטה:</p>
+        
+        <h3>מבנה נתוני הקלט (מה נכנס לתהליך):</h3>
+        <table>
+            <tr>
+                <th>תאריך ושעה</th>
+                <th>סוג תעריף</th>
+                <th>צריכה (קוט"ש)</th>
+            </tr>
+            <tr>
+                <td>13/02/2024 14:00</td>
+                <td>שפל</td>
+                <td>2.5</td>
+            </tr>
+            <tr>
+                <td>13/02/2024 18:00</td>
+                <td>פסגה</td>
+                <td>4.1</td>
+            </tr>
+            <tr>
+                <td>13/02/2024 19:00</td>
+                <td>פסגה</td>
+                <td>3.2</td>
+            </tr>
+        </table>
+
+        <h3>מבנה נתוני הפלט (מה התהליך חייב להוציא):</h3>
+        <table>
+            <tr>
+                <th>תאריך (ללא שעה)</th>
+                <th>סך קוט"ש (פסגה בלבד)</th>
+            </tr>
+            <tr>
+                <td>13/02/2024</td>
+                <td>7.3 <em>(חישוב של 4.1 + 3.2)</em></td>
+            </tr>
+        </table>
+
+        <h2>2. תרשים זרימה לוגי של התהליך</h2>
+        <p>כך המערכת צריכה לעבד את הנתונים, שלב אחר שלב (ללא תלות בטכנולוגיה):</p>
+        
+        <div class="mermaid">
+            graph TD;
+                A[קריאת רשומה מקובץ הנתונים] --> B[הפרדת התאריך מהשעה];
+                B --> C{האם סוג התעריף הוא 'פסגה'?};
+                C -- כן --> D[המרת הקוטש למספר וחיבור לסך היומי];
+                C -- לא --> E[התעלמות מהרשומה];
+                D --> F{האם נשארו רשומות?};
+                E --> F;
+                F -- כן --> A;
+                F -- לא --> G[הפקת טבלת סיכום סופית];
+                style C fill:#f9f2f4,stroke:#333,stroke-width:2px;
+                style D fill:#d4edda,stroke:#28a745,stroke-width:2px;
+        </div>
+
+        <h2>3. דרישות טיפול במקרי קצה (Edge Cases)</h2>
+        <ul>
+            <li><strong>פורמט תאריכים:</strong> המערכת חייבת להתייחס לתאריכים בפורמט שבו היום קודם לחודש (DD/MM/YYYY) כדי למנוע בלבול עם הפורמט האמריקאי.</li>
+            <li><strong>סוגי נתונים (Data Types):</strong> ערכי הקוט"ש המגיעים מהקובץ עלולים להיקרא כטקסט. המערכת חייבת להמיר אותם לערכים מספריים (Numeric/Float) לפני פעולת החיבור כדי לבצע סכימה מתמטית ולא "הדבקה" של טקסטים.</li>
+            <li><strong>ערכים ריקים או שגויים:</strong> במקרה של שורה שבה חסר נתון קוט"ש או שיש בה טקסט לא חוקי במקום מספר, המערכת תתעלם מהערך כדי למנוע קריסה של החישוב.</li>
+        </ul>
+
+        <h2>4. תצוגה חזותית של התוצאה הסופית</h2>
+        <p>תרשים עמודות המדגים כיצד ייראה הסיכום היומי המופק (דוגמה חזותית):</p>
+        
+        <div class="chart-container">
+            <canvas id="peakChart"></canvas>
+        </div>
+
+    </div>
+
+    <!-- הגדרת התרשים -->
+    <script>
+        // אתחול תרשים הזרימה
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+
+        // אתחול גרף העמודות
+        const ctx = document.getElementById('peakChart').getContext('2d');
+        const peakChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['13/02/2024', '14/02/2024', '15/02/2024', '16/02/2024', '17/02/2024'],
+                datasets: [{
+                    label: 'סך צריכת פסגה (קוט"ש)',
+                    data: [7.3, 12.5, 9.8, 15.2, 11.0],
+                    backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                    borderColor: 'rgba(41, 128, 185, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Segoe UI' } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'קוט"ש' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

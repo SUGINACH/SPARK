@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסמך אפיון וסיכום פרויקט - מערכת הצעות מחיר בראשית סולאר</title>
+    <style>
+        :root {
+            --primary-color: #005a70;
+            --secondary-color: #00798c;
+            --bg-color: #f8fafc;
+            --text-color: #333;
+            --border-color: #cbd5e1;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: var(--secondary-color);
+            margin-top: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2a9d8f;
+            margin-top: 20px;
+        }
+        ul, ol {
+            margin-bottom: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #b91c1c;
+            direction: ltr;
+            display: inline-block;
+        }
+        .note {
+            background-color: #fffbeb;
+            border-right: 4px solid #f59e0b;
+            padding: 10px 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>מסמך אפיון וסיכום - מחולל הצעות מחיר "בראשית סולאר"</h1>
+
+    <h2>1. תיאור כללי של הפרויקט</h2>
+    <p>
+        הפרויקט הינו מערכת Single Page Application (קובץ HTML אחד) המשמשת כמחולל הצעות מחיר ומודלים פיננסיים להקמת מערכות סולאריות ומערכות אגירה.
+        המערכת מיועדת לאנשי המכירות של חברת "בראשית סולאר".
+    </p>
+    <p>
+        <strong>הבעיה הנפתרת:</strong> המערכת מחליפה את הצורך ביצירת הצעת מחיר במסמך וורד, בניית מודל פיננסי מורכב באקסל נפרד, ושילוב שלהם יחד. 
+        היא מספקת ממשק משתמש מחולק לשניים: צד ימין מכיל סיידבר לשליטה והזנת נתונים, וצד שמאל מציג תצוגה מקדימה חיה (Live Preview) של מסמך A4 המיועד להדפסה ישירה ל-PDF, כולל טבלאות חישוב, לוחות סילוקין וגרפים שנוצרים בזמן אמת.
+    </p>
+
+    <h2>2. רשימת היכולות והפיצ'רים</h2>
+    <ul>
+        <li><strong>ממשק WYSIWYG להדפסה:</strong> המערכת מעוצבת באמצעות <code>@media print</code> כך שבעת הדפסה السיידבר נעלם, וכל <code>div.page</code> מודפס כעמוד A4 נפרד ומדויק.</li>
+        <li><strong>עריכת טקסט דינמית (Inline Editing):</strong> סקריפט ייעודי (<code>initDynamicEditors</code>) עובר על טבלת השליטה בסיידבר ומייצר כפתורי עריכה (סמל עיפרון) המאפשרים לשנות טקסט חופשי (שורות טבלה, סעיפי אחריות, המלצות) בזמן אמת.</li>
+        <li><strong>הדלקת/כיבוי סעיפים:</strong> כפתורי צ'קבוקס בסיידבר מאפשרים להציג או להסתיר דפים שלמים, שורות בטבלאות רכיבים או סעיפי החרגות.</li>
+        <li><strong>העלאת תמונות:</strong> קיימת יכולת להטמיע תמונות קבועות לפי שם קובץ, או להעלות קובץ תמונה מקומי (Base64) עבור השער, מבט הגג ותמונות אווירה.</li>
+        <li><strong>שכפול לוגו SVG:</strong> פונקציה (<code>injectLogo</code>) שלוקחת קוד SVG מאסטר נסתר ומשכפלת אותו לכל הפוטרים במסמך, תוך יצירת IDs ייחודיים לכל עותק כדי למנוע התנגשויות CSS/SVG.</li>
+        <li><strong>מנוע פיננסי אוטומטי:</strong> סימולציה מלאה של פרויקט אנרגיה ל-25 שנה (או 20), כולל לוח סילוקין בשיטת שפיצר, ירידת תפוקה שנתית, ואינפלציה.</li>
+        <li><strong>קליטת נתונים ממערכת CRM:</strong> בטעינת הדף, המערכת מחפשת אובייקט JSON ב-<code>localStorage</code> תחת המפתח <code>pendingQuote</code> ומאכלסת את השדות אוטומטית.</li>
+    </ul>
+
+    <h2>3. אלמנטים בממשק שנוספו או עודכנו (מודל פיננסי)</h2>
+    <p>המוקד המרכזי של הפיתוח היה סעיף 11 בסיידבר והוספת עמודים 11-12 במסמך עצמו.</p>
+    
+    <h3>בסיידבר (פאנל עריכה - סעיף 11)</h3>
+    <ul>
+        <li><code>inp-tech-type</code> (סוג טכנולוגיה): Select עם אפשרויות: סולארי, אגירה, סולארי + אגירה. משפיע בעיקר על חלוקת האחוזים בגרף העוגה בעמוד 12.</li>
+        <li><code>inp-reg-type</code> (סוג הסדרה): Select עם אפשרויות: תעריפית, תחרותית, משולב, מונה נטו. בחירה ב"מונה נטו" או "משולב" פותחת את שדה דמי השימוש ברשת.</li>
+        <li><code>inp-roof-factor</code> (מקדם שטח גג): Float. מגדיר כמה מ"ר נדרשים לכל 1 קו"ט מותקן (ברירת מחדל 6.9).</li>
+        <li><code>inp-capex</code> (עלות הקמה לקו"ט): Float. מחושב אוטומטית אם המשתמש הזין סה"כ עלות בסעיף 2 בסיידבר.</li>
+        <li><code>inp-yield</code> (תפוקה ספציפית): Integer. שעות ייצור לקו"ט בשנה.</li>
+        <li><code>inp-base-tariff</code>, <code>inp-urban-premium</code>, <code>inp-escalation</code> (עליית מחיר), <code>inp-degradation</code> (דעיכה).</li>
+        <li><code>inp-opex</code> (תפעול שנתי לקו"ט).</li>
+        <li><code>inp-rent-pct</code> (שכר דירה לבעלי הגג): אחוז מתוך ההכנסה השנתית שיקוזז כהוצאה.</li>
+        <li><code>inp-grid-fee</code> (דמי שימוש ברשת): נחסם/נפתח דינמית לפי סוג ההסדרה (באמצעות פונקציית <code>handleRegTypeChange</code>).</li>
+        <li>נתוני הלוואה: <code>inp-loan-pct</code>, <code>inp-interest-rate</code>, <code>inp-loan-term</code>.</li>
+        <li><code>inp-discount-rate</code> (שיעור היוון), <code>inp-lifetime</code> (אורך חיי מתקן).</li>
+    </ul>
+
+    <h3>עמוד 11 (טבלאות האקסל) במסמך <code>#page-finance</code></h3>
+    <p>העמוד מכיל שתי טבלאות <strong>שהועתקו במדויק מתבניות האקסל המקוריות</strong>. העיצוב מתבסס על מחלקה <code>.compact-fin-table</code> המשתמשת בפונט קטן (6.8pt) כדי להבטיח אי-גלישת שורות מעבר לדף A4.</p>
+    <ol>
+        <li><strong>טבלה עליונה:</strong> מחולקת לקטגוריות (גודל, הכנסות, הוצאות, מימון, סיכום וכדאיות). לכל שורה יש עמודות: פרק, סעיף, יחידה, ערך ל-1 kWp, ערך למתקן. מזהים (IDs) מתחילים ב-<code>m-</code>. שינוי כותרת העמוד מתבצע אוטומטית לפי סוג ההסדרה.</li>
+        <li><strong>טבלה תחתונה (פירוט תזרים):</strong> 26 שורות (שנה 0 עד סוף הפרויקט). נוצרת דינמית על ידי לולאה ב-JS אל תוך ה-<code>tbody id="financeTableBody"</code>.</li>
+    </ol>
+
+    <h3>עמוד 12 (גרפים ותעריפים) במסמך <code>#page-finance-charts</code></h3>
+    <p>בנוי מלמעלה למטה במדויק לפי הדרישות:</p>
+    <ol>
+        <li><strong>גרף עליון רחב:</strong> "תזרים שנתי". מצויר באמצעות Chart.js בתוך <code>canvas-cashflow</code>. מציג עמודות (תזרים נטו שנתי) וקו (רווח מצטבר).</li>
+        <li><strong>חלק תחתון שמאלי:</strong> טבלת "תעריפי תעו"ז". טבלה סטטית לחלוטין (חורף/מעבר/קיץ - שפל/גבע/פסגה).</li>
+        <li><strong>חלק תחתון ימני:</strong> "התפלגות עלות הפרויקט". מורכב מגרף עוגה (Chart.js ב-<code>canvas-pie</code>) + מקרא. אחוזי העוגה משתנים בהתאם לפרמטר <code>inp-tech-type</code> (אם נבחרה אגירה, נוסף פלח לסוללות על חשבון קונסטרוקציה וציוד).</li>
+    </ol>
+
+    <h2>4. החישובים והנוסחאות</h2>
+    <ul>
+        <li><strong>סך עלות הקמה (Total Capex):</strong> <code>Capacity * CapexPerKwp</code>.</li>
+        <li><strong>הלוואה והון עצמי:</strong> ההלוואה היא <code>Total Capex * LoanPct</code>. ההון העצמי הוא ההפרש.</li>
+        <li><strong>החזר הלוואה שנתי (שפיצר):</strong> 
+            <code>(InterestRate * LoanAmount) / (1 - Math.pow(1 + InterestRate, -LoanTerm))</code>. מטופל גם מקרה קצה של ריבית 0% בחלוקה פשוטה.
+        </li>
+        <li><strong>תפוקה שנתית (Yearly Yield):</strong> לכל שנה t: <code>Capacity * SpecYield * Math.pow(1 - Degradation, t - 1)</code>.</li>
+        <li><strong>הכנסה שנתית (Revenue):</strong> <code>Yearly Yield * (BaseTariff + UrbanPremium) * Math.pow(1 + Escalation, t - 1)</code>.</li>
+        <li><strong>הוצאות תפעול (OpEx):</strong> קבוע מראש: <code>Capacity * OpExPerKwp</code>.</li>
+        <li><strong>תשלום לחח"י ושכירות:</strong> חיוב שנתי לפי <code>Yearly Yield * GridFee</code> ו- <code>Revenue * RentPct</code>.</li>
+        <li><strong>לוח סילוקין ודיוק (Floating Point):</strong> בתוך לולאת השנים (עבור שנות ההלוואה), הריבית מחושבת על <code>RemainingBalance</code>. החזר הקרן הוא <code>Spitzer - Interest</code>. יש טיפול במקרה קצה בשנה האחרונה של ההלוואה כדי לאפס במדויק את יתרת החוב במקרה של סטייה עשרונית.</li>
+        <li><strong>NPV (ערך נוכחי נקי):</strong> משתמש בפונקציה ייעודית שמקבלת את מערך התזרים ממינוס ההון העצמי ועד הסוף, ומהוונת אותו לפי שדה <code>Discount Rate</code> (ברירת מחדל 4%).</li>
+        <li><strong>IRR (תשואה פנימית):</strong> חישוב בפונקציה מותאמת בשיטת החצייה (Bisection method) למערך התזרים של הפרויקט (Project IRR - לפני מימון) ולתזרים ההון (Equity IRR - אחרי מימון). במקרה של 100% הלוואה (אין הון עצמי בשנה 0) מחזיר NaN וה-UI כותב "N/A".</li>
+    </ul>
+
+    <h2>5. תיקונים ושינויי כיוון במהלך השיחה</h2>
+    <div class="note">
+        <strong>שים לב: הגרסה המיושמת בקוד הנוכחי היא הגרסה הסופית שלאחר התיקונים.</strong>
+    </div>
+    <ul>
+        <li>
+            <strong>שינוי כיוון מרכזי - הימנעות משינוי UI של הלקוח:</strong> בתחילת העבודה ה-AI "שיפר" את עיצוב ה-HTML באמצעות Tailwind CSS ושינה כליל את נראות המסמך והסיידבר, מה ששבר פונקציות מקוריות (החלפת לוגו ועריכה חיה). <br>
+            <span class="highlight">החלטה סופית:</span> חזרה מלאה ל-HTML/CSS הונילה (Vanilla) של הלקוח. נאסר לגעת בשום דבר מלבד הוספת תפריטים פיננסיים בסיידבר ועריכת דפים 11-12 בלבד.
+        </li>
+        <li>
+            <strong>מבנה עמוד 11:</strong> בתחילה הוצעו כרטיסיות KPI מודרניות. <br>
+            <span class="highlight">החלטה סופית:</span> שחזור מדויק 1:1 של טבלאות האקסל (לפי הקבצים שסופקו), כולל סדר העמודות "פרק, סעיף, יחידה, ל-1 קו"ט, למתקן".
+        </li>
+        <li>
+            <strong>מבנה עמוד 12:</strong> בתחילה הוצעו 2 גרפים זה לצד זה ועוד טבלת עלויות.<br>
+            <span class="highlight">החלטה סופית:</span> סידור מלמעלה למטה: גרף רוחב של התזרים השנתי, מתחתיו טבלת תעו"ז (משמאל) ועוגת התפלגות עלויות (מימין).
+        </li>
+        <li>
+            <strong>סיווג סוגי מערכת:</strong> בתחילה היה תפריט אחד שאיחד רגולציה וטכנולוגיה.<br>
+            <span class="highlight">החלטה סופית:</span> פיצול לשני Selectors שונים - "טכנולוגיה" (סולארי/אגירה) שמשפיע על עוגת העלויות, ו"הסדרה" (תעריפית/נטו וכו') שמשפיע על פתיחת/חסימת שדות כמו דמי רשת. הוסף גם שדה מקדם "שטח גג" ושדה "שכר דירה".
+        </li>
+    </ul>
+
+    <h2>6. מבנה הנתונים (Integration Contract)</h2>
+    <p>כדי שמערכת ה-CRM תאכלס את ההצעה, עליה לכתוב אובייקט JSON אל <code>localStorage.setItem('pendingQuote', JSON.stringify(...))</code> עם השדות הבאים (כולם אופציונליים):</p>
+    <ul>
+        <li><code>projectTitle</code> (String) - כותרת הפרויקט במסמך.</li>
+        <li><code>clientName</code>, <code>clientAddress</code>, <code>clientContact</code>, <code>quoteDate</code> (Strings) - פרטי לקוח.</li>
+        <li><code>analysisNotes</code> (String) - טקסט התיאור בעמוד 2.</li>
+        <li><code>sysType</code> (String) - סוג ההסדרה במערכת ('tariff', 'storage', 'net_metering', '7th_reg').</li>
+        <li><code>sysSize</code> (Float) - הספק המערכת (kWp).</li>
+        <li><code>sysCost</code> (Float) - עלות כוללת של המערכת ברוטו. (הסקריפט יחשב את ה-CapEx לקו"ט באמצעות <code>sysCost / sysSize</code>).</li>
+        <li><code>selectedCover</code>, <code>selectedProject</code>, <code>selectedLogo</code> (String - URL/Base64) - מקור התמונות.</li>
+    </ul>
+
+    <h2>7. סטטוס נוכחי</h2>
+    <ul>
+        <li><strong>עובד ותקין:</strong> המבנה הבסיסי של המסמך, הדפסה ל-PDF (A4), התממשקות עם LocalStorage, עריכת טקסט דינמית בסעיפי המלצות ואחריות, כלל הלוגיקה של המודל הפיננסי (שפיצר, פחת, היוון), יצירה דינמית של טבלת התזרים והגרפים (Chart.js) בהתאם לבחירת סוג ההסדרה.</li>
+        <li><strong>באגים/מגבלות קיימות:</strong> טבלאות HTML אינן "נשברות" בחן מעמוד לעמוד כשעושים Print. מאחר שהטבלה המפורטת היא בת 26 שורות עבות, היא נדחסה בגודל פונט באמצעות המחלקה <code>.compact-fin-table</code> כדי לוודא שהיא נכנסת כולה לעמוד 11. אם בעתיד תוארך התקופה מעל 25 שנה, הטבלה תגלוש אל מחוץ לעמוד.</li>
+    </ul>
+
+    <h2>8. החלטות והגבלות טכניות</h2>
+    <ul>
+        <li><strong>ללא שרת או קומפילציה:</strong> הפרויקט הינו קובץ HTML טהור (Vanilla JS + CSS). אסור להשתמש בספריות בנייה (Webpack/Vite) או בפריימוורקים מודרניים (React/Angular).</li>
+        <li><strong>ספריות חיצוניות:</strong> מותר שימוש ב-CDN עבור פונט גוגל (Assistant) ועבור <code>Chart.js</code> (לרינדור הגרפים בעמוד 12).</li>
+        <li><strong>אילוצי הדפסה:</strong> ה-CSS נשען על חוקי חומרה מחמירים במחלקת <code>.page</code> (גובה 297mm ורוחב 210mm) כך שמנוע ההדפסה של דפדפן כרום ידפיס עמוד A4 מושלם ללא שוליים מיותרים.</li>
+    </ul>
+
+    <h2>9. דברים שנפסלו במפורש</h2>
+    <ul>
+        <li><strong>Tailwind CSS:</strong> נפסל במפורש. העיצוב צריך להתבסס בלעדית על ה-CSS המקורי של הלקוח.</li>
+        <li><strong>עיצוב מחדש של כרטיסיות פיננסיות:</strong> נפסל. הלקוח דרש העתק מדויק של העימוד המקורי באקסל (שורות של קטגוריות אפורות, פירוט של כל סעיף בטבלה רציפה) ולא כרטיסי "דשבורד" מעוצבים.</li>
+        <li><strong>התערבות בפונקציית <code>initDynamicEditors</code>:</strong> נפסלה עריכת הקוד המטפל בפיצ'ר סמל העיפרון הקטן שמופיע ליד כל שורה, המערכת כולה בנויה סביבו.</li>
+    </ul>
+
+    <div class="note">
+        <strong>נקודות לבירור (למודל/מפתח ההמשך):</strong><br>
+        המשתמש הזין את <code>inp-cost</code> בסיידבר בתור שדה ברוטו, אך המודל הפיננסי (בעמוד 11) משתמש ב-<code>inp-capex</code> (עלות לכל 1 קו"ט). הוגדרה פונקציה <code>onCostManualInput</code> שגוזרת את עלות הקו"ט על ידי חילוק ה-Cost ב-Size. יש לוודא שזה מתנהג כראוי במקרי קצה שבהם המשתמש מקליד הון הקמה לקו"ט באופן ידני.
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון ניתוח תעו״ז ואגירה — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 01 מתוך 6 · בראשית סולאר</div>
+    <h1>מחשבון ניתוח תעו״ז ואגירה</h1>
+    <p class="lede">אפיון מרוכז של הרכיב ההנדסי-פיננסי המרכזי במערכת: קליטת נתוני צריכה אמיתיים, סימולציית אגירה שעתית, מנוע תעריפים ומיסוי, וניתוח השקעה ברמת CFO.</p>
+    <div class="hero-meta"><div><b>4</b>קבצי קוד שנשמרו</div><div><b>24+</b>סעיפי אימות שנסרקו</div><div><b>4</b>קטעי קוד זהב</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip current" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תפקיד ותפוקה</a></li><li><a href="#p2">2 · קובצי הקוד שנשמרו</a></li><li><a href="#p3">3 · קליטת נתוני צריכה</a></li><li><a href="#p4">4 · הליבה ההנדסית-פיזיקלית</a></li><li><a href="#p5">5 · סימולציית אגירה שעתית</a></li><li><a href="#p6">6 · לוח עברי, שקיעה וזמנים</a></li><li><a href="#p7">7 · מנוע התעריפים</a></li><li><a href="#p8">8 · מודל פיננסי, מס ו-CFO</a></li><li><a href="#p9">9 · שכבת חוויית משתמש ומכירה</a></li><li><a href="#p10">10 · קוד זהב — הפונקציות המתוקנות</a></li><li><a href="#p11">11 · טבלת קבועי אמת</a></li><li><a href="#p12">12 · פערים פתוחים</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תפקיד ותפוקה</h2></div>
+  
+  
+<p>זהו <strong>הרכיב המרכזי והמורכב ביותר</strong> במערכת בראשית סולאר. הוא מקבל את נתוני הצריכה בפועל של הלקוח (בכל צורה שהיא זמינה), מדמה שעה-אחר-שעה כיצד מערכת סולארית ואגירה תתפקד מול דפוס הצריכה הזה, ומחזיר תשואה כלכלית מדויקת ל-25 שנה.</p>
+<p>בשונה מ<strong>מחשבון המלצת המערכת</strong> (מסמך 02), שתפקידו להציע גודל מערכת מומלץ במהירות, מחשבון זה עונה על השאלה <strong>"בהינתן שכבר בחרנו גודל מערכת מסוים — מה בדיוק יקרה, שעה אחר שעה, לאורך רבע מאה?"</strong> הוא הבסיס החישובי שגם מחשבון ההמלצה וגם מחולל הצעת המחיר אמורים להישען עליו.</p>
+<div class="callout-strip"><b>קלט:</b>&nbsp; נתוני צריכה (CSV/JSON/הערכה) + פרטי גג/מערכת&nbsp; ⟶&nbsp; <b>פלט:</b>&nbsp; גודל מערכת, תזרים 25 שנה, IRR/MIRR/NPV, טבלת מס, ייצוא אקסל</div>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>קובצי הקוד שנשמרו</h2></div>
+  <p class="part-sub">4 מתוך 6 קבצים היסטוריים נשמרים — כל אחד תורם יכולת שהאחרים חסרים.</p>
+  
+<p>מתוך 6 קבצי קוד היסטוריים שנבדקו עבור רכיב זה, נשמרו <strong>4</strong> — כל אחד מהם תורם משהו שהאחרים לא מכילים. 2 קבצים נוספים (<code class="inline">מחשבון_סולארי1.html</code> ו-<code class="inline">solar_calculator.html</code>, וכן העותק <code class="inline">שיחה קלוד 1 - מחשבון_סולארי.html</code>) הוסרו בוודאות גבוהה: השוואת קוד שורה-אחר-שורה (לא רק גודל קובץ) הראתה שהם תת-קבוצה כמעט מלאה של <code class="inline">מחשבון_סולארי.html</code>, ללא שום יכולת ייחודית.</p>
+<ul class="filelist"><li><span class="ftag badge success">הבסיס המרכזי</span>
+  <div><div class="fname">מחשבון_סולארי.html</div><div class="fnote">163KB · 2,355 שורות. הענף המפותח ביותר: 21 התייחסויות לזיהוי מונה-כפול (P0), סימולציית SoC שעתית מלאה, טבלת פרופילי-צריכה מלאה ל-10 סוגי נכס (מאומתת מול תרשים ההתפלגות). זוהה כזהה בייטית לעותק שהופק במקביל בשיחה 2.</div></div>
+</li><li><span class="ftag badge decision">ענף משלים — לוח עברי + ExcelJS</span>
+  <div><div class="fname">ai_studio_code (16).html</div><div class="fnote">92KB · 1,636 שורות. ענף נפרד לחלוטין (לא גזור מהבסיס המרכזי — ההשוואה בפועל הראתה כ-1,000 שורות ייחודיות בכל כיוון). מכיל מנוע AstroEngine ללוח עברי ושקיעה, וייצוא ExcelJS מעוצב (מיזוג תאים, צביעת שעות פסגה/שפל, הזרקת גרפים כתמונה).</div></div>
+</li><li><span class="ftag badge decision">ענף משלים — גרסה מודרנית יותר</span>
+  <div><div class="fname">Calculator (2).html</div><div class="fnote">90KB · 1,643 שורות. קרוב משפחה של ai_studio_code(16) אך מימוש עצמאי: משתמש במשתני CSS מודרניים (‎--primary‎ וכו׳), וכולל התחלה של סימולציית SoC (3 אזכורים) שאינה קיימת ב-ai_studio_code(16). כותרות ייצוא שונות (כולל עמודות 'טעינת סוללה'/'פריקת סוללה'/'מצב טעינה').</div></div>
+</li><li><span class="ftag badge warning">ניסיון איחוד חלקי</span>
+  <div><div class="fname">מחשבון מאסטר - תעו״ז, אגירה וסימולציה.html</div><div class="fnote">35KB · 656 שורות בלבד — קצר משמעותית מהשאר, אך הקובץ היחיד המשלב שלושה עולמות בבת אחת: לוח עברי (AstroEngine), אופטימיזציית Grid Search, וסימולציית SoC שעתית. ככל הנראה ניסיון מוקדם לאותו איחוד שמסמך 00 (המערכת הכוללת) ממליץ עליו — שווה עיון כהשראה, לא כתחליף.</div></div>
+</li></ul>
+<div class="card warning">
+  <div class="card-head"><span class="card-title">מה נשמט — ולמה זה חשוב</span><span class="badge warning">לתשומת לב</span></div>
+  <p>בבדיקה ישירה נמצא ש<code class="inline">מחשבון_סולארי.html</code> (הבסיס המרכזי) <strong>אינו</strong> מכיל את מנוע הלוח העברי/שקיעה ואת ExcelJS — אלה קיימים רק בענפים המשלימים. איחוד עתידי חייב לשלב את שלושת הענפים, לא רק לבחור אחד. זהו בדיוק הפער שמסמך 00 (המערכת הכוללת) מגדיר כמשימת הפיתוח המרכזית שנותרה.</p>
+</div>
+
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>קליטת נתוני צריכה</h2></div>
+  <p class="part-sub">ארבע חלופות קלט, מנוע סינתזה אחד, וכמה כשלים חמורים שתועדו בדרך.</p>
+  
+<p>המערכת תומכת בארבע חלופות קליטת נתונים, כולן מנותבות למנוע סינתזה אחד שמייצר סדרת זמנים אחידה של 8,760 שעות בשנה (או 17,520 רשומות בחצי-שעה):</p>
+<table>
+<tr><th>מצב קלט</th><th>מקור</th><th>דיוק</th><th>הערה</th></tr>
+<tr><td><strong>קובץ CSV/XLSX חח״י</strong></td><td>ייצוא גולמי מהאזור האישי בחברת החשמל</td><td>הגבוה ביותר</td><td>מפוענח ע״י PapaParse/SheetJS; תומך בזיהוי מונה כפול</td></tr>
+<tr><td><strong>קובץ JSON מטופס המכשירים</strong></td><td>טופס איסוף הנתונים (מסמך 04)</td><td>גבוה</td><td>⚠ ראו פער קריטי בהמשך — פורמט לא תואם</td></tr>
+<tr><td><strong>מטריצה ידנית</strong></td><td>12 שדות: עונה × סוג יום × שעות</td><td>בינוני</td><td>ראו "עומס שטוח" בהמשך</td></tr>
+<tr><td><strong>הערכה שנתית גסה</strong></td><td>סה״כ קוט"ש + סוג נכס</td><td>ראשוני</td><td>מסונתז באלגוריתם IPF</td></tr>
+</table>
+
+<h3 class="sub">אלגוריתם ה-IPF (Iterative Proportional Fitting)</h3>
+<p>כאשר יש רק הערכה שנתית כוללת, האלגוריתם מתרגם אותה ל-8,760 שעות לפי פרופיל צריכה סטטי (טבלת 10 סוגי הנכס בחלק 4). אי אפשר פשוט להכפיל אחוזים כי הממדים (עונה / פסגה-שפל / חול-שבת) תלויים זה בזה — הפתרון שיושם מריץ <strong>15 סבבי כיול הדדי</strong> בין הממדים עד להתכנסות, כך שסך הצריכה בכל רמה (עונה, פסגה, חול) יתאים בדיוק לאחוזי הפרופיל שהוגדרו.</p>
+
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">זיהוי מונה כפול ושחזור צריכה אמיתית</span></div><span class="badge success">מאומת והכרחי</span></div>
+  <p>כאשר ללקוח כבר יש מערכת סולארית קיימת (P0 &gt; 0), קובץ חח״י מכיל מונה "דו-כיווני" ומונה "ייצור" נפרדים. המערכת מזהה זאת אוטומטית ומשחזרת את הצריכה האמיתית של הבית לפי:</p><pre>actualKwh = genKwh - exportKwh + importKwh</pre><p>ללא השחזור הזה, קריאת המונה הדו-כיווני בלבד (שהיא רק ה-Import מהרשת) מציגה צריכה נמוכה כוזבת — הבית צרך חלק מהחשמל ישירות מהפאנלים בלי שהרשת ראתה זאת. המערכת גם מעדכנת אוטומטית את P0 לפי שיא הייצור שנצפה, כפול 2.0 (הערכת הספק AC מותקן). בנוסף, שורות עם חותמת זמן וסוג מונה זהים (מוני בדיקה כפולים) עוברות <strong>ממוצע</strong> ולא סכימה, כדי למנוע ניפוח הצריכה ב-100%.</p>
+</div>
+
+<div class="two-col">
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">חוסר טיפול ברשומות חסרות</span></div><span class="badge danger">כשל חמור</span></div>
+  <p>הקוד המקורי הניח סדרה מושלמת ורציפה. בפועל, מוני חח״י סובלים מניתוקי תקשורת שכיחים. אם חסר חודש שלם, המערכת תחשב צריכה שנתית נמוכה בכ-8% ותציע סוללה קטנה מדי. <strong>תיקון נדרש:</strong> בדיקת שלמות שסופרת רשומות — פחות מ-17,520 בשנה מפעילה Scaling פרופורציונלי או אזהרה חמורה.</p>
+</div>
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">מטריצה ידנית יוצרת עומס שטוח</span></div><span class="badge danger">שגוי פיזיקלית</span></div>
+  <p>הזנת "4 קוט״ש לשעת פסגה" מייצרת שורות זהות של 2 קוט״ש לכל חצי-שעה — אך צריכה אנושית "קוצנית" (קומקום/מזגן/כביסה יוצרים שיאים של 8kW לדקות ספורות). הסימולטור יניח בטעות שהממיר מכסה הכל. <strong>תיקון נדרש:</strong> "מקדם תנודתיות" (Volatility Factor) של כ-15% שמפחית את יעילות הכיסוי בנתונים סינתטיים.</p>
+</div>
+</div>
+
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">זיהום גנרטור ונירמול שבתות</span></div><span class="badge success">אומת ויושם</span></div>
+  <p>לקוחות דתיים המפעילים גנרטור בשבת רושמים "0 צריכה" במונה חח״י — ומכיוון שבחורף שבת היא שעת פסגה, האפס הזה מעוות כלפי מטה את חציון הפסגה החורפית. <strong>הפתרון שיושם:</strong> צ׳קבוקס <code class="inline">ignoreMissingShabbat</code> שמסיר שבתות חורף מהסטטיסטיקה, בתוספת מנגנון נירמול שמשלים אותן לפי אחוז מוגדר מחציון ימי החול.</p>
+</div>
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>הליבה ההנדסית-פיזיקלית</h2></div>
+  <p class="part-sub">כל הקבועים הפיזיקליים שהוגדרו-מחדש בסבבי האימות.</p>
+  
+<table>
+<tr><th>פרמטר</th><th>ערך שגוי/ישן</th><th>ערך מתוקן</th><th>השפעה אם לא מתוקן</th></tr>
+<tr><td>יחס שטח גג להספק</td><td>7.5 מ״ר/קוו״ט</td><td><strong>5.5 מ״ר/קוו״ט</strong> (עריך בהגדרות מתקדמות)</td><td>מקטין את ההספק המקסימלי המוצע ב-~35%</td></tr>
+<tr><td>עלות הקמה (CAPEX)</td><td>מחושבת לפי הספק AC (אחרי חלוקה ב-1.3)</td><td><strong>תמיד לפי הספק DC</strong> (הפאנלים)</td><td>מוזיל את המערכת ב-23% ומנפח את ה-IRR</td></tr>
+<tr><td>הפסד קיטום (Clipping)</td><td>לא מנוכה כלל</td><td>ניכוי 1.5%–2.5% כש-DC/AC&gt;1.25</td><td>תחזית תפוקה אופטימית מדי</td></tr>
+<tr><td>נצילות מחזור סוללה (RTE)</td><td>100% (בקובץ אחד)</td><td><strong>~87.4%</strong> (טעינה 93% × פריקה 94%)</td><td>הטיית תוצאות בלתי ריאלית</td></tr>
+<tr><td>שחיקת פאנלים</td><td>0.25%/שנה קבוע מיום 1</td><td>שנה 1: <strong>1.5%‑2.0% (LID)</strong>; משנה 2: 0.25%/שנה</td><td>מנפח תחזית שנים 1–5 — הכי משפיעות על IRR</td></tr>
+<tr><td>עומק פריקה (DOD)</td><td>0.95</td><td><strong>0.85–0.90</strong></td><td>פריקה יומית ל-95% הורגת את הסוללה לפני שנה 15</td></tr>
+<tr><td>מקדם טמפרטורה</td><td>לא קיים</td><td>-0.35%/מעלה מעל 25°C</td><td>מפספס הפסד של ~14% בשיא הקיץ (65°C+ בתא)</td></tr>
+<tr><td>קיטום רשת (נגה)</td><td>לא קיים</td><td>1%–3% למתקנים &gt;100 קוו״ט</td><td>ללא פיצוי כספי — מתעלם מהפסד אמיתי</td></tr>
+</table>
+
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">שחיקת הסוללה חייבת לפגוע גם בקיבולת הפיזית, לא רק בכסף</span></div><span class="badge danger">שגוי פיזיקלית</span></div>
+  <p>הקוד המקורי מחיל שחיקה (2.2%/שנה) רק על הערך הכספי של הארביטראז'. בשנה ה-10, הסוללה לא באמת מחזיקה את אותה קיבולת — אם לקוח בנה על 15 קוט״ש לגיבוי שבת, בשנה ה-10 הוא יקבל בפועל כ-12 קוט״ש ויחווה הפסקת חשמל, בעוד המודל הכספי "לא ידע" על כך. <strong>תיקון נדרש:</strong> החלת השחיקה גם על <code class="inline">usableBat</code> בתוך לולאת ה-25 שנה.</p>
+</div>
+
+<div class="two-col">
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">קצב טעינה/פריקה (C-Rate) דינמי</span></div><span class="badge success">תוקן ויושם</span></div>
+  <p>קצב הטעינה/פריקה השעתי מוגבל דינמית לכל מועמד בגריד לפי <code class="inline">0.2C</code> (הספק הממיר = 20% מנפח הסוללה הנבדקת), במקום קצב קבוע לכל 10 הגדלים הנבדקים.</p>
+</div>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">יעילות ממיר בעומס נמוך</span></div><span class="badge warning">פשטני מדי</span></div>
+  <p>יעילות פריקה קבועה ב-94% ללא תלות בעומס. במציאות, בלילה כשהבית צורך 300W בלבד מממיר 10kW, היעילות צונחת ל-70%–80%. עדיין לא מתוקן.</p>
+</div>
+</div>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>סימולציית אגירה שעתית</h2></div>
+  
+  
+<p>לב המחשבון: סימולציית מצב-מכונה (State Machine) המחשבת SoC (מצב טעינה) אמיתי לכל שעה בשנה, במקום להסתמך על ממוצעים עונתיים סטטיים.</p>
+<div class="card decision">
+  <div class="card-head"><div><span class="card-title">פרדיגמת חישוב שהוחלפה: סטטיסטי מול סימולציה חיה</span></div><span class="badge decision">הוחלט</span></div>
+  <p>גרסאות מוקדמות חישבו רווחיות אגירה על בסיס ממוצעים עונתיים מוכפלים בימי פעילות. שיטה זו יוצרת סטיות של עד <strong>35%</strong>, כי היא מניחה שכל יום פסגה מנוצל במלואו — בעוד בפועל הצריכה משתנה ולא תמיד יש עודף ייצור מספיק להצדיק פריקה מלאה. <strong>ההחלטה:</strong> שימוש בלעדי במנוע הדיספאץ' השעתי (State Machine) בקוד זהב 6.3.</p>
+</div>
+
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">באג היחידות בטעינה (תוקן)</span></div><span class="badge success">תוקן — היה קריטי</span></div>
+  <p>המקום הפנוי בסוללה חושב ביחידות פנימיות (אחרי הפסד), בעוד יכולת הטעינה מהרשת חושבה ביחידות חיצוניות — והושווה ביניהן ללא המרה, כך שהסוללה נטענה רק ב-93% מהפער בכל צעד ולא הגיעה ל-100%.</p>
+<pre><span class="cm">// שגוי:</span> const space = nominalKwh - currentSoC; const chargeAbility = inverterPowerKw * 0.5;
+chargedKwh = Math.min(space, chargeAbility); <span class="cm">// תפוחים מול תפוזים</span>
+
+<span class="cm">// מתוקן:</span> const requiredGridKwhToFill = space / effCharge;
+chargedKwh = Math.min(requiredGridKwhToFill, chargeAbility);</pre>
+</div>
+
+<div class="two-col">
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">יום שיא מטעה בגרף</span></div><span class="badge warning">מטעה ויזואלית</span></div>
+  <p>הפונקציה בוחרת אוטומטית את יום השיא השנתי להצגה בגרף הדיספאץ' — אך זהו חריג סטטיסטי שגורם לסוללה להיראות לא מספקת. <strong>תיקון נדרש:</strong> לבחור את היום הקרוב ביותר לחציון צריכת הפסגה העונתית.</p>
+</div>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">הנחת תחזית מושלמת (Perfect Foresight)</span></div><span class="badge warning">אופטימיות יתר</span></div>
+  <p>הסימולציה מניחה שהלקוח יודע בדיוק כמה יצרוך ופורק בדיוק את הכמות הנדרשת. <strong>תיקון מוצע:</strong> מקדם מציאות (Real World Factor) של 0.90–0.95 על שורת הרווח מהארביטראז'.</p>
+</div>
+</div>
+
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>לוח עברי, שקיעה וזמנים</h2></div>
+  <p class="part-sub">כיצד משתלבים לוח השנה העברי, תנועת השמש ותקנות חח״י בחישוב השעתי.</p>
+  
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">באג השקיעה (NOAA Timezone)</span></div><span class="badge danger">שגיאה קריטית</span></div>
+  <p>פונקציית <code class="inline">getSunsetLocalDecimal</code> (מנוע AstroEngine) סובלת מבאג כיווני-סימנים הפוך בחישוב Equation of Time ו-Hour Angle, ומחזירה שקיעה בשעה 21:47 בדצמבר בישראל במקום כ-16:40 — טעות שנובעת מטיפול שגוי באזורי זמן. פוגם באמינות "שעות החשמל הכשר בשבת" בייצוא ובגרפים. <strong>תיקון נדרש:</strong> החלפה בספריית Zmanim חיצונית ואמינה (דיוק ±1.5 דקות).</p>
+</div>
+
+<table class="compact">
+<tr><th>נושא</th><th>ממצא</th></tr>
+<tr><td>פסגה בחורף בשבתות</td><td><span class="badge success">מאומת כנכון</span> תואם תקנות רשות החשמל — שיא ביקוש חורפי קיים גם בשבת</td></tr>
+<tr><td>רשימת חגים</td><td><span class="badge warning">פצצת זמן</span> קידוד קשיח ל-2020–2030 בקובץ אחד; יש להעדיף את מנוע <code class="inline">AstroEngine.isYomTov</code> האלגוריתמי הקיים בקבצים אחרים</td></tr>
+<tr><td>חול המועד</td><td><span class="badge danger">שגוי התנהגותית</span> מסווג כיום חול רגיל, בעוד שבמוסדות רבים הצריכה בו דומה לשבת</td></tr>
+<tr><td>עונות מעבר (אביב/סתיו)</td><td><span class="badge warning">נכון רגולטורית, שגוי פיזיקלית</span> מקובצות יחד לתעריף, אך מאי (אביב) מייצר הרבה יותר מנובמבר (סתיו)</td></tr>
+<tr><td>עקומת ייצור שעתית</td><td><span class="badge danger">שגוי אסטרונומית</span> קבועה 06:00–17:00 ללא תלות בעונה — מפספסת ייצור קיץ עד 19:30</td></tr>
+<tr><td>שנים מעוברות</td><td><span class="badge neutral">חוסר דיוק קל</span> 8,760 שעות קשיח; השפעה כלכלית זניחה (&lt;0.2%) אך דורש תשומת לב ארכיטקטונית</td></tr>
+</table>
+
+</section><section class="part" id="p7">
+  <div class="part-head"><span class="part-num">07</span><h2>מנוע התעריפים</h2></div>
+  
+  
+<table>
+<tr><th>עונה</th><th>פסגה</th><th>שפל</th></tr>
+<tr><td>קיץ</td><td>145.97 אג'</td><td>43.58 אג'</td></tr>
+<tr><td>חורף</td><td>97.74 אג'</td><td>40.22 אג'</td></tr>
+<tr><td>מעבר</td><td>42.93 אג'</td><td>39.45 אג'</td></tr>
+</table>
+<p style="margin-top:-8px" class="part-sub">תעריפי תעו״ז מתח נמוך, ללא מע״מ — מאומת מול פרסומי רשות החשמל 2026.</p>
+
+<h3 class="sub">מדרגות תעריף הזרמה (FIT)</h3>
+<table class="compact">
+<tr><th>מדרגה</th><th>תעריף</th></tr>
+<tr><td>0–15 קוו״ט</td><td>48.00 אג'</td></tr>
+<tr><td>15–100 קוו״ט</td><td>39.36 אג' (37.39 עם הנחת אגירה 5%)</td></tr>
+<tr><td>100–300 קוו״ט</td><td>34.37 אג'</td></tr>
+<tr><td>300–630 קוו״ט</td><td>28.44 אג'</td></tr>
+</table>
+
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">באג ה-P0 השלילי במדרגות ההזרמה</span></div><span class="badge danger">נפסל — היה קריטי</span></div>
+  <p>הנוסחה המקורית <code class="inline">(15 - P0) * fit_0_15 + ...</code> מחזירה ערך שלילי כאשר ללקוח כבר יש מערכת קיימת גדולה מ-15 קוו״ט (P0&gt;15) — מה שגורם לתמחור חסר של עד <strong>64%</strong>. <strong>התיקון:</strong> חיתוכים מוגנים ב-<code class="inline">Math.max(0,...)</code> בכל מדרגה (הקוד המלא בחלק 10).</p>
+</div>
+
+<div class="two-col">
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">קנס אגירה 5% במדרגה 15–100</span></div><span class="badge success">מאומת לחלוטין</span></div>
+  <p>מותקן סוללה גורם להפחתה רגולטורית של 5% במדרגה זו (39.36→37.39 אג'). מאומת מול החלטת רשות החשמל 65304 (אמות מידה 175–176) — קיזוז המונע כפל הטבה.</p>
+</div>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">משך הפרמיה האורבנית</span></div><span class="badge warning">דורש בירור משפטי</span></div>
+  <p>6 אג'/קוט״ש ליישובים מעל 50,000 תושבים. מיושם כ-17 שנה בשלושה קבצים, אך חלק מהמקורות ל-2026 מציינים 15 שנה. גם לא ברור אם צמודה למדד — אם לא, שוחקת לכ-4 אג' בכוח קנייה תוך 15 שנה.</p>
+</div>
+</div>
+
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">הפרמיה האורבנית מתאפסת בטעות ב-Zero Export</span></div><span class="badge danger">הבאג החוקי</span></div>
+  <p>לקוח באזור עירוני שצורך את האנרגיה עצמו (BTM) זכאי לזיכוי הפרמיה כהפחתה מחשבון החשמל — אך הקוד המקורי מאפס אותה במצב Zero Export כי "אין מכירה פיזית". זו טעות משפטית; יש להחיל את הפרמיה גם על צריכה עצמית.</p>
+</div>
+
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">חיוב עלות מערכתית (Systemic Grid Fee)</span></div><span class="badge warning">פער בין סבבי אימות — 3–6 אג' מול 9.09 אג'</span></div>
+  <p>חיוב חדש (2025/2026) על אנרגיה שנצרכת עצמית מאחורי המונה, שממן את שירותי האיזון של נגה/חח״י. סבב אימות מוקדם ("סריקה אטומית") ציין טווח ראשוני של 3–6 אג'/קוט״ש; סבב מאוחר ומדויק יותר קבע <strong>9.09 אג'</strong> (ללא מע״מ) — זהו הערך שנכנס לקוד זהב (חלק 10.3). שני הנתונים נשמרים כתיעוד היסטורי של תהליך האימות.</p>
+</div>
+
+</section><section class="part" id="p8">
+  <div class="part-head"><span class="part-num">08</span><h2>מודל פיננסי, מס ו-CFO</h2></div>
+  
+  
+<table>
+<tr><th>נושא</th><th>ממצא</th></tr>
+<tr><td>מודל מיסוי פרטי</td><td><span class="badge danger">שגיאה קריטית</span> הקוד חישב פטור עד ₪27,900 ואז 10% על העודף בלבד — הכלאה שגויה. במציאות יש <strong>שני מסלולים נפרדים</strong> (פטור מדורג עד תקרה, או 10% שטוח מהשקל הראשון עד ₪120,000), והמערכת צריכה לבחור אוטומטית את המשתלם. פער של עד פי-3 בחישוב המס.</td></tr>
+<tr><td>מע״מ</td><td><span class="badge success">מאומת: 18%</span> קבצים המשתמשים ב-1.17 שגויים — המע״מ עלה ל-18% מ-1.1.2025.</td></tr>
+<tr><td>עלות סוללה (CAPEX)</td><td><span class="badge success">המודל המפוצל נכון</span> 510 ₪/קוט״ש + 52,330 ₪ קבוע (ממיר היברידי) — לא מודל שטוח של 3,500 ₪/קוט״ש שמעוות את כדאיות ההגדלה.</td></tr>
+<tr><td>PPMT/IPMT</td><td><span class="badge success">מדויק חשבונאית</span> רק הריבית מוכרת כהוצאה למס; החזר הקרן אינו.</td></tr>
+<tr><td>תדירות PMT</td><td><span class="badge danger">סטייה פיננסית</span> חושב שנתי במקום חודשי — מתעלם מריבית דריבית תוך-שנתית.</td></tr>
+<tr><td>OPEX</td><td><span class="badge danger">שגוי כלכלית</span> קבוע נומינלית ל-25 שנה במקום צמוד למדד (~2.5%/שנה) — למעט ה-FIT עצמו שכן קבוע חוזית.</td></tr>
+<tr><td>עלות תפעול אגירה</td><td><span class="badge danger">כשל מסחרי</span> חושבה לפי קוו״ט פאנלים ולא לפי נפח סוללה — מעוות לחלוטין מקרי קצה (סוללה ענקית + פאנלים קטנים).</td></tr>
+</table>
+
+<h3 class="sub">מנוע ה-CFO: IRR מול MIRR</h3>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">אחיזת עיניים של Equity IRR בממונף גבוה</span></div><span class="badge warning">שגוי פיננסית לתשואה גבוהה</span></div>
+  <p>ה-IRR מניח מתמטית שהמשקיע משקיע מחדש כל רווח <strong>באותו שיעור התשואה</strong> — הנחה בלתי אפשרית. במימון 80%, זה מניב Equity IRR "מנופח" של 76%–88%. הפתרון: <strong>MIRR</strong> עם שני שיעורים ריאליים — השקעה מחדש 4.0% (פיקדון סולידי), מימון 7.0% (ריבית בפועל) — שמוריד את התשואה למספרים אמינים של 16.8%–21.2%.</p>
+</div>
+<div class="two-col">
+<div class="card neutral">
+  <div class="card-head"><div><span class="card-title">השוואה מול נדל״ן/מניות/פיקדון</span></div><span class="badge neutral">ניתוח השוואתי</span></div>
+  <p>מערכת סולארית+אגירה: תשואה 11%–24%, תנודתיות אפסית, מינוף קל עד 80% ללא Margin Call, נזילות נמוכה. מול S&P 500 (8–10% נומינלי, תנודתיות גבוהה) ונדל״ן (2.8%–3.5% שכירות, נזילות נמוכה מאוד). המחשה מלאה עם דוגמת מינוף מספרית — במסמך 00 (מערכת כוללת), חלק 5.</p>
+</div>
+<div class="card decision">
+  <div class="card-head"><div><span class="card-title">תעריפי תעו״ז אינם קבועים ל-25 שנה</span></div><span class="badge decision">דורש החלטה עסקית</span></div>
+  <p>בניגוד ל-FIT החוזי, תעריפי התעו״ז עולים היסטורית עם עלויות הדלק של חח״י — כלומר ערך הארביטראז' צפוי לגדול עם השנים. מוצע משתנה <code class="inline">tou_escalation_rate</code> (ברירת מחדל 1.5%) על רווחי האגירה בלבד.</p>
+</div>
+</div>
+</section><section class="part" id="p9">
+  <div class="part-head"><span class="part-num">09</span><h2>שכבת חוויית משתמש ומכירה</h2></div>
+  <p class="part-sub">הנחות פסיכולוגיות ומכירתיות שנבדקו מול המציאות.</p>
+  
+<div class="two-col">
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">טולטיפים + פאנל שקיפות מלאה</span></div><span class="badge success">אומת כנכון ומבריק</span></div>
+  <p>חשיפת המנגנון האלגוריתמי המלא (איזה תא באקסל הזין כל שקל) מורידה ספקנות אצל לקוחות עסקיים ומוסדות דת החוששים מ"קופסה שחורה". רכיב קריטי לאחוזי סגירה במגזר הדתי-מוסדי.</p>
+</div>
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">בלבול Project IRR מול Equity IRR</span></div><span class="badge danger">שגוי פסיכולוגית</span></div>
+  <p>הצגת שני האחוזים זה-לצד-זה מבלבלת לקוחות שאינם אנשי כספים. <strong>תיקון:</strong> ברירת מחדל להציג רק Equity IRR ("תשואה על הכסף שלך"), עם Project IRR מוסתר תחת "נתונים מתקדמים".</p>
+</div>
+</div>
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">היררכיית שלבי ה-SPA מול localStorage</span></div><span class="badge danger">נפסל חלקית</span></div>
+  <p>העברת מערך CSV שעתי גולמי (8,760–17,520 אובייקטים) דרך localStorage כגוש JSON.stringify חורגת ממגבלת 5MB של הדפדפן (QuotaExceededError) ותוקעת את המעבר בין שלבים. <strong>הוחלט:</strong> נתוני הגלם יישמרו רק בזיכרון הריצה הפנימי (<code class="inline">AppController.state.activeTimeSeries</code>); רק מטא-דאטה מכווצת תישמר ב-localStorage.</p>
+</div>
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">קוביות גדלים כמחוללי אמון</span></div><span class="badge success">אומת כנכון</span></div>
+  <p>לצד ה"תשובה אחת מנצחת" (Grid Search הממקסם IRR), הצגת גריד של 10–20 "קוביות" גודל עם החיסכון השנתי לכל אחת מגבירה אמון — מראה שהמערכת בדקה הכל, לא רק המלצה שרירותית.</p>
+</div>
+
+</section><section class="part" id="p10">
+  <div class="part-head"><span class="part-num">10</span><h2>קוד זהב — הפונקציות המתוקנות</h2></div>
+  <p class="part-sub">קטעי קוד מוכנים ליישום ישיר בקובץ המאוחד העתידי (קובץ 5).</p>
+  
+<p>כל קטעי הקוד הבאים מגובים בהחלטה מפורשת במסמך המאוחד (שיחה 6) ומיועדים להיות מוטמעים <strong>כמות שהם</strong> בקובץ המחשבון המאוחד העתידי.</p>
+
+<h3 class="sub">10.1 — חישוב תעריף מדרגות הזרמה (מוגן P0 + הנחת אגירה 5%)</h3>
+<pre>function calculateBlendedFitTariff(p0, pAc, zeroExport, isUrban, hasBattery) {
+  if (zeroExport || pAc <= 0) return 0;
+  const totalP = p0 + pAc;
+  const t15  = CALC_CONSTANTS.staircase.t15;   // 0.48
+  const t100 = hasBattery ? CALC_CONSTANTS.staircase.t100 * 0.95 : CALC_CONSTANTS.staircase.t100;
+  const t300 = CALC_CONSTANTS.staircase.t300;  // 0.3437
+  const t630 = CALC_CONSTANTS.staircase.t630;  // 0.2844
+  <span class="cm">// חיתוך מוגן ע"י Math.max בכל מדרגה, מונע P0 שלילי</span>
+  const inTier1 = Math.max(0, Math.min(totalP, 15)  - p0);
+  const inTier2 = Math.max(0, Math.min(totalP, 100) - Math.max(p0, 15));
+  const inTier3 = Math.max(0, Math.min(totalP, 300) - Math.max(p0, 100));
+  const inTier4 = Math.max(0, totalP - Math.max(p0, 300));
+  const blendedRevenue = (inTier1*t15) + (inTier2*t100) + (inTier3*t300) + (inTier4*t630);
+  let finalTariff = blendedRevenue / pAc;
+  if (isUrban) finalTariff += CALC_CONSTANTS.urban_premium; // 0.06
+  return finalTariff;
+}</pre>
+<div class="callout-strip">⚠ מימוש מקביל שתועד בנפרד (<code class="inline">calculateStaircaseTariff</code>) זהה בלוגיקת ההגנה אך השתמש בבסיס 0.3731 במקום 0.3936 עבור מדרגת 15–100 (ייתכן שמדובר בתעריף עתידי ממתווה ההפחתה השנתי) — יש לוודא איזה ערך תקף לשנת החישוב לפני שילוב סופי.</div>
+
+<h3 class="sub">10.2 — מיסוי הכנסה דו-מסלולי לאדם פרטי (סעיף 9(13א))</h3>
+<pre>function calculateIsraelPrivateTax(income) {
+  const exemptionCeiling = 27900;
+  const flatTaxCap = 120000;
+  <span class="cm">// מסלול א': פטור מדורג</span>
+  let taxTrackA = 0;
+  if (income > exemptionCeiling) {
+    const excess = income - exemptionCeiling;
+    const reducedExemption = Math.max(0, exemptionCeiling - excess);
+    taxTrackA = (income - reducedExemption) * 0.10;
+  }
+  <span class="cm">// מסלול ב': 10% שטוח מהשקל הראשון, עד תקרה</span>
+  let taxTrackB = income <= flatTaxCap ? income * 0.10 : income * 0.35;
+  return Math.min(taxTrackA, taxTrackB); <span class="cm">// בוחר את המשתלם והחוקי מביניהם</span>
+}</pre>
+
+<h3 class="sub">10.3 — סימולציית דיספאץ' שעתית (עם תיקון יחידות וחיוב מערכתי)</h3>
+<pre>function runHourlyStateSimulation(series, batteryUsableKwh, inverterPowerKw) {
+  const nominalKwh = batteryUsableKwh / CALC_CONSTANTS.battery.dod;
+  const minSoC = nominalKwh * (1 - CALC_CONSTANTS.battery.dod);
+  let currentSoC = minSoC;
+  const effCharge = 0.93, effDischarge = 0.94, systemicFee = 0.0909;
+  const results = series.map(p => {
+    const price = p.isPeak ? peakPrice(p) : lowPrice(p);
+    let chargedKwh = 0, dischargedKwh = 0, actualGridKwh = p.actualKwh;
+    if (!p.isPeak) {
+      const space = nominalKwh - currentSoC;
+      const requiredGridKwhToFill = space / effCharge; <span class="cm">// תיקון באג יחידות</span>
+      chargedKwh = Math.min(requiredGridKwhToFill, inverterPowerKw * 0.5);
+      currentSoC += chargedKwh * effCharge;
+      actualGridKwh += chargedKwh;
+    } else {
+      const available = currentSoC - minSoC;
+      dischargedKwh = Math.min(p.actualKwh, available * effDischarge, inverterPowerKw * 0.5);
+      currentSoC -= dischargedKwh / effDischarge;
+      actualGridKwh -= dischargedKwh;
+    }
+    const systemicCharge = dischargedKwh * systemicFee;
+    return { dateObj: p.dateObj, gridKwh: actualGridKwh, soc: currentSoC, charged: chargedKwh, discharged: dischargedKwh };
+  });
+  return results;
+}</pre>
+
+<h3 class="sub">10.4 — מנוע MIRR והשוואת נכסים ברמת CFO</h3>
+<pre>const SolarInvestmentAnalyst = {
+  calculateMIRR(cashFlows, financeRate, reinvestRate) {
+    const n = cashFlows.length - 1;
+    let pvCosts = 0, fvRevenues = 0;
+    cashFlows.forEach((cf, t) => {
+      if (cf < 0) pvCosts += cf / Math.pow(1 + financeRate, t);
+      else fvRevenues += cf * Math.pow(1 + reinvestRate, n - t);
+    });
+    return Math.pow(Math.abs(fvRevenues) / Math.abs(pvCosts), 1/n) - 1;
+  },
+  compareAssets(solarCapex, solarAnnualYieldKwh, tariff, inputs) {
+    <span class="cm">// בונה תזרים סולארי ממונף מול תזרים השקעה ב-S&P 500 (9% נומינלי)
+    // ומחזיר MIRR/IRR להשוואה ישירה — ראו טקסט מלא במסמך המקור</span>
+  }
+};</pre>
+</section><section class="part" id="p11">
+  <div class="part-head"><span class="part-num">11</span><h2>טבלת קבועי אמת</h2></div>
+  
+  <p>טבלת הקבועים המחייבים לשימוש בכל מימוש עתידי של המחשבון, לאחר אימות מול קבצי האקסל של מחלקת ההנדסה וכלל סבבי הבדיקה שבוצעו.</p><table><tr><th>פרמטר</th><th>ערך מאומת</th><th>הערה</th></tr><tr><td>עלות פאנלים (CAPEX PV)</td><td><strong>2,400 ₪/קוו״ט</strong></td><td>מחושב תמיד לפי DC</td></tr><tr><td>עלות סוללה (CAPEX Battery)</td><td><strong>510 ₪/קוט״ש + 52,330 ₪ קבוע</strong></td><td>מודל מפוצל; המודל השטוח (3,500 ₪) נפסל</td></tr><tr><td>יחס שטח גג להספק</td><td><strong>5.5 מ״ר/קוו״ט</strong></td><td>עודכן מ-7.5 (שמרני מדי); עריך בהגדרות מתקדמות</td></tr><tr><td>יחס DC/AC</td><td><strong>1.3</strong></td><td>מעל 1.25 יש לנכות הפסד קיטום 1.5%–2.5%</td></tr><tr><td>בלאי פאנלים</td><td><strong>שנה 1: 1.5% (LID); משנה 2: 0.25%/שנה</strong></td><td><code class="inline">year===1 ? 0.985 : 0.985-0.0025*(year-1)</code></td></tr><tr><td>עומק פריקה (DOD)</td><td><strong>0.85–0.90</strong></td><td>עודכן מ-0.95 לשימור תנאי אחריות</td></tr><tr><td>בלאי סוללה (ערך ארביטראז')</td><td><strong>2.2%/שנה מעריכי</strong></td><td>להחיל גם על הקיבולת הפיזית בלולאת ה-25 שנה</td></tr><tr><td>יעילות סוללה (RTE)</td><td><strong>טעינה 93% / פריקה 94%</strong></td><td>נצילות כוללת ~87.4%</td></tr><tr><td>קצב טעינה/פריקה</td><td><strong>0.2C</strong></td><td>דינמי לפי נפח הסוללה הנבדקת</td></tr><tr><td>שיעור היוון NPV</td><td><strong>3.5%</strong></td><td>ריאלי; לא 5% כפי שהיה בחלק מהגרסאות</td></tr><tr><td>מע״מ</td><td><strong>18%</strong></td><td>יש לתקן מקומות עם 17% (1.17→1.18)</td></tr><tr><td>פרמיה אורבנית</td><td><strong>6 אג'/קוט״ש</strong></td><td>מוגבל ל-17 שנה (דורש בירור: ייתכן 15); חל גם על Zero Export</td></tr><tr><td>חיוב עלות מערכתית</td><td><strong>9.09 אג'/קוט״ש (ללא מע״מ)</strong></td><td>מנוכה מכל קוט״ש שנצרך עצמית/נפרק מסוללה</td></tr><tr><td>קנס אגירה במדרגת 15–100</td><td><strong>הנחה של 5%</strong></td><td>39.36→37.39 אג', מבוסס החלטה 65304</td></tr><tr><td>עלויות תפעול (OPEX)</td><td><strong>80 ₪/קוו״ט + 30 ₪/קוט״ש אגירה</strong></td><td>מפוצל: קבוע לפי פאנלים + משתנה לפי נפח אגירה</td></tr><tr><td>ריבית מימון</td><td><strong>6.5%–7.5%/שנה</strong></td><td>מוסדות מול פרטיים, בהתאמה</td></tr><tr><td>שיעור השקעה מחדש (MIRR)</td><td><strong>4.0%/שנה</strong></td><td>תשואה ריאלית שמרנית לחישוב MIRR</td></tr><tr><td>מדרגות FIT</td><td><strong>0–15: 48.00 / 15–100: 39.36 / 100–300: 34.37 / 300–630: 28.44 אג'</strong></td><td>מוגן ב-Math.max(0,...) בכל מדרגה</td></tr><tr><td>מדרגת פטור ממס פרטי</td><td><strong>₪27,900/שנה או 10% שטוח עד ₪120,000</strong></td><td>שני מסלולים במקביל; נבחר המשתלם</td></tr><tr><td>מס חברות</td><td><strong>23%</strong></td><td>על רווח לאחר OPEX, פחת מואץ (25%/4 שנים) וריבית (IPMT)</td></tr><tr><td>מקדם טמפרטורה</td><td><strong>-0.35%/מעלה מעל 25°C</strong></td><td>הפסד תפוקה ~14% בשיא הקיץ הישראלי</td></tr><tr><td>קיטום רשת (נגה)</td><td><strong>1%–3% מהתפוקה</strong></td><td>למתקנים מעל 100 קוו״ט, ללא פיצוי</td></tr><tr><td>עומס פרזיטי מיזוג מצברים</td><td><strong>3.5%–5.0% מאנרגיית הסוללה</strong></td><td>~6,480 קוט״ש/שנה לדוגמה</td></tr></table>
+</section><section class="part" id="p12">
+  <div class="part-head"><span class="part-num">12</span><h2>פערים פתוחים</h2></div>
+  <p class="part-sub">נקודות שטרם הוכרעו סופית וטעונות בדיקה נוספת לפני נעילת המפרט.</p>
+  
+<ul class="filelist">
+<li><span class="ftag badge warning">פער פתוח</span>
+  <div><div class="fname">משך הפרמיה האורבנית: 15 או 17 שנה?</div><div class="fnote">שלושה קבצים מיישמים 17 שנה, אך מקורות 2026 מסוימים מציינים 15. יש לאמת מול רשות החשמל לפני קיבוע.</div></div>
+</li>
+<li><span class="ftag badge warning">פער בין סבבי אימות</span>
+  <div><div class="fname">חיוב עלות מערכתית: 3–6 אג' או 9.09 אג'?</div><div class="fnote">הקוד הסופי אימץ 9.09 אג' (הסבב המדויק יותר) — אך שני הנתונים מתועדים; כדאי לוודא שהערך הישן לא הודלף לאיזשהו קובץ.</div></div>
+</li>
+<li><span class="ftag badge warning">פער מימושים מקביל</span>
+  <div><div class="fname">בסיס תעריף מדרגת 15–100: 39.36 או 37.31 אג'?</div><div class="fnote">שני מימושים תקינים בהגנת Math.max אך עם ערך בסיס שונה לפני הנחת האגירה — ייתכן שמדובר בתעריף עתידי; יש לבדוק לפי שנת החישוב.</div></div>
+</li>
+<li><span class="ftag badge danger">פער עסקי מרכזי</span>
+  <div><div class="fname">מודל Zero Export דינמי</div><div class="fnote">SELF_CONSUMPTION_RATE=0.4 קבוע — לא עולה כשמוסיפים סוללה, בסתירה למטרת מכירת הסוללה. נדרשת פונקציה דינמית התלויה ביחס קיבולת/תפוקה יומית.</div></div>
+</li>
+<li><span class="ftag badge warning">שגוי רגולטורית</span>
+  <div><div class="fname">מגבלת הזרמה כבינארית</div><div class="fnote">המודל מניח או-הכל-או-כלום; במציאות ניתנים אישורי הזרמה חלקיים (למשל 100kWp מותקן, 50kW מוזרם). דרוש שדה max_grid_injection_kw.</div></div>
+</li>
+<li><span class="ftag badge danger">חסר</span>
+  <div><div class="fname">תשלום קבוע (דמי רשת) ללקוחות עסקיים</div><div class="fnote">לקוחות עסקיים משלמים דמי חיבור קבועים חודשיים ללא קשר לצריכה — הצגת \'0 ₪ חשבון חשמל\' מטעה אותם.</div></div>
+</li>
+</ul>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>

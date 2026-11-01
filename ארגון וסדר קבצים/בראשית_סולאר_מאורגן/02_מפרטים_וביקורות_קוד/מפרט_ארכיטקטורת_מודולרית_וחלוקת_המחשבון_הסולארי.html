@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מפרט ארכיטקטורה מודולרית — מחשבון סולארי מאוחד</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f6fa; color: #2f3640; line-height: 1.6; margin: 0; padding: 25px; }
+        .spec-card { max-width: 1350px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        h1 { color: #1a3a5f; border-bottom: 4px solid #f39c12; padding-bottom: 12px; margin-top: 0; font-size: 2.2em; text-align: center; }
+        h2 { color: #2c3e50; border-right: 5px solid #3498db; padding-right: 15px; margin-top: 40px; font-size: 1.6em; }
+        h3 { color: #34495e; margin-top: 25px; font-size: 1.25em; border-bottom: 1px solid #ecf0f1; padding-bottom: 8px; }
+        p { text-align: justify; font-size: 1.05em; color: #34495e; }
+        
+        /* תוויות תצוגה */
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.82em; font-weight: bold; margin-left: 6px; }
+        .badge-core { background: #e8f4fd; color: #2980b9; }
+        .badge-ui { background: #faf5ff; color: #8e44ad; }
+        .badge-warning { background: #fdf2e9; color: #e67e22; }
+        .badge-ok { background: #eafaf1; color: #2ecc71; }
+        
+        /* טבלאות */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; font-size: 0.9em; }
+        th, td { border: 1px solid #dcdde1; padding: 12px 14px; text-align: right; vertical-align: top; }
+        th { background-color: #1a3a5f; color: white; font-weight: bold; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        
+        /* מדדי ציונים */
+        .score-bar-container { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .score-bar { background: #e0e0e0; border-radius: 4px; height: 10px; width: 120px; overflow: hidden; display: inline-block; }
+        .score-fill { background: #2ecc71; height: 100%; border-radius: 4px; }
+        .score-fill.orange { background: #e67e22; }
+        .score-fill.red { background: #e74c3c; }
+        .score-num { font-weight: bold; font-size: 0.9em; color: #2c3e50; }
+        
+        /* קוד וחוזים */
+        pre { background: #f8fafc; border-right: 4px solid #f39c12; padding: 15px; border-radius: 0 6px 6px 0; overflow-x: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.88em; line-height: 1.5; color: #2c3e50; }
+        code { font-family: 'Consolas', monospace; color: #c0392b; font-size: 0.92em; }
+        
+        /* גריד קלפים להשוואה */
+        .grid-proposals { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin: 25px 0; }
+        .prop-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; background: #fafbfc; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; text-align: center; }
+        .prop-card:hover { transform: translateY(-4px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
+        .prop-card.active { border-color: #2980b9; background-color: #ebf8ff; box-shadow: 0 4px 12px rgba(41,128,185,0.15); }
+        .prop-num { font-size: 1.8em; font-weight: bold; color: #2980b9; margin-bottom: 5px; }
+        .prop-title { font-weight: bold; font-size: 1.1em; color: #1a3a5f; margin-bottom: 8px; }
+        .prop-subtitle { font-size: 0.85em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="spec-card">
+    <h1>מפרט ארכיטקטורה מודולרית וחלוקת המחשבון הסולארי</h1>
+    
+    <p>
+        בניית מערכת הנדסית ופיננסית מורכבת בדף HTML יחיד ("Monolith") עלולה להוביל לקשיים חמורים בתחזוקה, קושי בבידוד שגיאות חישוב פיזיקליות לעומת בעיות רינדור, וקושי תפעולי כאשר נתוני לקוח חסרים (כגון היעדר קובץ CSV).
+        חלוקת המערכת למודולים עצמאיים פותרת בעיות אלו ומאפשרת שליטה מדויקת בקוד.
+        להלן מפרט הנדסי המציע <strong>5 חלופות שונות של חלוקה מודולרית (מ-2 ועד 6 חלקים)</strong>. כל חלופה מלווה במיפוי רכיבים, חוזי ממשק (APIs), מנגנוני טיפול במידע חסר (Fallback), ציונים מפורטים וניתוח יתרונות/חסרונות.
+    </p>
+
+    <h2>1. סקירה מהירה של חמש חלופות החלוקה</h2>
+    <div class="grid-proposals">
+        <div class="prop-card" onclick="scrollToProp('prop1')">
+            <div class="prop-num">2</div>
+            <div class="prop-title">מנוע מול ממשק (Dual-Core)</div>
+            <div class="prop-subtitle">חלוקה בינארית פשוטה בין הממשק החזותי לכלל החישובים הפיזיקליים/פיננסיים.</div>
+        </div>
+        <div class="prop-card" onclick="scrollToProp('prop2')">
+            <div class="prop-num">3</div>
+            <div class="prop-title">שילוש שלבי המכירה</div>
+            <div class="prop-subtitle">התאמה מלאה לאשף ה-SPA התלת-שלבי. כל דף עומד בפני עצמו פיזית או לוגית.</div>
+        </div>
+        <div class="prop-card" onclick="scrollToProp('prop3')">
+            <div class="prop-num">4</div>
+            <div class="prop-title">ארבעת עמודי התווך</div>
+            <div class="prop-subtitle">חלוקה קלאסית: קלט/זמנים, סימולציית דיספאץ' שעתית, מנוע פיננסי, ומחולל הדוחות.</div>
+        </div>
+        <div class="prop-card active" onclick="scrollToProp('prop4')">
+            <div class="prop-num">5</div>
+            <div class="prop-title">חמשת המיקרו-רכיבים</div>
+            <div class="prop-subtitle"><strong>(ההצעה המומלצת)</strong> איזון מושלם בין עצמאות הנדסית לבין פשטות ממשקי הנתונים.</div>
+        </div>
+        <div class="prop-card" onclick="scrollToProp('prop5')">
+            <div class="prop-num">6</div>
+            <div class="prop-title">פירוק גרנולרי מוחלט</div>
+            <div class="prop-subtitle">הפרדת תפקידים קיצונית. כל פונקציה הנדסית או אסטרונומית מקבלת קובץ נפרד.</div>
+        </div>
+    </div>
+
+    <h2>2. ניתוח מפורט של חמש חלופות החלוקה</h2>
+
+    <!-- ========================================== PROPOSAL 1 ========================================== -->
+    <h3 id="prop1">חלופה 1: חלוקה לשני חלקים (מנוע מול ממשק - Dual-Core)</h3>
+    <p>
+        גישה המפרידה בצורה חותכת בין קוד הממשק (HTML, CSS, ניווט שלבים, הצגת טבלאות וגרפים) לבין קוד הליבה המדעי-חישובי (המחשב את כלל האנליטיקה, הדיספאץ' והפיננסים ללא תלות בדפדפן).
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">חלק בקוד</th>
+                <th style="width: 45%;">תכולה פונקציונלית מפורטת</th>
+                <th style="width: 30%;">ממשקי נתונים וחוזים (Contracts)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>חלק א': מנוע החישוב ההנדסי-פיננסי (The Core Engine)</strong></td>
+                <td>
+                    - פענוח CSV גולמי וחילוץ קריאות מונה כפול.<br>
+                    - מנוע אסטרונומי שקיעה (NOAA) ולוח שנה עברי מורחב.<br>
+                    - מנוע סימולציית דיספאץ' שעתית (טעינה/פריקה, SoC, הפסדי המרה).<br>
+                    - אלגוריתם אופטימיזציית גדלים (IRR Sizer).<br>
+                    - מודל 25 שנה כלכלי (לוח סילוקין הלוואה, פחת, מסים ומדרגות תעריף).
+                </td>
+                <td rowspan="2">
+                    הממשק קורא למנוע באמצעות אובייקט JS גלובלי יחיד: <code class="code-inline">SolarCore.runSimulation(inputs)</code>.<br>
+                    המנוע מחזיר JSON מובנה ושלם המכיל את כלל מערכי הסימולציה והתוצאות. אין גישה ישירה של המנוע ל-DOM של הדפדפן.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ב': ממשק המשתמש ומחולל הדוחות (The UI Shell)</strong></td>
+                <td>
+                    - ניווט שלבים (SPA) ותיבות קלט.<br>
+                    - רינדור טבלאות הנתונים, הגרפים (<code class="code-inline">Chart.js</code>) וסרגל המטא-דאטה.<br>
+                    - כפתורי הורדה וייצוא קבצים באמצעות <code class="code-inline">ExcelJS</code>.<br>
+                    - הדפסת "דוח הקמה סופי" ל-PDF.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>מנגנון טיפול במידע חסר (Fallback Modes):</h4>
+    <p>
+        אם המשתמש לא מעלה קובץ CSV, חלק ב' (ממשק) מזהה זאת ומעביר לחלק א' דגל <code class="code-inline">hasCSV: false</code> בתוספת נתוני הצריכה הידניים (המטריצה או ההערכה השנתית). מנוע החישוב מדלג אוטומטית על סימולציית הדיספאץ' השעתית ועובר להערכה סטטית-עונתית (נוסחאות הארביטראז' המקוריות), תוך החזרת תוצאות תקינות ללא קריסה.
+    </p>
+
+    <h4>ציונים והערכת מדדים (חלופה 1):</h4>
+    <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
+        <div class="grid-proposals" style="margin: 0;">
+            <div>
+                <strong>יעילות קוד:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 95%;"></div></div>
+                    <span class="score-num">95/100</span>
+                </div>
+                <span class="prop-subtitle">מינימום תקשורת מעבר, זיכרון משותף.</span>
+            </div>
+            <div>
+                <strong>מניעת שגיאות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill orange" style="width: 75%;"></div></div>
+                    <span class="score-num">75/100</span>
+                </div>
+                <span class="prop-subtitle">המנוע עדיין גדול ומכיל לוגיקות שונות.</span>
+            </div>
+            <div>
+                <strong>קלות תיקון והרחבה:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill orange" style="width: 70%;"></div></div>
+                    <span class="score-num">70/100</span>
+                </div>
+                <span class="prop-subtitle">קשה לפצל פיתוח בין הנדסה לפיננסים.</span>
+            </div>
+            <div>
+                <strong>ביטחון בנכונות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 90%;"></div></div>
+                    <span class="score-num">90/100</span>
+                </div>
+                <span class="prop-subtitle">קל לבצע בדיקות יחידה (Unit Tests) למנוע.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== PROPOSAL 2 ========================================== -->
+    <h3 id="prop2">חלופה 2: חלוקה לשלושה חלקים (שילוש שלבי המכירה - Step-Based SPA Files)</h3>
+    <p>
+        חלוקה פיזית או לוגית התואמת במדויק את שלושת השלבים של אשף ה-SPA מקובץ 4. כל מודול מייצג שלב נפרד בתהליך המכירה, כאשר הנתונים מועברים באופן לינארי ומאובטח.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">שלב בקוד</th>
+                <th style="width: 45%;">תכולה פונקציונלית מפורטת</th>
+                <th style="width: 30%;">ממשקי נתונים וחוזים (Contracts)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>חלק א': מודול קליטת צריכה ולוח שנה (שלב 1)</strong></td>
+                <td>
+                    - ממשק העלאת CSV/JSON והזנת קלט ידני מפורט.<br>
+                    - מנוע NOAA ושחזור צריכה ממונה כפול.<br>
+                    - רינדור טבלאות הנתונים היומיות והשעתיות.<br>
+                    - ניתוח 4 שורות הסטטיסטיקה הכללית והעונתית.
+                </td>
+                <td rowspan="3">
+                    המעבר בין השלבים מבוסס על **חוזה סנכרון localStorage** קשיח:<br>
+                    - שלב 1 כותב ל- <code class="code-inline">solar_step1_data</code> את פרטי הלקוח ומערך הסטטיסטיקה של הפסגות העונתיות.<br>
+                    - שלב 2 קורא משם, מעבד, וכותב ל- <code class="code-inline">solar_step2_data</code> את הגדלים שנבחרו ותוצאות סימולציית הדיספאץ'.<br>
+                    - שלב 3 אוסף את הכל וכותב את ה-JSON הסופי ל- <code class="code-inline">transferredCalcData</code>.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ב': מודול אופטימיזציה ודיספאץ' שעתית (שלב 2)</strong></td>
+                <td>
+                    - הזנת נתוני גג, אזימוט והצללה.<br>
+                    - מנוע סימולציית ייצור סולארי לפי חודש ושעה.<br>
+                    - מנוע אופטימיזציה מבוסס IRR למציאת גדלים מומלצים.<br>
+                    - רינדור גרף רגישות שולית וגרף הדיספאץ' השעתי.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ג': מודול רגולציה, מימון ודוחות (שלב 3)</strong></td>
+                <td>
+                    - הגדרת Zero Export, פרמיה אורבנית ותנאי הלוואה.<br>
+                    - הרצת מודל ה-25 שנה המלא.<br>
+                    - הצגת כרטיסי המלצות, טבלה פיננסית סופית ותרשים תזרים.<br>
+                    - רינדור דף ההקמה להדפסה והפעלת ספריית ExcelJS לייצוא.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>מנגנון טיפול במידע חסר (Fallback Modes):</h4>
+    <p>
+        אם משתמש מדלג ישירות לשלב 2 או 3 ללא העלאת קובץ צריכה בשלב 1: שלב 2 מזהה ש- <code class="code-inline">solar_step1_data</code> ריק או מסומן כחסר CSV, מעלים את מנוע הדיספאץ' השעתי האמיתי, מציג הודעה כי "סימולציית דיספאץ' שעתית מבוטלת עקב חוסר נתונים", ומאפשר להזין ידנית הערכה שנתית בלבד כדי לבצע את האופטימיזציה הסולארית בלבד.
+    </p>
+
+    <h4>ציונים והערכת מדדים (חלופה 2):</h4>
+    <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
+        <div class="grid-proposals" style="margin: 0;">
+            <div>
+                <strong>יעילות קוד:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 88%;"></div></div>
+                    <span class="score-num">88/100</span>
+                </div>
+                <span class="prop-subtitle">טעינה מדורגת של משאבים, עבודה לינארית.</span>
+            </div>
+            <div>
+                <strong>מניעת שגיאות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 85%;"></div></div>
+                    <span class="score-num">85/100</span>
+                </div>
+                <span class="prop-subtitle">קל לבדוק כל מסך/שלב בנפרד ללא הפרעות.</span>
+            </div>
+            <div>
+                <strong>קלות תיקון והרחבה:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 90%;"></div></div>
+                    <span class="score-num">90/100</span>
+                </div>
+                <span class="prop-subtitle">קל מאוד להחליף שלב מסוים או לשפר עיצוב שלו.</span>
+            </div>
+            <div>
+                <strong>ביטחון בנכונות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill orange" style="width: 78%;"></div></div>
+                    <span class="score-num">78/100</span>
+                </div>
+                <span class="prop-subtitle">פגיעה קלה עקב העברת נתוני ביניים ב-JSON.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== PROPOSAL 3 ========================================== -->
+    <h3 id="prop3">חלופה 3: חלוקה לארבעה חלקים (ארבעת עמודי התווך)</h3>
+    <p>
+        חלוקה ארכיטקטונית המפרידה את המערכת לארבעה רכיבי שירות (Services) בעלי אחריות הנדסית ופונקציונלית מבודדת לחלוטין.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">עמוד תווך בקוד</th>
+                <th style="width: 45%;">תכולה פונקציונלית מפורטת</th>
+                <th style="width: 30%;">ממשקי נתונים וחוזים (Contracts)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>חלק א': מנוע קליטה, סינון וזמנים (Data & Zmanim Service)</strong></td>
+                <td>
+                    - פענוח CSV גולמי, קריאת JSON, נירמול שבתות וחגים.<br>
+                    - המרת תאריכים עבריים ומנוע שקיעה NOAA.<br>
+                    - סיווג זמנים ישיבתיים וחופשות.
+                </td>
+                <td rowspan="4">
+                    סכמת זרימת מידע חד-כיוונית (Unidirectional Data Flow):<br>
+                    1. <code class="code-inline">Data Service</code> מייצר את מערך הצריכה המנוקה.<br>
+                    2. <code class="code-inline">Simulator Service</code> מקבל את המערך, מריץ דיספאץ' ומחזיר את הערך השנתי של הארביטראז'.<br>
+                    3. <code class="code-inline">Financial Service</code> מקבל את ערך האגירה והגודל הסולארי ומחשב תזרים 25 שנה.<br>
+                    4. <code class="code-inline">Reporter Service</code> מושך מכולם ומפיק UI וקבצים.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ב': סימולטור ייצור ואגירה שעתית (Energy Simulator)</strong></td>
+                <td>
+                    - מודל ייצור פוטו-וולטאי דינמי (אזימוט, הצללה).<br>
+                    - סימולציית דיספאץ' שעתית (טעינה משפל, פריקה לפסגה, SoC והפסדים).
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ג': מנוע כלכלי ואופטימיזציה (Fiscal Engine)</strong></td>
+                <td>
+                    - אלגוריתם אופטימיזציית IRR לסריקת גדלים.<br>
+                    - מדרגות תעריף הזרמה (מדרגות חח"י והפחתת 5% לאגירה).<br>
+                    - מודל 25 שנה (הלוואה, פחת, מסים, תזרימי מזומנים).
+                </td>
+            </tr>
+            <tr>
+                <td><strong>חלק ד': ממשק משתמש וייצוא (UI & Export Service)</strong></td>
+                <td>
+                    - מעטפת SPA, טבלאות וגרפים (Chart.js ו-SVG).<br>
+                    - מנוע כתיבת אקסל מתקדם (ExcelJS).<br>
+                    - תבנית דוח הקמה מוכנה להדפסה.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>מנגנון טיפול במידע חסר (Fallback Modes):</h4>
+    <p>
+        כאשר אין קובץ CSV, חלק א' מייצר מערך צריכה סינתטי (מבוסס על מטריצת הקלט הידנית או הפרופילים הטיפוסיים). חלק ב' (הסימולטור) ממשיך לעבוד על המערך הסינתטי הזה בדיוק באותו האופן, ובכך נמנע לחלוטין הצורך בפיתוח מסלול חישוב מיוחד או כתיבת נוסחאות עוקפות - המערכת כולה תמיד רצה על מנוע הדיספאץ' השעתי.
+    </p>
+
+    <h4>ציונים והערכת מדדים (חלופה 3):</h4>
+    <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
+        <div class="grid-proposals" style="margin: 0;">
+            <div>
+                <strong>יעילות קוד:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 90%;"></div></div>
+                    <span class="score-num">90/100</span>
+                </div>
+                <span class="prop-subtitle">מודולריות מאוזנת עם תקשורת נקייה.</span>
+            </div>
+            <div>
+                <strong>מניעת שגיאות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 92%;"></div></div>
+                    <span class="score-num">92/100</span>
+                </div>
+                <span class="prop-subtitle">הפרדת פיזיקה (חלק ב') מפיננסים (חלק ג').</span>
+            </div>
+            <div>
+                <strong>קלות תיקון והרחבה:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 88%;"></div></div>
+                    <span class="score-num">88/100</span>
+                </div>
+                <span class="prop-subtitle">מבנה קלאסי וברור לכל מפתח חדש.</span>
+            </div>
+            <div>
+                <strong>ביטחון בנכונות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 93%;"></div></div>
+                    <span class="score-num">93/100</span>
+                </div>
+                <span class="prop-subtitle">רמת בידוד מעולה של משוואות החישוב.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== PROPOSAL 4 ========================================== -->
+    <h3 id="prop4" style="color: #2980b9;">חלופה 4: חלוקה לחמישה חלקים (חמשת המיקרו-רכיבים) — החלופה המומלצת ⭐️</h3>
+    <p>
+        הגישה המאוזנת והנכונה ביותר להנדסת תוכנה מודרנית. גישה זו מבודדת את הרכיבים המדעיים והטכנולוגיים הכבדים ביותר (מנוע שקיעה אסטרונומי, סימולטור פריקה שעתית, ומודל כלכלי ארוך-טווח) לקבצים עצמאיים נפרדים. הדבר מונע לחלוטין מצב שבו באג ברינדור גרף או שינוי עיצובי בדוח ההדפסה ישפיעו על הדיוק הפיזיקלי של החישובים.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">מיקרו-רכיב בקוד</th>
+                <th style="width: 45%;">תכולה פונקציונלית מפורטת</th>
+                <th style="width: 30%;">ממשקי נתונים וחוזים (Contracts)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. מעטפת הממשק ומנהל המצב (UI Shell & State Manager)</strong></td>
+                <td>
+                    - ניווט SPA, קלטים כלליים, הגדרות תעריפי תעו"ז.<br>
+                    - קריאה וכתיבה מול <code class="code-inline">localStorage</code>.<br>
+                    - תיאום ותזמון הפעולות בין כלל המיקרו-רכיבים האחרים.
+                </td>
+                <td rowspan="5">
+                    <strong>תרשים חוזי הנתונים (APIs):</strong><br>
+                    - רכיב 1 מאתחל את הממשק ומנהל את המצב הגלובלי.<br>
+                    - רכיב 2 מקבל תאריך ומחזיר אובייקט: <br><code class="code-inline">{ isHoly, isPeak, sunsetLocal }</code>.<br>
+                    - רכיב 3 מקבל את מערך הנתונים של רכיב 1 ואת פונקציות רכיב 2, ומחזיר: <br><code class="code-inline">{ rawHourly, statsTable, yearlyArbValue }</code>.<br>
+                    - רכיב 4 מקבל את תוצאות רכיב 3 ופרמטרי מימון, ומחזיר תזרים ל-25 שנה.<br>
+                    - רכיב 5 קורא מכולם ומייצר קבצי אקסל ו-PDF.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>2. מנוע אסטרונומי וליטורגי (NOAA & Calendar Engine)</strong></td>
+                <td>
+                    - מנוע משוואות השמש של NOAA לחילוץ שקיעה מדויקת ברמת דקות.<br>
+                    - אלגוריתם המרה עברי וימי חג (2020-2030).<br>
+                    - זיהוי שבתות, ערבי חג, זמנים ישיבתיים וחופשות מוסדיות.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>3. סימולטור דיספאץ' ואופטימיזציה (Energy Dispatch Simulator)</strong></td>
+                <td>
+                    - פענוח CSV גולמי וחילוץ צריכה ממונה כפול.<br>
+                    - סימולציית ייצור סולארי שעתית עונתית.<br>
+                    - לולאת פריקה וטעינה שעתית מדויקת (SoC, C-rate, יעילות המרה).<br>
+                    - הרצת אלגוריתם אופטימיזציה למציאת גודל סוללה מומלץ (Sizer).
+                </td>
+            </tr>
+            <tr>
+                <td><strong>4. מנוע כלכלי ותזרים 25 שנה (25-Yr Fiscal Engine)</strong></td>
+                <td>
+                    - חישוב מדרגות תעריף הזרמה (כולל הנחת אגירה רגולטורית).<br>
+                    - לוח סילוקין שבועי/שנתי של ההלוואה (ריבית וקרן פוחתת).<br>
+                    - חישובי מס הכנסה, פחת מואץ, מע"מ ופטורים לאדם פרטי.<br>
+                    - חישובי IRR פרויקט, IRR הון, NPV וזמן החזר השקעה.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>5. מחולל הדוחות והורדות (High-Fi PDF & Excel Compiler)</strong></td>
+                <td>
+                    - בניית דף תכנית ההקמה הסופי המיועד להדפסה.<br>
+                    - הפקת תרשימי אקסל ועיצוב תאים מתקדם באמצעות ספריית ExcelJS.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>מנגנון טיפול במידע חסר (Fallback Modes):</h4>
+    <p>
+        במצב ללא CSV, רכיב 3 (סימולטור דיספאץ') מייצר אוטומטית מערך צריכה סינתטי מלא של 8,760 שעות לשנה, המבוסס על סוג הנכס (בית/עסק) והצריכה השנתית שהוזנה. הסימולטור מריץ את סימולציית הדיספאץ' השעתית על הנתונים הסינתטיים הללו בדיוק באותה צורה.
+        המשתמש מקבל תוצאה מדויקת ככל הניתן ("מבוסס סימולציית פרופיל סינתטי") ללא שינוי במבנה הקוד או במסכי שלב 2 ו-3.
+    </p>
+
+    <h4>ציונים והערכת מדדים (חלופה 4 — ההצעה המומלצת):</h4>
+    <div style="background: #eef8ff; padding: 15px; border-radius: 6px; border: 1px solid #3498db;">
+        <div class="grid-proposals" style="margin: 0;">
+            <div>
+                <strong>יעילות קוד:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 92%;"></div></div>
+                    <span class="score-num">92/100</span>
+                </div>
+                <span class="prop-subtitle">מודולים טהורים ללא כפילויות, זיכרון יעיל.</span>
+            </div>
+            <div>
+                <strong>מניעת שגיאות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 96%;"></div></div>
+                    <span class="score-num">96/100</span>
+                </div>
+                <span class="prop-subtitle">צינור חישוב מבודד, בדיקת תקלות קלה.</span>
+            </div>
+            <div>
+                <strong>קלות תיקון והרחבה:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 95%;"></div></div>
+                    <span class="score-num">95/100</span>
+                </div>
+                <span class="prop-subtitle">פיתוח עצמאי במקביל של מספר מתכנתים.</span>
+            </div>
+            <div>
+                <strong>ביטחון בנכונות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 98%;"></div></div>
+                    <span class="score-num">98/100</span>
+                </div>
+                <span class="prop-subtitle">הפרדה מוחלטת של הפיזיקה מהממשק החזותי.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== PROPOSAL 5 ========================================== -->
+    <h3 id="prop5">חלופה 5: חלוקה לשישה חלקים (פירוק גרנולרי מוחלט)</h3>
+    <p>
+        גישה המפרקת את המערכת לרמת שירותי מיקרו (Micro-Services Style) בקוד לקוח. כל תפקיד או פונקציה אלגוריתמית מקבלת קובץ JS מופרד לחלוטין.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">מיקרו-קובץ בקוד</th>
+                <th style="width: 45%;">תכולה פונקציונלית מפורטת</th>
+                <th style="width: 30%;">ממשקי נתונים וחוזים (Contracts)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. מפענח קבצים (Ingestion Component)</strong></td>
+                <td>פענוח CSV/JSON חח"י, זיהוי עמודות גנרי ומוני ייצור קיימים.</td>
+                <td rowspan="6">
+                    רשת סבוכה של חוזי תקשורת ואינטגרציה (Mesh Architecture):<br>
+                    כל רכיב מייצא פונקציה ספציפית ומסתמך על ייבוא של רכיבים אחרים באמצעות מודולים של ES6 (<code class="code-inline">import / export</code>).<br>
+                    מחייב שימוש בכלי בנייה (Bundlers) כגון Webpack או Vite במהלך הפיתוח כדי לאחד את הקבצים לקובץ ריצה אחד.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>2. מנוע אסטרונומי וזמנים (Astro & Liturgical Engine)</strong></td>
+                <td>חישוב שקיעה, המרת לוח עברי, זיהוי שבתות וחגים וזמנים ישיבתיים.</td>
+            </tr>
+            <tr>
+                <td><strong>3. סימולטור פריקה וטעינה (Hourly Dispatch Logic)</strong></td>
+                <td>אלגוריתם זרימת האנרגיה השעתי, חישוב SoC והפסדים.</td>
+            </tr>
+            <tr>
+                <td><strong>4. אופטימיזציית גדלים (Sizing Optimizer)</strong></td>
+                <td>מנוע חיפוש הגדלים המיטביים להשגת IRR מקסימלי.</td>
+            </tr>
+            <tr>
+                <td><strong>5. מחשבון פיננסי 25 שנה (25-Yr Financial Simulator)</strong></td>
+                <td>חישובי הלוואות, פחת, מסים, תזרימי מזומנים וערך נוכחי נקי.</td>
+            </tr>
+            <tr>
+                <td><strong>6. מייצא קבצים ודוחות (High-Fi PDF & Excel Compiler)</strong></td>
+                <td>ייצוא ExcelJS, תבנית הדפסה ל-PDF ותרשימי SVG/Chart.js.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>מנגנון טיפול במידע חסר (Fallback Modes):</h4>
+    <p>
+        רכיב 1 (קליטה) מחזיר דגל שגיאה חסר נתונים. רכיב 4 (האופטימיזטור) מזהה זאת, עוקף לחלוטין את רכיב 3 (דיספאץ' שעתי), קורא ישירות לרכיב 2 (זמנים) לקבלת זמני שמש גנריים, ומבצע חישוב מקורב המועבר ישירות לרכיב 5 (פיננסי).
+    </p>
+
+    <h4>ציונים והערכת מדדים (חלופה 5):</h4>
+    <div style="background: #fafbfc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1;">
+        <div class="grid-proposals" style="margin: 0;">
+            <div>
+                <strong>יעילות קוד:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill orange" style="width: 78%;"></div></div>
+                    <span class="score-num">78/100</span>
+                </div>
+                <span class="prop-subtitle">תקורת טעינה מרובה של קבצים וייבוא מודולים.</span>
+            </div>
+            <div>
+                <strong>מניעת שגיאות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 95%;"></div></div>
+                    <span class="score-num">95/100</span>
+                </div>
+                <span class="prop-subtitle">רכיבים מבודדים לחלוטין, בידוד באגים מעולה.</span>
+            </div>
+            <div>
+                <strong>קלות תיקון והרחבה:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 98%;"></div></div>
+                    <span class="score-num">98/100</span>
+                </div>
+                <span class="prop-subtitle">הכי קל להחליף מנוע ספציפי ללא שום השפעה.</span>
+            </div>
+            <div>
+                <strong>ביטחון בנכונות:</strong>
+                <div class="score-bar-container">
+                    <div class="score-bar"><div class="score-fill" style="width: 96%;"></div></div>
+                    <span class="score-num">96/100</span>
+                </div>
+                <span class="prop-subtitle">בדיקות יחידה מבודדות לכל תפקיד הנדסי.</span>
+            </div>
+        </div>
+    </div>
+
+    <h2>3. טבלת השוואה וציונים משוקללת (Scorecard Summary)</h2>
+    <p>
+        להלן מיפוי השוואתי של כל חמש הצעות החלוקה. הציונים מבוססים על קריטריונים הנדסיים קפדניים של תחזוקת קוד וביצועים:
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <th>פרמטר השוואה</th>
+                <th style="background-color: #f0fff4; color: #1a3a5f;">חלופה 1 (2 חלקים)</th>
+                <th style="background-color: #ebf8ff; color: #1a3a5f;">חלופה 2 (3 חלקים)</th>
+                <th style="background-color: #fffdf5; color: #1a3a5f;">חלופה 3 (4 חלקים)</th>
+                <th style="background-color: #eef8ff; color: #1a3a5f;">חלופה 4 (5 חלקים) 🌟</th>
+                <th style="background-color: #faf5ff; color: #1a3a5f;">חלופה 5 (6 חלקים)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>יעילות ביצועים וריצה (JS Runtime)</strong></td>
+                <td><strong>95</strong> (מצוין, פניה ישירה בזיכרון)</td>
+                <td><strong>88</strong> (טוב, שימוש ב-localStorage)</td>
+                <td><strong>90</strong> (יעיל, תקשורת קווית)</td>
+                <td><strong>92</strong> (מאוזן ומהיר מאוד)</td>
+                <td><strong>78</strong> (תקורת קריאות מודולים רבה)</td>
+            </tr>
+            <tr>
+                <td><strong>מניעת שגיאות ובידוד תקלות</strong></td>
+                <td><strong>75</strong> (בינוני, מנוע החישוב עדיין מונוליטי)</td>
+                <td><strong>85</strong> (טוב, הפרדה שלבית ברורה)</td>
+                <td><strong>92</strong> (גבוה, הפרדת מדע מפיננסים)</td>
+                <td><strong>96</strong> (מעולה, בידוד מוחלט של הפיזיקה)</td>
+                <td><strong>95</strong> (מצוין, מבודד לחלוטין)</td>
+            </tr>
+            <tr>
+                <td><strong>קלות תחזוקה, תיקון והמשך פיתוח</strong></td>
+                <td><strong>70</strong> (נמוך-בינוני, קוד המנוע ארוך ומורכב)</td>
+                <td><strong>90</strong> (גבוה, קל לעבוד על שלבים)</td>
+                <td><strong>88</strong> (קל וברור למפתחים)</td>
+                <td><strong>95</strong> (מעולה, מודולים קטנים וממוקדים)</td>
+                <td><strong>98</strong> (מושלם, רכיבי מיקרו עצמאיים)</td>
+            </tr>
+            <tr>
+                <td><strong>ביטחון בנכונות החישוב (Unit Testing)</strong></td>
+                <td><strong>90</strong> (גבוה, מנוע החישוב מבודד מה-UI)</td>
+                <td><strong>78</strong> (בינוני, תלות במעברי המצב)</td>
+                <td><strong>93</strong> (גבוה מאוד, קל לבדוק כל שלב)</td>
+                <td><strong>98</strong> (מושלם, בדיקת הפיזיקה ללא הפרעות)</td>
+                <td><strong>96</strong> (גבוה מאוד, רכיבים מבודדים)</td>
+            </tr>
+            <tr>
+                <td><strong>גמישות ומצבי קצה (Fallback Modes)</strong></td>
+                <td><strong>85</strong> (טוב, מבוסס תנאים פנימיים)</td>
+                <td><strong>80</strong> (בינוני, תלוי בדילוג שלבים)</td>
+                <td><strong>94</strong> (מצוין, המרה לפרופיל סינתטי)</td>
+                <td><strong>97</strong> (מושלם, טיפול שקוף ברמת הדיספאץ')</td>
+                <td><strong>92</strong> (מצוין, טיפול מודולרי)</td>
+            </tr>
+            <tr>
+                <td><strong>חווית משתמש ומהירות תגובה (UI Lag)</strong></td>
+                <td><strong>96</strong> (מהיר מאוד, ללא השהיות מעבר)</td>
+                <td><strong>85</strong> (בינוני, תלוי במהירות ה-localStorage)</td>
+                <td><strong>92</strong> (חלק וזורם)</td>
+                <td><strong>95</strong> (רינדור מהיר וחלק ללא תקיעות)</td>
+                <td><strong>80</strong> (תלוי בטעינת קבצים ואיחודם)</td>
+            </tr>
+            <tr style="font-weight: bold; background-color: #f1f2f6;">
+                <td>ציון משוקלל סופי</td>
+                <td>85.1</td>
+                <td>84.3</td>
+                <td>91.5</td>
+                <td style="color: #2980b9; font-size: 1.1em;">95.5 🏆</td>
+                <td>89.8</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. הגדרת חוזה ממשק הנתונים המומלץ (Data Contract) עבור חלופה 4</h2>
+    <p>
+        על מנת לאפשר עבודה תקינה של חמשת הרכיבים ללא תלות הדדית, להלן הגדרת מבנה הנתונים (JSON Schema) המועבר בין המודולים. החוזה מוגדר בצורה קשיחה ומונע קריסות במצבי קצה:
+    </p>
+    
+    <pre>
+{
+  "client": {
+    "name": "ישראל ישראלי",
+    "address": "רחוב הרצל 10, תל אביב",
+    "contractId": "12345678"
+  },
+  "consumption": {
+    "hasCSV": true,
+    "source": "csv", // "csv" | "json_appliance" | "manual_matrix" | "annual_total"
+    "annualKwhTotal": 12500,
+    "peakStats": {
+      "combined": { "medianKwh": 14.50, "trimmedKwh": 14.20 },
+      "winter": { "medianKwh": 12.10, "trimmedKwh": 11.90 },
+      "summer": { "medianKwh": 16.80, "trimmedKwh": 16.50 },
+      "transition": { "medianKwh": 8.50, "trimmedKwh": 8.20 }
+    },
+    "hourlySeries": [
+      // מערך נקי המכיל 8,760 שעות לשנה, מיושר לפי שעון ישראל ותעו"ז
+      { "dt": "2026-01-01T17:00:00Z", "kwh": 3.4, "isPeak": true, "season": "winter" }
+    ]
+  },
+  "engineering": {
+    "targetKwp": 15.0,
+    "batteryUsableKwh": 22.5,
+    "inverterKw": 10.0,
+    "shabbatBackupNeeded": true,
+    "estShabbatLoad": 1.2
+  },
+  "financials": {
+    "zeroExport": false,
+    "isUrban": true,
+    "loanPercent": 0.8,
+    "loanInterest": 0.07,
+    "loanYears": 10
+  }
+}
+    </pre>
+
+    <h2>5. תוכנית עבודה הנדסית ליישום ושלבי פיתוח</h2>
+    <p>
+        כדי להבטיח מעבר בטוח ונטול באגים מהקוד הנוכחי לקוד המודולרי המאוחזר, יש לעבוד לפי ארבעת השלבים הבאים בסדר כרונולוגי קשיח:
+    </p>
+    <ul>
+        <li>
+            <strong>שלב א' — בידוד מנוע ה-Zmanim/NOAA (קובץ 2 עצמאי):</strong> 
+            חלץ את פונקציות הלוח העברי והשקיעה של NOAA לקובץ נפרד בשם <code class="code-inline">solar-calendar-engine.js</code>. כתוב עבורו בדיקת יחידה (Unit Test) המזינה תאריך ושעה ומאמתת את נכונות סיווג שעות הפסגה (isPeak) מול הלוח הרשמי של רשות החשמל.
+        </li>
+        <li>
+            <strong>שלב ב' — בניית סימולטור הדיספאץ' השעתי (קובץ 3 עצמאי):</strong>
+            חלץ את מנוע הדיספאץ' וה-SoC לקובץ בשם <code class="code-inline">solar-dispatch-simulator.js</code>. ודא כי הוא מסוגל לקבל מערך צריכה ולרוץ בצורה נקייה ללא פניה לשום רכיב ויזואלי או סגנונות עיצוב.
+        </li>
+        <li>
+            <strong>שלב ג' — מיזוג המודל הפיננסי (קובץ 4 עצמאי):</strong>
+            אחד את נוסחאות מדרגות התעריף (Staircase Fit Tariff) ולוח סילוקין ההלוואה לקובץ בשם <code class="code-inline">solar-financial-model.js</code>. המודל יקבל את שווי הארביטראז' המחושב מהסימולטור ואת הפרמטרים הכלכליים ויחשב את ה-IRR וה-NPV ל-25 שנה.
+        </li>
+        <li>
+            <strong>שלב ד' — הרכבת הממשק ומחולל הדוחות (קובץ 1 ו-5):</strong>
+            השתמש בשלד ה-SPA מקובץ 4 כבסיס הראשי. קשר אליו את שלושת המנועים ההנדסיים שנוצרו בשלבים א'-ג'. הטמע את ממשק ההדפסה ואת מנוע ה-ExcelJS לקובץ הדוחות בשלב 3. בצע הרצה ובדיקה מלאה של תזרים הנתונים מקצה לקצה.
+        </li>
+    </ul>
+</div>
+
+<script>
+    function scrollToProp(id) {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+</script>
+</body>
+</html>

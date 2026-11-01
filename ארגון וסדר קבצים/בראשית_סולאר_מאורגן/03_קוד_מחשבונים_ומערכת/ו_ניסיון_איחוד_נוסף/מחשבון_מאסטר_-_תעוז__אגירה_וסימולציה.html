@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון מאסטר - תעו"ז, אגירה וסימולציה</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #3b82f6;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #334155;
+            --border-light: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; background: var(--bg-card); padding: 30px; border-radius: 12px; box-shadow: var(--shadow); }
+        h1 { color: var(--primary); text-align: center; border-bottom: 3px solid var(--secondary); padding-bottom: 10px; margin-bottom: 30px; display: inline-block; }
+        .header-wrap { text-align: center; position: relative; }
+        
+        /* SPA Navigation */
+        .step-indicator { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .step-pill { padding: 10px 20px; border-radius: 30px; background: #e2e8f0; color: #64748b; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
+        .step-pill.active { background: var(--secondary); color: white; box-shadow: 0 4px 6px rgba(59,130,246,0.3); }
+        .step-pill.done { background: #d1fae5; color: #047857; }
+        .spa-section { display: none; animation: fadeIn 0.4s; }
+        .spa-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Grid & Cards */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { border: 1px solid var(--border-light); border-radius: 8px; padding: 20px; background: #f8fafc; }
+        .card h3 { margin-top: 0; color: var(--secondary); border-bottom: 2px solid var(--border-light); padding-bottom: 5px; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9em; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: 6px; font-family: inherit; font-size: 1em; }
+        .form-group input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+        
+        /* Buttons */
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--secondary); color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { background: #d97706; }
+        .btn-success { background: var(--success); color: white; }
+        
+        /* Tables */
+        .table-responsive { overflow-x: auto; max-height: 400px; border-radius: 8px; border: 1px solid var(--border-light); margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border-light); }
+        th { background: #e2e8f0; color: var(--primary); position: sticky; top: 0; }
+        .tr-peak { background: #fee2e2; color: #991b1b; }
+        .tr-offpeak { background: #f0fdf4; color: #065f46; }
+
+        /* Meta Bar */
+        .meta-bar { display: flex; flex-wrap: wrap; gap: 15px; background: white; border-right: 4px solid var(--secondary); padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin: 20px 0; }
+        .meta-item { display: flex; flex-direction: column; }
+        .meta-lbl { font-size: 0.8em; color: #64748b; }
+        .meta-val { font-size: 1.1em; font-weight: bold; color: var(--primary); }
+
+        /* Battery Cubes */
+        .cubes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
+        .cube { border: 2px solid var(--secondary); border-radius: 8px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .cube:hover, .cube.selected { background: #eff6ff; transform: translateY(-2px); }
+        .c-title { font-size: 1.2em; font-weight: 900; color: var(--primary); }
+        .c-sub { font-size: 0.8em; color: #64748b; }
+        .c-val { font-size: 1.1em; font-weight: 700; color: var(--success); margin-top: 5px; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-wrap">
+        <h1>מערכת מאסטר: תעו"ז, אגירה ופיננסים</h1>
+    </div>
+
+    <!-- SPA Navigation -->
+    <div class="step-indicator">
+        <button id="tab1" class="step-pill active" onclick="App.UI.navigate(1)">1. מנוע צריכה וניקוי נתונים</button>
+        <button id="tab2" class="step-pill" onclick="App.UI.navigate(2)">2. דיספאץ' ואגירה</button>
+        <button id="tab3" class="step-pill" onclick="App.UI.navigate(3)">3. מודל פיננסי ודו"חות</button>
+    </div>
+
+    <!-- ========================================== STEP 1 ========================================== -->
+    <div id="step1" class="spa-section active">
+        <div class="grid-2">
+            <div class="card">
+                <h3>מקור נתוני צריכה</h3>
+                <div class="form-group">
+                    <label>סוג נכס (לסינתוז נתונים)</label>
+                    <select id="propType">
+                        <option value="home">בית פרטי</option>
+                        <option value="business">משרד/עסק (פעילות יום)</option>
+                        <option value="school">מוסד חינוכי</option>
+                        <option value="yeshiva">ישיבה / פנימייה</option>
+                        <option value="shul">בית כנסת</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>קובץ מונה (CSV/Excel)</label>
+                    <input type="file" id="csvFile" accept=".csv,.xlsx">
+                </div>
+                <button class="btn btn-primary" onclick="App.Data.processFile()">נתח ושחזר נתונים ⚡</button>
+                <div class="form-group" style="margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+                    <label>סינתוז ללא קובץ (Mock Generation):</label>
+                    <input type="number" id="annualKwh" placeholder="צריכה שנתית (למשל 12000)">
+                    <button class="btn btn-accent" style="margin-top:10px;" onclick="App.Data.synthesizeData()">סנתז שנה שלמה ב-IPF</button>
+                </div>
+            </div>
+
+            <div class="card" id="metaCard" style="opacity: 0.5;">
+                <h3>זיהוי אלגוריתמי (Metadata)</h3>
+                <div class="meta-bar" id="metaBar" style="background:transparent; box-shadow:none; padding:0; border:none;">
+                    <div class="meta-item"><span class="meta-lbl">שם לקוח</span><span class="meta-val" id="m_name">-</span></div>
+                    <div class="meta-item"><span class="meta-lbl">סוג מונה</span><span class="meta-val" id="m_type">-</span></div>
+                    <div class="meta-item"><span class="meta-lbl">רשומות תקינות</span><span class="meta-val" id="m_rows">-</span></div>
+                    <div class="meta-item"><span class="meta-lbl">סך צריכה (קוט"ש)</span><span class="meta-val" id="m_kwh">-</span></div>
+                </div>
+                <div id="cleanAlert" style="margin-top:10px; color:#d97706; font-size:0.85em; font-weight:bold;"></div>
+            </div>
+        </div>
+
+        <div id="reportsContainer" style="display:none; margin-top:20px;">
+            <h3>תצוגה מקדימה - שעות פסגה בלבד (לאחר ניקוי ועיבוד)</h3>
+            <div class="table-responsive">
+                <table id="peakTable">
+                    <thead><tr><th>תאריך לועזי</th><th>תאריך עברי (מנוע)</th><th>עונה</th><th>צריכת פסגה נטו (kWh)</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== STEP 2 ========================================== -->
+    <div id="step2" class="spa-section">
+        <div class="grid-2">
+            <div class="card">
+                <h3>פרמטרי מערכת (הנדסי)</h3>
+                <div class="form-group"><label>שטח גג (מ"ר)</label><input type="number" id="roofArea" value="120" onchange="App.UI.syncPvp()"></div>
+                <div class="form-group"><label>הספק DC מתוכנן (kWp)</label><input type="number" id="pvDc" value="21.8"></div>
+                <div class="form-group"><label>הספק קיים - P0 (kW)</label><input type="number" id="p0" value="0"></div>
+            </div>
+            <div class="card">
+                <h3>סימולציית דיספאץ' סוללה (State Machine)</h3>
+                <p style="font-size:0.85em; color:#64748b;">המערכת תריץ סימולציה שעתית עוקבת (Charge/Discharge) לאורך כל הרשומות שנקלטו בשלב 1, כולל הפסדי המרה של 13% Round-Trip.</p>
+                <div class="form-group"><label>קצב פריקה מירבי (C-Rate)</label><input type="number" id="cRate" value="0.5" step="0.1" max="1"></div>
+                <button class="btn btn-primary" onclick="App.Simulation.runBatteryOptimization()">הרץ אופטימיזציית גדלים</button>
+            </div>
+        </div>
+
+        <div id="simResults" style="display:none; margin-top:30px;">
+            <h3>חלופות אגירה (הערך המשתלם ביותר הודגש)</h3>
+            <div class="cubes-grid" id="cubesGrid"></div>
+            
+            <div class="card" style="margin-top:20px;">
+                <canvas id="marginalChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== STEP 3 ========================================== -->
+    <div id="step3" class="spa-section">
+        <div class="grid-3">
+            <div class="card">
+                <h3>רגולציה וחוקי משחק</h3>
+                <div class="form-group"><label>Zero Export?</label><select id="isZero"><option value="false">לא</option><option value="true">כן (ללא הזרמה)</option></select></div>
+                <div class="form-group"><label>פרמיה אורבנית?</label><select id="isUrban"><option value="false">לא</option><option value="true">כן (+6 אג')</option></select></div>
+                <div class="form-group"><label>סוג מס</label><select id="taxType"><option value="private">פרטי (פטור עד תקרה)</option><option value="business">עסקי (פחת מואץ)</option></select></div>
+            </div>
+            <div class="card">
+                <h3>עלויות נורמטיביות (Capex/Opex)</h3>
+                <div class="form-group"><label>עלות פאנלים (₪/kWp)</label><input type="number" id="capexPv" value="2400"></div>
+                <div class="form-group"><label>עלות אגירה (₪/kWh)</label><input type="number" id="capexBat" value="510"></div>
+                <div class="form-group"><label>עלות ממיר+עבודה (₪)</label><input type="number" id="capexInv" value="52330"></div>
+            </div>
+            <div class="card">
+                <h3>מימון</h3>
+                <div class="form-group"><label>שיעור מימון (%)</label><input type="number" id="loanPct" value="80"></div>
+                <div class="form-group"><label>ריבית שנתית (%)</label><input type="number" id="loanRate" value="5.5" step="0.1"></div>
+                <div class="form-group"><label>תקופה (שנים)</label><input type="number" id="loanYrs" value="10"></div>
+            </div>
+        </div>
+
+        <button class="btn btn-accent" style="width:100%; font-size:1.2em; padding:15px;" onclick="App.Finance.calculateFinal()">חשב IRR ו-NPV ל-25 שנה 🧮</button>
+
+        <div id="financeResults" style="display:none; margin-top:30px;">
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>מדד</th><th>PV בלבד</th><th>PV + סוללה מומלצת</th></tr></thead>
+                    <tbody id="finTbody"></tbody>
+                </table>
+            </div>
+            <div style="text-align:left; margin-top:20px;">
+                <button class="btn btn-success" onclick="App.Excel.exportMasterSheet()">📥 הורד דו"ח Master Excel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/** 
+ * =========================================================================
+ * CORE SYSTEM ARCHITECTURE (Namespaces)
+ * המערכת מחולקת ליחידות לוגיות אטומות וסגורות.
+ * =========================================================================
+ */
+const App = {
+    // State Container
+    State: {
+        rawSeries: [],      // הנתונים שעברו ניקוי
+        selectedBatSize: 0, // גודל הסוללה שנבחר בשלב 2
+        arbValue: 0         // ערך הארביטראז' המחושב
+    },
+
+    // 1. Configuration & Constants
+    Config: {
+        tariffs: { t15: 0.48, t100: 0.3936, t300: 0.3437 },
+        tou: { s_peak: 1.4597, s_low: 0.4358, w_peak: 0.9774, w_low: 0.4022, t_peak: 0.4293, t_low: 0.3945 },
+        battery: { dod: 0.95, eff_in: 0.93, eff_out: 0.94 },
+        yield: 1650, degrad: 0.0035, discRate: 0.05
+    },
+
+    // 2. AstroEngine: Hebrew Calendar & Sunsets (Zero External Dependencies)
+    Astro: {
+        _EPOCH: 347998,
+        isLeap(y) { return (7*y+1)%19 < 7; },
+        elapsed(y) { const m=Math.floor((235*y-234)/19); const p=12084+13753*m; let d=29*m+Math.floor(p/25920); if((3*(d+1))%7<3)d++; return d; },
+        delay(y) { const n0=this.elapsed(y-1),n1=this.elapsed(y),n2=this.elapsed(y+1); return (n2-n1===356)?2:(n1-n0===382)?1:0; },
+        newYear(y) { return this._EPOCH + this.elapsed(y) + this.delay(y); },
+        dim(m,y) { const l=this.isLeap(y); const v={1:30,2:(this.newYear(y+1)-this.newYear(y))%10===5?30:29,3:(this.newYear(y+1)-this.newYear(y))%10===3?29:30,4:29,5:30,6:l?30:29,7:l?29:30,8:l?30:29,9:l?29:30,10:l?30:29,11:l?29:30,12:l?30:29,13:29}; return v[m]||29; },
+        g2j(Y,M,D) { const a=Math.floor((14-M)/12),y=Y+4800-a,m=M+12*a-3; return D+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045; },
+        j2h(j) { let y=Math.floor((j-this._EPOCH)*98496.0/35975351.0)+1; while(this.newYear(y+1)<=j)y++; while(this.newYear(y)>j)y--; let doy=j-this.newYear(y)+1,m=1,acc=0; while(m<=(this.isLeap(y)?13:12)){let d=this.dim(m,y); if(acc+d>=doy)break; acc+=d;m++;} return {y,m,d:doy-acc}; },
+        getHoly(dateObj) {
+            // Simplified boolean trigger for Shabbat/YomTov
+            const dow = dateObj.getDay();
+            if(dow === 6) return true; // Shabbat
+            const j = this.g2j(dateObj.getFullYear(), dateObj.getMonth()+1, dateObj.getDate());
+            const h = this.j2h(j);
+            // RH, YK, Sukkot, Pesach, Shavuot (simplified)
+            if(h.m===1 && [1,2,10,15,22].includes(h.d)) return true;
+            if(h.m===(this.isLeap(h.y)?8:7) && [15,21].includes(h.d)) return true;
+            if(h.m===(this.isLeap(h.y)?10:9) && h.d===6) return true;
+            return false;
+        }
+    },
+
+    // 3. Data Cleanser & Parser (Multimeter Resolution)
+    Data: {
+        processFile() {
+            const f = document.getElementById('csvFile').files[0];
+            if(!f) return alert("בחר קובץ");
+            Papa.parse(f, {
+                complete: (res) => {
+                    const rows = res.data;
+                    let meta = {name:'-', type:[]};
+                    // Extract Meta
+                    for(let i=0; i<Math.min(20, rows.length); i++){
+                        if(rows[i][0] && rows[i][0].includes("שם לקוח") && rows[i+2]) meta.name = rows[i+2][0];
+                        if(rows[i][0] && rows[i][0].includes("סוג מונה") && rows[i+2]) meta.type.push(rows[i+2][0]);
+                    }
+                    
+                    let start = -1;
+                    for(let i=0; i<rows.length; i++) if(rows[i][0] && rows[i][0].includes("קוד ומספר מונה")) { start=i+1; break; }
+                    if(start===-1) return alert("לא נמצאה כותרת תקינה");
+
+                    // Build Raw Map
+                    const map = {};
+                    for(let i=start; i<rows.length; i++){
+                        let r = rows[i]; if(r.length<5 || !r[2] || !r[3]) continue;
+                        let dtKey = r[2]+"_"+r[3];
+                        if(!map[dtKey]) {
+                            let pts = r[2].split('/'), tts = r[3].split(':');
+                            if(pts.length<3||tts.length<2) continue;
+                            let dt = new Date(parseInt(pts[2])<2000?parseInt(pts[2])+2000:parseInt(pts[2]), parseInt(pts[1])-1, parseInt(pts[0]), parseInt(tts[0]), parseInt(tts[1]));
+                            map[dtKey] = { date: dt, dateStr: r[2], isHoly: App.Astro.getHoly(dt), draws:[], feeds:[], gens:[] };
+                        }
+                        let val = parseFloat(r[4].replace(/[",]/g,''))||0;
+                        let type = r[1]||"";
+                        if(type.includes("דו-כיווני")||type.includes("דו כיווני")) { map[dtKey].draws.push(val); map[dtKey].feeds.push(parseFloat(r[5]||0)); }
+                        else if(type.includes("ייצור")) map[dtKey].gens.push(val);
+                        else map[dtKey].draws.push(val); // Standard
+                    }
+
+                    // Cleanse & Deduplicate (The core logic)
+                    let series = [];
+                    let duplicates = 0;
+                    let totalKwh = 0;
+                    
+                    for(let k in map) {
+                        let obj = map[k];
+                        // Average if duplicates exist (e.g., 2 production meters generating same pulse)
+                        let avgDraw = obj.draws.length ? obj.draws.reduce((a,b)=>a+b)/obj.draws.length : 0;
+                        let avgGen  = obj.gens.length  ? obj.gens.reduce((a,b)=>a+b)/obj.gens.length : 0;
+                        let avgFeed = obj.feeds.length ? obj.feeds.reduce((a,b)=>a+b)/obj.feeds.length : 0;
+                        
+                        if(obj.draws.length>1 || obj.gens.length>1) duplicates++;
+
+                        // The ultimate mathematical truth:
+                        let actualKwh = Math.max(0, avgDraw + Math.max(0, avgGen - avgFeed));
+                        totalKwh += actualKwh;
+
+                        // TOU Classification
+                        let mo = obj.date.getMonth()+1, h = obj.date.getHours();
+                        let season = ([12,1,2].includes(mo)) ? 'W' : ([6,7,8,9].includes(mo)) ? 'S' : 'T';
+                        let isPeak = false;
+                        if(season === 'W') isPeak = (h>=17 && h<22);
+                        else if(season === 'S' && !obj.isHoly && obj.date.getDay()!==5) isPeak = (h>=17 && h<23);
+                        // Transition has no peak conceptually for PV/Storage diff, but IEC bills it. We track strictly.
+
+                        series.push({ dt: obj.date, ds: obj.dateStr, kwh: actualKwh, season, isPeak, isHoly: obj.isHoly });
+                    }
+                    
+                    series.sort((a,b)=>a.dt-b.dt);
+                    App.State.rawSeries = series;
+
+                    // Update UI
+                    document.getElementById('m_name').innerText = meta.name;
+                    document.getElementById('m_type').innerText = meta.type.join(', ')||"רגיל";
+                    document.getElementById('m_rows').innerText = series.length.toLocaleString();
+                    document.getElementById('m_kwh').innerText = Math.round(totalKwh).toLocaleString();
+                    document.getElementById('metaCard').style.opacity = "1";
+                    
+                    if(duplicates>0) document.getElementById('cleanAlert').innerText = `⚠️ נוקו ${duplicates} קריאות כפולות במונה (Average Applied).`;
+                    else document.getElementById('cleanAlert').innerText = "✅ נתונים נקיים ללא כפילויות.";
+
+                    this.renderPeakTable(series);
+                }
+            });
+        },
+        
+        synthesizeData() {
+            // Iterative Proportional Fitting (IPF) Mock Generator
+            let annual = parseFloat(document.getElementById('annualKwh').value);
+            if(!annual || annual<1000) return alert("הזן ערך הגיוני");
+            
+            // Simplified Profile: 35% Winter, 45% Summer, 20% Trans.
+            let series = [];
+            let start = new Date(2026,0,1);
+            for(let i=0; i<8760*2; i++){
+                let dt = new Date(start.getTime() + i*30*60000);
+                let mo = dt.getMonth()+1, h = dt.getHours();
+                let season = ([12,1,2].includes(mo)) ? 'W' : ([6,7,8,9].includes(mo)) ? 'S' : 'T';
+                let isHoly = App.Astro.getHoly(dt);
+                
+                let isPeak = false;
+                if(season==='W') isPeak = (h>=17 && h<22);
+                else if(season==='S' && !isHoly && dt.getDay()!==5) isPeak = (h>=17 && h<23);
+
+                // Base weight
+                let weight = isPeak ? 2.5 : (h>8 && h<17) ? 1.5 : 0.5;
+                if(season==='S') weight *= 1.2;
+                
+                series.push({ dt, ds: dt.toLocaleDateString('en-GB'), weight, season, isPeak, isHoly });
+            }
+
+            let totalW = series.reduce((a,b)=>a+b.weight, 0);
+            series.forEach(s => {
+                s.kwh = (s.weight / totalW) * annual;
+            });
+
+            App.State.rawSeries = series;
+            document.getElementById('m_name').innerText = "נתונים מסונתזים (Mock)";
+            document.getElementById('m_rows').innerText = series.length.toLocaleString();
+            document.getElementById('m_kwh').innerText = Math.round(annual).toLocaleString();
+            document.getElementById('metaCard').style.opacity = "1";
+            document.getElementById('cleanAlert').innerText = "✅ נתונים סונתזו בהצלחה.";
+            
+            this.renderPeakTable(series);
+        },
+
+        renderPeakTable(series) {
+            let html = "";
+            let count=0;
+            for(let i=series.length-1; i>=0; i--){
+                if(series[i].isPeak && count<50) { // Show last 50 peaks for speed
+                    let sgn = series[i].season==='W'?'חורף':series[i].season==='S'?'קיץ':'מעבר';
+                    html+=`<tr class="tr-peak"><td>${series[i].ds} ${series[i].dt.getHours()}:00</td><td>${series[i].isHoly?'כן':'לא'}</td><td>${sgn}</td><td>${series[i].kwh.toFixed(2)}</td></tr>`;
+                    count++;
+                }
+            }
+            document.querySelector('#peakTable tbody').innerHTML = html;
+            document.getElementById('reportsContainer').style.display = "block";
+        }
+    },
+
+    // 4. Energy Simulator: State Machine Dispatch
+    Simulation: {
+        runBatteryOptimization() {
+            if(App.State.rawSeries.length===0) return alert("אין נתונים. בצע שלב 1.");
+            const pAc = (parseFloat(document.getElementById('pvDc').value)||0) / 1.3;
+            const cRate = parseFloat(document.getElementById('cRate').value)||0.5;
+            
+            // Find Peak Needs
+            let peaks = App.State.rawSeries.filter(s=>s.isPeak).map(s=>s.kwh);
+            if(!peaks.length) return alert("אין שעות פסגה בנתונים");
+            
+            // Sort to find 85th percentile (Trimmed Top)
+            peaks.sort((a,b)=>a-b);
+            let targetMaxKwh = peaks[Math.floor(peaks.length * 0.85)] * 5; // 5 hours of peak avg
+            if(targetMaxKwh < 5) targetMaxKwh = 15; // fallback minimum
+            
+            let sizes = [];
+            for(let i=1; i<=6; i++) sizes.push(Math.round((targetMaxKwh/4)*i));
+
+            let html = "";
+            let bestArb = 0;
+            
+            sizes.forEach((size, idx) => {
+                let arb = this.dispatch(App.State.rawSeries, size, size*cRate);
+                if(arb > bestArb) { bestArb = arb; App.State.selectedBatSize = size; App.State.arbValue = arb; }
+                
+                html += `<div class="cube ${idx===0?'selected':''}" onclick="App.UI.selectCube(this, ${size}, ${arb})">
+                            <div class="c-title">${size} <span class="c-sub">kWh</span></div>
+                            <div class="c-val">₪${Math.round(arb).toLocaleString()}<span class="c-sub">חיסכון שנתי</span></div>
+                         </div>`;
+            });
+            
+            document.getElementById('cubesGrid').innerHTML = html;
+            
+            // Auto select best mathematically (usually the largest in this isolated demo, but restricted by ROI in real life. Here we pre-select the first for UI clarity).
+            document.querySelector('.cube').click(); 
+            
+            document.getElementById('simResults').style.display = 'block';
+            this.drawChart(sizes, sizes.map(s => this.dispatch(App.State.rawSeries, s, s*cRate)));
+        },
+
+        dispatch(series, batSize, maxRateKw) {
+            let soc = 0;
+            const dod = App.Config.battery.dod;
+            const usable = batSize * dod;
+            const c_eff = App.Config.battery.eff_in;
+            const d_eff = App.Config.battery.eff_out;
+            let arbValue = 0;
+
+            const VAT = 1.18;
+            const summerDiff = (App.Config.tou.s_peak - App.Config.tou.s_low) * VAT;
+            const winterDiff = (App.Config.tou.w_peak - App.Config.tou.w_low) * VAT;
+
+            // 0.5 hours per step assumption
+            const stepH = 0.5;
+
+            series.forEach(pt => {
+                if(!pt.isPeak) {
+                    // Charge
+                    let room = usable - soc;
+                    if(room > 0) {
+                        let c = Math.min(maxRateKw * stepH, room);
+                        soc += c * c_eff;
+                    }
+                } else {
+                    // Discharge to cover load
+                    let need = pt.kwh;
+                    if(need > 0 && soc > 0) {
+                        let d = Math.min(need, maxRateKw * stepH, soc * d_eff);
+                        soc -= (d / d_eff);
+                        
+                        // Financial realization
+                        if(pt.season === 'S') arbValue += d * summerDiff;
+                        if(pt.season === 'W') arbValue += d * winterDiff;
+                    }
+                }
+            });
+
+            // Adjust if data is not exactly 1 year (Scale to 8760/2 steps)
+            let yearRatio = (8760*2) / series.length;
+            return arbValue * yearRatio;
+        },
+
+        drawChart(sizes, values) {
+            const ctx = document.getElementById('marginalChart').getContext('2d');
+            if(window.mChart) window.mChart.destroy();
+            window.mChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sizes.map(s=>s+'kWh'),
+                    datasets: [{
+                        label: 'חיסכון ארביטראז\' צפוי (₪)',
+                        data: values,
+                        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.2)',
+                        fill: true, tension: 0.4
+                    }]
+                },
+                options: { responsive:true, maintainAspectRatio:false }
+            });
+        }
+    },
+
+    // 5. Financial Model
+    Finance: {
+        calculateFinal() {
+            if(!App.State.selectedBatSize) return alert("יש לבחור גודל סוללה בשלב 2");
+
+            const pvDc = parseFloat(document.getElementById('pvDc').value)||0;
+            const pvAc = pvDc / 1.3;
+            const batSize = App.State.selectedBatSize;
+            const isZero = document.getElementById('isZero').value === 'true';
+            const isUrban = document.getElementById('isUrban').value === 'true';
+            const taxType = document.getElementById('taxType').value;
+            
+            const capexPv = pvAc * (parseFloat(document.getElementById('capexPv').value)||2400);
+            const capexBat = (batSize * (parseFloat(document.getElementById('capexBat').value)||510)) + (parseFloat(document.getElementById('capexInv').value)||0);
+            
+            const loanPct = (parseFloat(document.getElementById('loanPct').value)||0)/100;
+            const loanRate = (parseFloat(document.getElementById('loanRate').value)||0)/100;
+            const loanYrs = parseInt(document.getElementById('loanYrs').value)||10;
+
+            // Tariff 
+            let tariffPv = 0;
+            if(!isZero) {
+                let p0 = parseFloat(document.getElementById('p0').value)||0;
+                let tot = p0+pvAc;
+                let t = App.Config.tariffs;
+                if(tot<=15) tariffPv = t.t15;
+                else if(tot<=100) tariffPv = ((15-p0)*t.t15 + (tot-Math.max(15,p0))*t.t100)/pvAc;
+                else tariffPv = t.t300;
+                if(isUrban) tariffPv += 0.06;
+            }
+
+            // Run flows
+            let baseYield = pvDc * App.Config.yield;
+            
+            const resPv = this._runCashflow(pvAc, capexPv, 0, baseYield, tariffPv, 0, loanPct, loanRate, loanYrs, taxType, isZero);
+            const resBat = this._runCashflow(pvAc, capexPv+capexBat, batSize, baseYield, tariffPv, App.State.arbValue, loanPct, loanRate, loanYrs, taxType, isZero);
+
+            // Print
+            document.getElementById('finTbody').innerHTML = `
+                <tr><td>השקעה כוללת (CAPEX)</td><td>₪${resPv.capex.toLocaleString()}</td><td>₪${resBat.capex.toLocaleString()}</td></tr>
+                <tr><td>הון עצמי נדרש</td><td>₪${resPv.eq.toLocaleString()}</td><td>₪${resBat.eq.toLocaleString()}</td></tr>
+                <tr><td>רווח נקי מצטבר 25 שנה</td><td>₪${resPv.prof.toLocaleString()}</td><td style="color:#10b981; font-weight:bold;">₪${resBat.prof.toLocaleString()}</td></tr>
+                <tr><td>NPV @ 5%</td><td>₪${resPv.npv.toLocaleString()}</td><td>₪${resBat.npv.toLocaleString()}</td></tr>
+                <tr><td>IRR ממונף</td><td>${resPv.irr}%</td><td style="color:#10b981; font-weight:bold;">${resBat.irr}%</td></tr>
+            `;
+            document.getElementById('financeResults').style.display = 'block';
+        },
+
+        _runCashflow(kw, capex, batSize, yieldY1, tariff, arbVal, lp, lr, ly, tax, isZero) {
+            let eq = capex * (1-lp);
+            let loanAmt = capex * lp;
+            let pmt = loanAmt>0 ? (loanAmt*lr)/(1-Math.pow(1+lr, -ly)) : 0;
+            
+            let opex = kw*(batSize>0 ? 250 : 80);
+            let cf = [-eq];
+            let prof = 0;
+            let bal = loanAmt;
+
+            for(let y=1; y<=25; y++) {
+                let e = yieldY1 * Math.pow(1-App.Config.degrad, y-1);
+                let rev = isZero ? (e * 0.4 * App.Config.tou.s_peak) : (e * tariff); // Simple self-consumption logic for zero export
+                rev += batSize>0 ? (arbVal * Math.pow(1-0.022, y-1)) : 0;
+                
+                let fin = y<=ly ? pmt : 0;
+                let int = y<=ly ? bal*lr : 0;
+                if(y<=ly) bal -= (pmt-int);
+
+                let repl = 0;
+                if(y===14) repl += capex * (batSize>0?0.1:0.15); // Inv repl
+                if(batSize>0 && y===15) repl += batSize*510 * 0.6; // Bat repl
+
+                let taxAmt = 0;
+                if(tax === 'business') {
+                    let dep = y<=4 ? capex*0.25 : 0;
+                    let ti = rev - opex - dep - int;
+                    if(ti>0) taxAmt = ti*0.23;
+                }
+
+                let net = rev - opex - repl - taxAmt - fin;
+                cf.push(net);
+                prof += net;
+            }
+
+            return {
+                capex: Math.round(capex),
+                eq: Math.round(eq),
+                prof: Math.round(prof),
+                irr: this._irr(cf).toFixed(1),
+                npv: Math.round(this._npv(App.Config.discRate, cf))
+            };
+        },
+
+        _npv(r, cf) { return cf.reduce((a,v,i)=> a + v/Math.pow(1+r, i), 0); },
+        _irr(cf) {
+            let x=0.1;
+            for(let i=0; i<100; i++) {
+                let n = this._npv(x, cf);
+                let d = cf.reduce((a,v,j)=> a - j*v/Math.pow(1+x, j+1), 0);
+                if(Math.abs(d)<1e-6) break;
+                let nx = x - n/d;
+                if(Math.abs(nx-x)<1e-5) return nx*100;
+                x = nx;
+            }
+            return 0;
+        }
+    },
+
+    // 6. Excel Reporter (Namespace)
+    Excel: {
+        async exportMasterSheet() {
+            if(!App.State.rawSeries.length) return alert("אין נתונים");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("Master Data", {views:[{rightToLeft:true}]});
+            
+            ws.addRow(["תאריך", "שבת/חג", "עונה", "פסגה?", "צריכה בפועל"]);
+            App.State.rawSeries.forEach(r => {
+                ws.addRow([r.ds + " " + r.dt.getHours()+":00", r.isHoly?"כן":"לא", r.season, r.isPeak?"כן":"לא", r.kwh]);
+            });
+
+            const buf = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buf]), "Master_Solar_Audit.xlsx");
+        }
+    },
+
+    // UI Orchestration
+    UI: {
+        navigate(step) {
+            document.querySelectorAll('.spa-section').forEach(s=>s.classList.remove('active'));
+            document.querySelectorAll('.step-pill').forEach(s=>{s.classList.remove('active'); s.classList.remove('done');});
+            
+            document.getElementById('step'+step).classList.add('active');
+            for(let i=1; i<=3; i++) {
+                let el = document.getElementById('tab'+i);
+                if(i===step) el.classList.add('active');
+                else if(i<step) el.classList.add('done');
+            }
+        },
+        syncPvp() {
+            let a = parseFloat(document.getElementById('roofArea').value)||0;
+            document.getElementById('pvDc').value = (a/5.5).toFixed(1);
+        },
+        selectCube(el, size, arb) {
+            document.querySelectorAll('.cube').forEach(c=>c.classList.remove('selected'));
+            el.classList.add('selected');
+            App.State.selectedBatSize = size;
+            App.State.arbValue = arb;
+        }
+    }
+};
+</script>
+</body>
+</html>

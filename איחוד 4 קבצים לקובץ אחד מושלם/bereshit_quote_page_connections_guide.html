@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מפת דפי המערכת והחיבורים ביניהם - בראשית סולאר</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --blue-dark: #005a70;
+    --blue: #00798c;
+    --brand-blue: #007CAA;
+    --blue-light: #f0f6fa;
+    --teal: #2a9d8f;
+    --border: #d0dde6;
+    --text: #2c2c2c;
+    --text-light: #5a6b73;
+    --bg: #fbfdfe;
+    --white: #ffffff;
+    --amber: #c98a2e;
+    --amber-light: #fdf3e3;
+    --red: #c0392b;
+    --red-light: #fdecea;
+    --purple: #7d5fa8;
+    --purple-light: #f2edf8;
+    --mono: 'JetBrains Mono', 'Consolas', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; }
+  code { font-family: var(--mono); direction: ltr; unicode-bidi: embed; background: var(--blue-light); border-radius: 3px; padding: 1px 5px; font-size: 0.92em; color: var(--blue-dark); }
+
+  header.hero {
+    background: linear-gradient(120deg, var(--blue-dark), var(--brand-blue));
+    color: white; padding: 40px 24px 34px; text-align: center;
+  }
+  header.hero h1 { font-size: 20pt; font-weight: 900; margin-bottom: 8px; }
+  header.hero p { font-size: 10.5pt; opacity: 0.92; max-width: 640px; margin: 0 auto; }
+
+  nav.toc {
+    max-width: 980px; margin: -20px auto 40px; background: white; border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,60,80,0.12); padding: 18px 26px; display: flex; flex-wrap: wrap; gap: 8px 18px;
+    position: relative; z-index: 5;
+  }
+  nav.toc a { font-size: 9.3pt; font-weight: 700; color: var(--blue-dark); text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+  nav.toc a:hover { border-bottom-color: var(--teal); }
+
+  main { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+  section { margin-bottom: 56px; scroll-margin-top: 20px; }
+  h2 {
+    font-size: 15.5pt; font-weight: 800; color: var(--blue-dark); margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .num { background: var(--teal); color: white; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5pt; flex-shrink: 0; }
+  h2 + .sub { color: var(--text-light); font-size: 9.8pt; margin: 4px 0 18px; max-width: 720px; }
+  h3 { font-size: 11.5pt; font-weight: 800; color: var(--blue); margin: 24px 0 10px; }
+  p { margin-bottom: 12px; max-width: 760px; }
+  ul, ol { padding-right: 22px; margin-bottom: 14px; max-width: 740px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--blue-dark); }
+
+  .diagram-wrap { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin: 16px 0 22px; overflow-x: auto; }
+  .diagram-wrap svg { display: block; margin: 0 auto; }
+  .diagram-caption { text-align: center; font-size: 8.5pt; color: var(--text-light); margin-top: 8px; }
+
+  .callout { background: var(--blue-light); border-right: 4px solid var(--teal); border-radius: 6px; padding: 14px 18px; margin: 14px 0; max-width: 740px; font-size: 9.8pt; }
+  .callout b { display: block; margin-bottom: 4px; color: var(--blue-dark); }
+  .callout.warn { background: var(--amber-light); border-right-color: var(--amber); }
+  .callout.warn b { color: #8a611e; }
+  .callout.danger { background: var(--red-light); border-right-color: var(--red); }
+  .callout.danger b { color: var(--red); }
+  .callout.protected { background: var(--purple-light); border-right-color: var(--purple); }
+  .callout.protected b { color: var(--purple); }
+
+  table.ref-table { border-collapse: collapse; width: 100%; max-width: 780px; margin: 14px 0 22px; font-size: 9.2pt; }
+  table.ref-table th { background: var(--blue); color: white; padding: 8px 10px; text-align: right; font-weight: 700; }
+  table.ref-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.ref-table tr:nth-child(even) td { background: var(--blue-light); }
+  table.ref-table tr.protected-row td { background: var(--purple-light); }
+
+  .badge { display: inline-block; font-size: 7.8pt; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .badge.solar { background: #fff3cd; color: #8a6300; }
+  .badge.storage { background: #d4edf5; color: #0d5a75; }
+  .badge.shared { background: #e6e6e6; color: #555; }
+  .badge.protected { background: var(--purple-light); color: var(--purple); }
+
+  footer.doc-footer { text-align: center; padding: 30px; font-size: 8.5pt; color: var(--text-light); }
+
+  @media print { nav.toc { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>🗺️ מפת דפי המערכת והחיבורים ביניהם</h1>
+  <p>מדריך חזותי ומפורט: כל דף במחולל הצעת המחיר, כל קובץ במערכת, ואיך הם מתחברים אחד לשני בפועל - כולל כמה חיבורים לא-מובנים-מאליהם שהתגלו תוך כדי בדיקה.</p>
+</header>
+
+<nav class="toc">
+  <a href="#s1">1. מבנה כללי - שלושת הקבצים</a>
+<a href="#s2">2. מפת הדפים - סדר בתצוגה מול לוח בקרה</a>
+<a href="#s3">3. טבלת דפים מפורטת</a>
+<a href="#s4">4. עקביות - מספור וסכומים</a>
+<a href="#s5">5. חיבור: בורר סוג המערכת</a>
+<a href="#s6">6. חיבור: הלוגו</a>
+<a href="#s7">7. חיבור: ניהול תמונות</a>
+<a href="#s8">8. חיבור: הזנת נתונים חיצונית</a>
+<a href="#s9">9. חיבור: חתימות</a>
+<a href="#s10">10. נקודות שכדאי לזכור</a>
+
+</nav>
+
+<main>
+  <section id="s1">
+  <h2><span class="num">1</span> מבנה כללי - שלושת הקבצים</h2>
+  <p class="sub">איך שלושת הקבצים הקיימים מתייחסים זה לזה, לפני שנכנסים לפרטים.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 860 400" xmlns="http://www.w3.org/2000/svg" width="100%">
+  <defs>
+    <marker id="arrow1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#00798c"/>
+    </marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#7d5fa8"/>
+    </marker>
+  </defs>
+
+  <!-- Quote generator: central box -->
+  <rect x="300" y="150" width="260" height="110" rx="10" fill="#e3f2f7" stroke="#005a70" stroke-width="2"/>
+  <text x="430" y="185" text-anchor="middle" font-size="14" font-weight="800" fill="#005a70">מחולל הצעת המחיר</text>
+  <text x="430" y="206" text-anchor="middle" font-size="10" fill="#2c2c2c">קובץ יחיד, עצמאי</text>
+  <text x="430" y="224" text-anchor="middle" font-size="10" fill="#2c2c2c">משמש כל יום למילוי הצעה</text>
+  <text x="430" y="242" text-anchor="middle" font-size="10" fill="#2c2c2c">מכיל בתוכו, כבויות כברירת מחדל,</text>
+  <text x="430" y="257" text-anchor="middle" font-size="10" fill="#2c2c2c">גם את כל יכולות הניהול</text>
+
+  <!-- Template editor: top right box -->
+  <rect x="590" y="20" width="240" height="95" rx="10" fill="#f2edf8" stroke="#7d5fa8" stroke-width="2"/>
+  <text x="710" y="50" text-anchor="middle" font-size="14" font-weight="800" fill="#7d5fa8">עורך התבנית</text>
+  <text x="710" y="71" text-anchor="middle" font-size="10" fill="#2c2c2c">קובץ "עטיפה" נפרד</text>
+  <text x="710" y="89" text-anchor="middle" font-size="10" fill="#2c2c2c">מכיל בתוכו עותק מלא</text>
+  <text x="710" y="104" text-anchor="middle" font-size="10" fill="#2c2c2c">של מחולל ההצעה</text>
+
+  <!-- Documentation: bottom box -->
+  <rect x="300" y="310" width="260" height="80" rx="10" fill="#fdf3e3" stroke="#c98a2e" stroke-width="2"/>
+  <text x="430" y="340" text-anchor="middle" font-size="14" font-weight="800" fill="#8a611e">קובץ תיעוד</text>
+  <text x="430" y="361" text-anchor="middle" font-size="10" fill="#2c2c2c">מדריך משתמש + תיעוד טכני</text>
+  <text x="430" y="378" text-anchor="middle" font-size="10" fill="#2c2c2c">מתאר את שני הקבצים האחרים</text>
+
+  <!-- Arrow: template editor -> quote generator -->
+  <path d="M650,115 C610,140 560,150 530,155" fill="none" stroke="#00798c" stroke-width="2" marker-end="url(#arrow1)"/>
+  <text x="500" y="120" text-anchor="middle" font-size="9.5" fill="#00798c" font-weight="700">טוען עותק מוטמע +</text>
+  <text x="500" y="134" text-anchor="middle" font-size="9.5" fill="#00798c" font-weight="700">מדליק מצב ניהול חבוי</text>
+
+  <!-- Dotted arrows: documentation -> both -->
+  <path d="M400,310 C390,270 400,220 400,262" fill="none" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#arrow1)"/>
+  <path d="M480,310 C560,270 640,180 700,117" fill="none" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#arrow1)"/>
+  <text x="230" y="295" text-anchor="middle" font-size="9.5" fill="#8a611e" font-weight="700">מתעד</text>
+  <text x="230" y="309" text-anchor="middle" font-size="9.5" fill="#8a611e" font-weight="700">(שניהם)</text>
+
+  <!-- output arrow from quote generator -->
+  <path d="M300,220 C220,220 150,220 90,220" fill="none" stroke="#2a9d8f" stroke-width="2" marker-end="url(#arrow1)"/>
+  <text x="185" y="205" text-anchor="middle" font-size="9.5" fill="#2a9d8f" font-weight="700">הדפסה / PDF</text>
+  <rect x="10" y="195" width="80" height="50" rx="8" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.5"/>
+  <text x="50" y="216" text-anchor="middle" font-size="9.5" fill="#1d6f64" font-weight="700">מסמך</text>
+  <text x="50" y="231" text-anchor="middle" font-size="9.5" fill="#1d6f64" font-weight="700">ללקוח</text>
+</svg>
+  </div>
+  <p class="diagram-caption">כיוון החץ = "טוען/מפעיל את"; קו מקווקו = "מתאר בתיעוד"</p>
+
+  <p><strong>מחולל הצעת המחיר</strong> הוא הליבה - קובץ שלם ועצמאי שאפשר לפתוח ולהשתמש בו לבד לגמרי, בלי שני הקבצים האחרים בכלל. כל יכולות הניהול (מחיקה, גרירה, שיוך סוג מערכת) <strong>כבר מוגדרות בתוכו</strong>, אבל כבויות ולא נראות בשימוש רגיל.</p>
+  <p><strong>עורך התבנית</strong> לא מכיל שום לוגיקה עצמאית משלו - הוא בעיקרו "מפתח הדלקה": טוען עותק שלם של מחולל ההצעה לתוך עצמו, ואז מדליק אצלו את יכולות הניהול שכבר קיימות שם. המשמעות המעשית: <strong>כל שינוי עתידי בדפי מחולל ההצעה עצמו מתעדכן אוטומטית גם בעורך</strong>, כי הוא לא מחזיק גרסה נפרדת של הדפים - הוא רק עוטף את אותו הקובץ.</p>
+  <p><strong>קובץ התיעוד</strong> עומד בפני עצמו ולא "מופעל" משום קובץ אחר - הוא רק מתאר במילים את שני הקבצים האחרים, בשני מצבי קריאה (מדריך למשתמש / תיעוד טכני).</p>
+
+  <div class="callout">
+    <b>נקודה חשובה להבנת שאר המדריך</b>
+    כשבהמשך המדריך כתוב "דף X מחובר ל-Y" - זה תמיד מתאר חיבור <strong>בתוך</strong> מחולל הצעת המחיר עצמו. עורך התבנית לא מוסיף חיבורים חדשים בין דפים - הוא רק חושף כלים נוספים לעריכה של אותם דפים ואותם חיבורים שכבר קיימים.
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span> מפת הדפים - סדר בתצוגה מול סדר בלוח הבקרה</h2>
+  <p class="sub">13 דפי ההדפסה הקבועים (מספור שנשאר מתקופה שבה זו הייתה גם עמדתם ה"רשמית", ועדיין רלוונטי לכמה שמות שדה ישנים - ראו הערה בסעיף 6), ואיך זה שונה מסדר הבלוקים בלוח הבקרה.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 1080 230" xmlns="http://www.w3.org/2000/svg" width="100%">
+<rect x="734" y="82" width="146" height="76" rx="10" fill="none" stroke="#7d5fa8" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="807" y="77" text-anchor="middle" font-size="8.3" fill="#7d5fa8" font-weight="700">🔒 אזור מוגן</text>
+<rect x="884" y="90" width="62" height="60" rx="8" fill="#fafafa" stroke="#999" stroke-width="1.6" stroke-dasharray="4,3"/>
+<rect x="20" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="51" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">שער</text>
+<text x="51" y="66" text-anchor="middle" font-size="8" fill="#999">1</text>
+<rect x="92" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="123" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">תמצית</text>
+<text x="123" y="66" text-anchor="middle" font-size="8" fill="#999">2</text>
+<rect x="164" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="195" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">אודות</text>
+<text x="195" y="66" text-anchor="middle" font-size="8" fill="#999">3</text>
+<rect x="236" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="267" y="118" text-anchor="middle" font-size="8.7" fill="#005a70" font-weight="700">למה</text>
+<text x="267" y="130" text-anchor="middle" font-size="8.7" fill="#005a70" font-weight="700">אנחנו</text>
+<text x="267" y="66" text-anchor="middle" font-size="8" fill="#999">4</text>
+<rect x="308" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="339" y="118" text-anchor="middle" font-size="8.7" fill="#005a70" font-weight="700">מפרט</text>
+<text x="339" y="130" text-anchor="middle" font-size="8.7" fill="#005a70" font-weight="700">טכני</text>
+<text x="339" y="66" text-anchor="middle" font-size="8" fill="#999">5</text>
+<rect x="380" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="411" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">רכיבים</text>
+<text x="411" y="66" text-anchor="middle" font-size="8" fill="#999">6</text>
+<rect x="452" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="483" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">החרגות</text>
+<text x="483" y="66" text-anchor="middle" font-size="8" fill="#999">7</text>
+<rect x="524" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="555" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">אחריות</text>
+<text x="555" y="66" text-anchor="middle" font-size="8" fill="#999">8</text>
+<rect x="596" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="627" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">תשלום</text>
+<text x="627" y="66" text-anchor="middle" font-size="8" fill="#999">9</text>
+<rect x="668" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="699" y="125" text-anchor="middle" font-size="9" fill="#005a70" font-weight="700">הערות</text>
+<text x="699" y="66" text-anchor="middle" font-size="8" fill="#999">10</text>
+<rect x="740" y="90" width="62" height="60" rx="8" fill="#f2edf8" stroke="#7d5fa8" stroke-width="1.6"/>
+<text x="771" y="118" text-anchor="middle" font-size="8.7" fill="#7d5fa8" font-weight="700">מודל</text>
+<text x="771" y="130" text-anchor="middle" font-size="8.7" fill="#7d5fa8" font-weight="700">פיננסי</text>
+<rect x="812" y="90" width="62" height="60" rx="8" fill="#f2edf8" stroke="#7d5fa8" stroke-width="1.6"/>
+<text x="843" y="118" text-anchor="middle" font-size="8.7" fill="#7d5fa8" font-weight="700">גרפים</text>
+<text x="843" y="130" text-anchor="middle" font-size="8.7" fill="#7d5fa8" font-weight="700">ותעריפים</text>
+<rect x="956" y="90" width="62" height="60" rx="8" fill="#e8f6f3" stroke="#1d6f64" stroke-width="1.6"/>
+<text x="987" y="118" text-anchor="middle" font-size="8.7" fill="#1d6f64" font-weight="700">יצירת</text>
+<text x="987" y="130" text-anchor="middle" font-size="8.7" fill="#1d6f64" font-weight="700">קשר</text>
+<text x="987" y="66" text-anchor="middle" font-size="8" fill="#999">14</text>
+<text x="915" y="118" text-anchor="middle" font-size="8.7" fill="#888" font-weight="700">דף</text>
+<text x="915" y="130" text-anchor="middle" font-size="8.7" fill="#888" font-weight="700">מותאם *</text>
+<line x1="82" y1="120.0" x2="92" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="154" y1="120.0" x2="164" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="226" y1="120.0" x2="236" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="298" y1="120.0" x2="308" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="370" y1="120.0" x2="380" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="442" y1="120.0" x2="452" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="514" y1="120.0" x2="524" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="586" y1="120.0" x2="596" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="658" y1="120.0" x2="668" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="730" y1="120.0" x2="740" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="802" y1="120.0" x2="812" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="874" y1="120.0" x2="884" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="946" y1="120.0" x2="956" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<text x="540" y="24" text-anchor="middle" font-size="12.5" font-weight="800" fill="#005a70">סדר הדפים בתצוגה המודפסת (PDF)</text>
+<text x="540" y="210" text-anchor="middle" font-size="8.5" fill="#888">* דף מותאם נכנס תמיד כאן - אחרי הגרפים, ממש לפני עמוד הסגירה</text>
+</svg>
+  </div>
+  <p class="diagram-caption">מסודר לפי הסדר שבו הדפים באמת יודפסו/ייוצאו כ-PDF</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 1080 230" xmlns="http://www.w3.org/2000/svg" width="100%">
+<rect x="806" y="82" width="74" height="76" rx="10" fill="none" stroke="#7d5fa8" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="843" y="77" text-anchor="middle" font-size="8.3" fill="#7d5fa8" font-weight="700">🔒 מוגן</text>
+<rect x="20" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="51" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">1. פרטי</text>
+<text x="51" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">לקוח ושער</text>
+<rect x="92" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="123" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">2.</text>
+<text x="123" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">תמצית</text>
+<rect x="164" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="195" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">3.</text>
+<text x="195" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">אודות</text>
+<rect x="236" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="267" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">4. למה</text>
+<text x="267" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">אנחנו</text>
+<rect x="308" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="339" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">5. מפרט</text>
+<text x="339" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">טכני</text>
+<rect x="380" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="411" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">6.</text>
+<text x="411" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">רכיבים</text>
+<rect x="452" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="483" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">7.</text>
+<text x="483" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">החרגות</text>
+<rect x="524" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="555" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">8.</text>
+<text x="555" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">אחריות</text>
+<rect x="596" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="627" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">9.</text>
+<text x="627" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">תשלום</text>
+<rect x="668" y="90" width="62" height="60" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="699" y="118" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">10.</text>
+<text x="699" y="130" text-anchor="middle" font-size="8.3" fill="#005a70" font-weight="700">הערות</text>
+<rect x="740" y="90" width="62" height="60" rx="8" fill="#fafafa" stroke="#999" stroke-width="1.6" stroke-dasharray="4,3"/>
+<text x="771" y="118" text-anchor="middle" font-size="8.3" fill="#999" font-weight="700">דף מותאם</text>
+<text x="771" y="130" text-anchor="middle" font-size="8.3" fill="#999" font-weight="700">*</text>
+<rect x="812" y="90" width="62" height="60" rx="8" fill="#f2edf8" stroke="#7d5fa8" stroke-width="1.6"/>
+<text x="843" y="118" text-anchor="middle" font-size="8.3" fill="#7d5fa8" font-weight="700">11. מודל</text>
+<text x="843" y="130" text-anchor="middle" font-size="8.3" fill="#7d5fa8" font-weight="700">פיננסי</text>
+<line x1="82" y1="120.0" x2="92" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="154" y1="120.0" x2="164" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="226" y1="120.0" x2="236" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="298" y1="120.0" x2="308" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="370" y1="120.0" x2="380" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="442" y1="120.0" x2="452" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="514" y1="120.0" x2="524" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="586" y1="120.0" x2="596" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="658" y1="120.0" x2="668" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="730" y1="120.0" x2="740" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<line x1="802" y1="120.0" x2="812" y2="120.0" stroke="#bbb" stroke-width="1.4"/>
+<circle cx="870" cy="146" r="11" fill="#7d5fa8" stroke="white" stroke-width="1.5"/>
+<text x="870" y="149.5" text-anchor="middle" font-size="9.5" fill="white" font-weight="800">×2</text>
+<text x="540" y="24" text-anchor="middle" font-size="12.5" font-weight="800" fill="#005a70">סדר הבלוקים בלוח הבקרה</text>
+<text x="540" y="210" text-anchor="middle" font-size="8.5" fill="#888">* דף מותאם נכנס תמיד כאן - ממש לפני בלוק "11. מודל פיננסי" (מיקום שונה מסדר ההדפסה!)</text>
+</svg>
+  </div>
+  <p class="diagram-caption">מסודר לפי הסדר שבו הבלוקים מופיעים בלוח הבקרה (העמודה שממלאים בה את הפרטים)</p>
+
+  <div class="callout warn">
+    <b>חיבור לא-מובן-מאליו: דף מותאם יושב במקום שונה בשתי הרשימות</b>
+    שימו לב שהכוכבית (*) של "דף מותאם" מופיעה <strong>במקום אחר</strong> בשני הדיאגרמות: בתצוגה המודפסת הוא נכנס <strong>אחרי</strong> עמודי המודל הפיננסי (ממש לפני עמוד הסגירה); בלוח הבקרה הוא נכנס <strong>לפני</strong> הבלוק של המודל הפיננסי. זו לא טעות - זה נובע מכך שבכל רשימה הוא מוכנס ביחס לעוגן אחר: בתצוגה המודפסת העוגן הוא "ממש לפני עמוד הסגירה" (העמוד הקבוע האחרון); בלוח הבקרה אין בלוק נפרד לעמוד הסגירה בכלל, אז העוגן הוא "ממש לפני הבלוק הפיננסי" (הבלוק האחרון שכן קיים שם). התוצאה: מי שמוסיף דף מותאם ומחפש אותו בלוח הבקרה ימצא אותו <strong>מעל</strong> סעיף 11, אבל כשיסתכל בפועל בתצוגה המודפסת/ב-PDF, הדף יופיע <strong>אחרי</strong> עמודי 11-12.
+  </div>
+
+  <div class="callout protected">
+    <b>האזור המוגן</b>
+    שני עמודי המודל הפיננסי מוחרגים באופן מפורש מכל יכולת עריכה מבנית: אי אפשר למחוק אותם, להזיז אותם, לגרור אותם, ואין לשורות שבתוכם בקרי מחיקה/שיוך-סוג-מערכת. זו לא מגבלה טכנית שנשכחה - זו החלטה מכוונת שנשמרה בעקביות בכל תוספת ניהול שנבנתה. בפועל, בכל מקום בקוד שבודק "האם הדף הזה פתוח לעריכה", יש בדיקה מפורשת ששוללת את שני העמודים האלה בשם.
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span> טבלת דפים מפורטת</h2>
+  <p class="sub">לכל דף: מה יש בו, מאיזה בלוק בלוח הבקרה הוא נשלט, ואילו חיבורים ספציפיים יש לו לדפים/רכיבים אחרים.</p>
+
+  <table class="ref-table">
+    <tr><th>#</th><th>דף</th><th>תוכן</th><th>נשלט ע"י</th><th>חיבורים ייחודיים</th></tr>
+    <tr>
+      <td>1</td><td><strong>שער</strong></td>
+      <td>לוגו, כותרת, שם לקוח, כתובת, תאריך, תמונת שער</td>
+      <td>בלוק 1</td>
+      <td>מקבל לוגו מהמקור המשותף לכל הדפים (סעיף 5). תמונת השער ופרטי הלקוח יכולים להגיע גם מהזנה חיצונית (סעיף 7). זהו היחיד (מלבד עמוד הסגירה) בלי "כותרת תחתונה" משותפת - יש לו עיצוב מיוחד משלו שממלא את כל גובה הדף.</td>
+    </tr>
+    <tr>
+      <td>2</td><td><strong>תמצית</strong></td>
+      <td>7 מדדי KPI (הספק, קיבולת אגירה, עלות, תפוקה, רווח שנתי, רווח מצטבר, תשואה) + תמונת גג</td>
+      <td>בלוק 2</td>
+      <td><strong>המדדים כאן הם ידניים בלבד</strong> - ראו הערה חשובה בסעיף 6, אין להם חיבור חי למחשבון הפיננסי בעמוד 11. שני מדדים ספציפיים (הספק, קיבולת אגירה) מתויגים לבורר סוג המערכת.</td>
+    </tr>
+    <tr>
+      <td>3</td><td><strong>אודות</strong></td>
+      <td>פתיח + 4 קופסאות המלצות לקוחות</td>
+      <td>בלוק 3</td>
+      <td>ללא חיבורים מיוחדים לדפים אחרים.</td>
+    </tr>
+    <tr>
+      <td>4</td><td><strong>למה אנחנו</strong></td>
+      <td>3 בלוקי יתרונות + תמונה תחתונה</td>
+      <td>בלוק 4</td>
+      <td>שדה התמונה כאן נקרא בקוד <code>page4-bottom</code> - שם שנשאר מהמיקום ההיסטורי (עמוד 4), ראו הערה בסעיף 6.</td>
+    </tr>
+    <tr>
+      <td>5</td><td><strong>מפרט טכני</strong></td>
+      <td>שני תתי-פרקים: תכנון-פיקוח-וליווי, ורישוי</td>
+      <td>בלוק 5</td>
+      <td>ללא חיבורים מיוחדים לדפים אחרים.</td>
+    </tr>
+    <tr>
+      <td>6</td><td><strong>רכיבים</strong></td>
+      <td>טבלת רכיבים (פאנלים/ממירים/מצברים) + רשימת ניטור ובקרה</td>
+      <td>בלוק 6</td>
+      <td>3 שורות ברכיבים מתויגות לבורר סוג המערכת (פאנלים=סולארי, מצברים=אגירה, קונסטרוקציה=סולארי).</td>
+    </tr>
+    <tr>
+      <td>7</td><td><strong>החרגות</strong></td>
+      <td>טבלה ממוספרת של 12 סעיפים שלא כלולים במחיר</td>
+      <td>בלוק 7</td>
+      <td>5 שורות מתויגות לבורר סוג המערכת. עמודת המספור מתעדכנת אוטומטית בכל שינוי (ראו סעיף 4).</td>
+    </tr>
+    <tr>
+      <td>8</td><td><strong>אחריות</strong></td>
+      <td>טבלת תקופות אחריות לפי רכיב</td>
+      <td>בלוק 8</td>
+      <td>2 שורות מתויגות לבורר סוג המערכת. שורת הכותרת "אחריות התקנה" ושורת התוכן שלה מקושרות יחד לאותה תיבת סימון (כדי שלא תישאר שורה יתומה).</td>
+    </tr>
+    <tr>
+      <td>9</td><td><strong>תשלום</strong></td>
+      <td>טבלת אבני דרך לתשלום, עם אחוז ואחוז מצטבר + תמונה תחתונה</td>
+      <td>בלוק 9</td>
+      <td>שורה אחת מתויגת לבורר סוג המערכת ("הגעת הפאנלים"). עמודת האחוז המצטבר מתעדכנת אוטומטית. שדה התמונה כאן נקרא בקוד <code>page9-bottom</code> - שם היסטורי (ראו סעיף 6).</td>
+    </tr>
+    <tr>
+      <td>10</td><td><strong>הערות וחתימות</strong></td>
+      <td>10 הערות משפטיות/כלליות + שני לוחות חתימה דיגיטליים</td>
+      <td>בלוק 10</td>
+      <td>שדות השם ות.ז./ח.פ בלוח הבקרה מוזרמים לכאן. שני לוחות הציור לחתימה חיים <strong>רק</strong> בדף הזה - אין להם ייצוג בשום דף אחר.</td>
+    </tr>
+    <tr class="protected-row">
+      <td>11</td><td><strong>מודל פיננסי 🔒</strong></td>
+      <td>טבלת פירוט עלויות + טבלת תזרים מזומנים מלאה ל-25 שנה, או תמונת סיכום (במצב "תמונות ידניות")</td>
+      <td>בלוק 11 (משותף לעמוד 12 גם)</td>
+      <td><span class="badge protected">אזור מוגן</span> אין מחיקה/הזזה/גרירה/שיוך-סוג. מקבל את כל פרמטרי החישוב מבלוק 11, ובאופן חי - נתונים גולמיים מהזנה חיצונית אם קיימת (סעיף 7).</td>
+    </tr>
+    <tr class="protected-row">
+      <td>12</td><td><strong>גרפים ותעריפים 🔒</strong></td>
+      <td>שני גרפים אינטראקטיביים (תזרים, עוגת עלויות) + טבלת תעריפי תעו"ז, או תמונת טבלת תזרים (במצב "תמונות ידניות")</td>
+      <td>בלוק 11 (יחד עם עמוד 11)</td>
+      <td><span class="badge protected">אזור מוגן</span> הגרפים תלויים בטעינת ספרייה חיצונית מהאינטרנט (סעיף 7) - שאר הדף ממשיך לעבוד גם בלעדיה.</td>
+    </tr>
+    <tr>
+      <td>—</td><td><strong>דף מותאם (אם נוסף)</strong></td>
+      <td>כותרת חופשית + אזור תוכן חופשי לעריכה</td>
+      <td>בלוק ייעודי, נוצר אוטומטית</td>
+      <td>נוסף רק דרך עורך התבנית. ראו סעיף 2 לגבי המיקום השונה בין הדיאגרמות. מקבל לוגו בכותרת התחתונה כמו כל דף רגיל, אבל <strong>לא</strong> מקבל אוטומטית חיבור להזנה החיצונית או לניהול תמונות ברירת המחדל - צריך להוסיף תמונה אליו ידנית (סעיף 5).</td>
+    </tr>
+    <tr>
+      <td>13</td><td><strong>יצירת קשר</strong></td>
+      <td>פרטי התקשרות קבועים של החברה</td>
+      <td>אין בלוק בקרה - קבוע תמיד</td>
+      <td>היחיד (מלבד השער) בלי תמיכה בהסתרה/הצגה. תמיד העמוד האחרון בפועל, ולא ניתן למחיקה או הזזה כי אין לו נקודת אחיזה בלוח הבקרה.</td>
+    </tr>
+  </table>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span> חיבורים של שמירת עקביות - מספור וסכומים</h2>
+  <p class="sub">שלושה מקומות שבהם הסתרת שורה בדף אחד חייבת "לדבר" עם שאר השורות באותו דף כדי שהתוצאה תיראה תקינה.</p>
+
+  <h3>עמוד ההחרגות - מספור אוטומטי מחדש</h3>
+  <p>עמודת ה-# בטבלת ההחרגות היא טקסט קבוע בכל שורה, לא מספור טבעי של רשימה. המשמעות: בלי חיבור מיוחד, הסתרת שורה אמצעית הייתה משאירה "חור" במספור.</p>
+  <table class="ref-table">
+    <tr><th>מצב</th><th>מה מוצג</th></tr>
+    <tr><td>לפני הסתרה</td><td>1, 2, 3, 4, 5...</td></tr>
+    <tr><td>אחרי הסתרת שורה 3 <em>(בלי החיבור)</em></td><td>1, 2, 4, 5... ← חור</td></tr>
+    <tr><td>אחרי הסתרת שורה 3 <em>(עם החיבור בפועל)</em></td><td>1, 2, 3, 4... ← תקין</td></tr>
+  </table>
+  <p>כל תיבת סימון בעמוד הזה, וגם כפתור ההוספה שלו, מחוברים לפונקציית רינמור שרצה מחדש על כל השורות הגלויות בכל שינוי.</p>
+
+  <h3>עמוד התשלומים - סכום מצטבר מתעדכן</h3>
+  <p>אותו עיקרון, אבל על עמודת "סך מצטבר" (%) ולא על מספור:</p>
+  <table class="ref-table">
+    <tr><th>שלב</th><th>אחוז</th><th>מצטבר <em>(בלי החיבור)</em></th><th>מצטבר <em>(עם החיבור)</em></th></tr>
+    <tr><td>1. חתימה</td><td>15%</td><td>15%</td><td>15%</td></tr>
+    <tr><td>2. הגעת קונסטרוקציה</td><td>35%</td><td>50%</td><td>50%</td></tr>
+    <tr><td><em>3. הגעת פאנלים (מוסתר)</em></td><td><em>35%</em></td><td><em>-</em></td><td><em>-</em></td></tr>
+    <tr><td>4. סיום התקנה</td><td>10%</td><td><strong>95% ← שגוי, מדלג על מה שהוסתר</strong></td><td><strong>60% ← תקין</strong></td></tr>
+    <tr><td>5. חיבור לרשת</td><td>5%</td><td>100%</td><td>65%</td></tr>
+  </table>
+  <p>הסתרת שלב 3 (למשל כי בחרו "אגירה בלבד" בבורר סוג המערכת, ראו סעיף 5) גורמת לחישוב מחדש של העמודה המצטברת מכאן ואילך, כדי שהיא תמיד תשקף רק את מה שבאמת מוצג.</p>
+
+  <h3>עמוד האחריות - שורה כפולה מקושרת</h3>
+  <p>שורת הכותרת "אחריות התקנה בראשית" ושורת התוכן שלה (עם תקופת האחריות בפועל) הן שתי שורות נפרדות בטבלה, אבל מקושרות <strong>לאותה תיבת סימון אחת</strong> - כדי שהסתרה של אחת לא תשאיר את השנייה לבד בלי הכותרת שמסבירה אותה.</p>
+
+  <div class="callout">
+    <b>למה זה חשוב לדעת</b>
+    אם בעתיד תיבנה יכולת נוספת שמסתירה/מוסיפה שורות (למשל דרך מקור חיצוני חדש), וזה נוגע לאחת משלוש הטבלאות האלה - צריך לזכור להפעיל את אותו חישוב מחדש, אחרת התוצאה המודפסת תיראה לא עקבית גם אם שום דבר "לא נשבר" טכנית.
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span> חיבור חוצה-דפים: בורר סוג המערכת</h2>
+  <p class="sub">דוגמה מובהקת לבקרה אחת שמשפיעה בו-זמנית על כמה דפים שונים.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 806 320" xmlns="http://www.w3.org/2000/svg" width="100%">
+<rect x="273" y="30" width="260" height="70" rx="10" fill="#fdf3e3" stroke="#c98a2e" stroke-width="2"/>
+<text x="403" y="60" text-anchor="middle" font-size="12" font-weight="800" fill="#8a611e">בורר סוג המערכת</text>
+<text x="403" y="80" text-anchor="middle" font-size="9" fill="#8a611e">בראש לוח הבקרה</text>
+<line x1="403" y1="100" x2="95" y2="210" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="30" y="210" width="130" height="64" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="95" y="238" text-anchor="middle" font-size="10.5" font-weight="800" fill="#005a70">דף תמצית</text>
+<text x="95" y="258" text-anchor="middle" font-size="9" fill="#005a70">2 שורות מתויגות</text>
+<line x1="403" y1="100" x2="249" y2="210" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="184" y="210" width="130" height="64" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="249" y="238" text-anchor="middle" font-size="10.5" font-weight="800" fill="#005a70">דף רכיבים</text>
+<text x="249" y="258" text-anchor="middle" font-size="9" fill="#005a70">3 שורות מתויגות</text>
+<line x1="403" y1="100" x2="403" y2="210" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="338" y="210" width="130" height="64" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="403" y="238" text-anchor="middle" font-size="10.5" font-weight="800" fill="#005a70">דף החרגות</text>
+<text x="403" y="258" text-anchor="middle" font-size="9" fill="#005a70">5 שורות מתויגות</text>
+<line x1="403" y1="100" x2="557" y2="210" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="492" y="210" width="130" height="64" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="557" y="238" text-anchor="middle" font-size="10.5" font-weight="800" fill="#005a70">דף אחריות</text>
+<text x="557" y="258" text-anchor="middle" font-size="9" fill="#005a70">2 שורות מתויגות</text>
+<line x1="403" y1="100" x2="711" y2="210" stroke="#c98a2e" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="646" y="210" width="130" height="64" rx="8" fill="#e3f2f7" stroke="#005a70" stroke-width="1.6"/>
+<text x="711" y="238" text-anchor="middle" font-size="10.5" font-weight="800" fill="#005a70">דף תשלום</text>
+<text x="711" y="258" text-anchor="middle" font-size="9" fill="#005a70">1 שורה מתויגות</text>
+<text x="403" y="290" text-anchor="middle" font-size="8.5" fill="#888">סה"כ 13 שורות מתויגות: 8 "סולארי" + 5 "אגירה" - כל השאר "משותף" ולא מושפעות</text>
+</svg>
+  </div>
+  <p class="diagram-caption">בחירה ב"סולארי בלבד" או "אגירה בלבד" מסמנת/מבטלת את השורות המתאימות בכל חמשת הדפים בבת אחת</p>
+
+  <p>הבורר עצמו יושב בראש לוח הבקרה, מחוץ לכל בלוק ספציפי - ולכן משפיע על כמה בלוקים (ודפים) בבת אחת, במקום להיות שייך לדף אחד. כל שורה בכל אחד מחמשת הדפים האלה נושאת תיוג ("סולארי" / "אגירה" / בלי תיוג = "משותף"), והבורר פשוט עובר על <strong>כל</strong> השורות המתויגות בכל המערכת ומעדכן את כולן יחד.</p>
+
+  <p>שני חיבורים נוספים, פחות מיידיים, שהבורר הזה גם מפעיל:</p>
+  <ul>
+    <li><strong>מתעדכן גם שדה "סוג טכנולוגיה" בעמוד 11</strong> (המודל הפיננסי) - כדי שגרף עוגת העלויות בעמוד 12 ידע אם לכלול פלח נפרד לעלות אגירה.</li>
+    <li><strong>מפעיל מחדש את שני חיבורי העקביות</strong> מסעיף 4 (מספור ההחרגות + סכום התשלומים המצטבר) - כי שינוי גורף כזה יכול להסתיר כמה שורות בבת אחת בטבלאות האלה.</li>
+  </ul>
+
+  <div class="callout">
+    <b>הרחבה עתידית פשוטה</b>
+    כדי לשנות אילו שורות שייכות לאיזה סוג מערכת, אין צורך לגעת בקוד - זה נעשה ישירות דרך עורך התבנית (בורר קטן ליד כל שורה). התיוג חי על השורה עצמה, לא ברשימה מרוכזת בקוד.
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span> חיבור חוצה-דפים: הלוגו</h2>
+  <p class="sub">האלמנט המחובר ביותר במערכת - מקור אחד, מוצג בכל דף ודף.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 982 230" xmlns="http://www.w3.org/2000/svg" width="100%">
+<rect x="421" y="20" width="140" height="60" rx="10" fill="#e3f2f7" stroke="#005a70" stroke-width="2"/>
+<text x="491" y="46" text-anchor="middle" font-size="11.5" font-weight="800" fill="#005a70">הלוגו</text>
+<text x="491" y="63" text-anchor="middle" font-size="8.5" fill="#005a70">מקור אחד</text>
+<line x1="491" y1="80" x2="491" y2="110" stroke="#00798c" stroke-width="2"/>
+<path d="M60,110 L922,110" stroke="#00798c" stroke-width="1.6" fill="none"/>
+<path d="M60,110 L60,122" stroke="#00798c" stroke-width="1.6"/>
+<path d="M922,110 L922,122" stroke="#00798c" stroke-width="1.6"/>
+<line x1="88.0" y1="122" x2="88.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="60" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="88" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">שער</text>
+<line x1="150.0" y1="122" x2="150.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="122" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="150" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">תמצית</text>
+<line x1="212.0" y1="122" x2="212.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="184" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="212" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">אודות</text>
+<line x1="274.0" y1="122" x2="274.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="246" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="274" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">למה</text>
+<line x1="336.0" y1="122" x2="336.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="308" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="336" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">מפרט</text>
+<line x1="398.0" y1="122" x2="398.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="370" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="398" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">רכיבים</text>
+<line x1="460.0" y1="122" x2="460.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="432" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="460" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">החרגות</text>
+<line x1="522.0" y1="122" x2="522.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="494" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="522" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">אחריות</text>
+<line x1="584.0" y1="122" x2="584.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="556" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="584" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">תשלום</text>
+<line x1="646.0" y1="122" x2="646.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="618" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="646" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">הערות</text>
+<line x1="708.0" y1="122" x2="708.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="680" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="708" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">פיננסי</text>
+<line x1="770.0" y1="122" x2="770.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="742" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="770" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">גרפים</text>
+<line x1="832.0" y1="122" x2="832.0" y2="140" stroke="#00798c" stroke-width="1.2"/>
+<rect x="804" y="140" width="56" height="40" rx="6" fill="#e8f6f3" stroke="#2a9d8f" stroke-width="1.4"/>
+<text x="832" y="164" text-anchor="middle" font-size="8" fill="#1d6f64" font-weight="700">קשר</text>
+<line x1="894.0" y1="122" x2="894.0" y2="140" stroke="#999" stroke-width="1.2" stroke-dasharray="3,2"/>
+<rect x="866" y="140" width="56" height="40" rx="6" fill="#fafafa" stroke="#999" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="894" y="164" text-anchor="middle" font-size="8" fill="#888" font-weight="700">מותאם</text>
+<text x="491" y="205" text-anchor="middle" font-size="9" fill="#888">כל 13 הדפים הקבועים (עמוד השער וכפתור הפוטר בכל היתר) + כל דף מותאם שיתווסף</text>
+</svg>
+  </div>
+  <p class="diagram-caption">בעמוד השער הלוגו גדול ובולט; בכל שאר הדפים הוא מופיע קטן, בכותרת התחתונה</p>
+
+  <p>יש רק כתובת/תמונת לוגו אחת (ניתנת לעריכה בעורך התבנית - ראו סעיף 7), אבל היא מוצגת פיזית בעשרות מקומות שונים בו-זמנית: פעם אחת גדולה בעמוד השער, ופעם אחת קטנה בכותרת התחתונה של כל אחד משאר 12 הדפים. כשמוסיפים דף מותאם חדש, הוא מקבל אוטומטית את אותה כותרת תחתונה עם הלוגו - בלי צורך בהגדרה נוספת.</p>
+
+  <div class="callout warn">
+    <b>נקודת כשל יחידה</b>
+    בגלל שמדובר במקור אחד המוזרם לכל מקום, אם כתובת הלוגו שגויה או לא נגישה - זה משפיע על <strong>כל</strong> הדפים בבת אחת, לא רק על דף אחד. זו הסיבה שבעורך התבנית יש אפשרות להעלות את קובץ הלוגו ישירות (ולא רק להזין קישור) - כדי שהתבנית לא תהיה תלויה בזמינות מתמשכת של קישור חיצוני.
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span> חיבור חוצה-דפים: ניהול תמונות ברירת מחדל</h2>
+  <p class="sub">5 תמונות קבועות, שאיפה מיוחדת בשמות שתיים מהן, ומנגנון פתוח להוספת תמונות נוספות.</p>
+
+  <table class="ref-table">
+    <tr><th>שם ברשימת ברירות המחדל</th><th>מופיעה בפועל בדף</th><th>הערה</th></tr>
+    <tr><td>הלוגו</td><td>כל הדפים (ראו סעיף 6)</td><td>—</td></tr>
+    <tr><td>תמונת שער</td><td>שער</td><td>תואם את השם</td></tr>
+    <tr><td>תמונת גג</td><td><strong>תמצית</strong></td><td>לא "עמוד גג" נפרד - זו התמונה שמופיעה בדף התמצית</td></tr>
+    <tr><td>תמונה תחתונה - "עמוד 4"</td><td>למה אנחנו</td><td>ראו הבהרה למטה</td></tr>
+    <tr><td>תמונה תחתונה - "עמוד 9"</td><td>תשלום</td><td>ראו הבהרה למטה</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <b>שמות היסטוריים שכדאי להכיר</b>
+    השמות הפנימיים של שתי התמונות האחרונות מתייחסים למיקום ה<strong>מספרי</strong> המקורי של הדפים ("עמוד 4", "עמוד 9"), לא לתוכן שלהם. זה עדיין נכון היום כי דף "למה אנחנו" אכן היה ונשאר הדף הרביעי, ודף "תשלום" אכן היה ונשאר הדף התשיעי - אבל אם אי פעם ייבנה סידור-מחדש של סדר הדפים עצמם, השמות האלה <strong>לא יתעדכנו אוטומטית</strong> ועלולים להטעות מי שמסתכל על הקוד ומצפה שהם יתאימו למיקום הנוכחי.
+  </div>
+
+  <h3>הוספת תמונות חדשות (מעבר לחמש הקבועות)</h3>
+  <p>דרך עורך התבנית אפשר להוסיף תמונה חדשה לכל דף (מלבד שני עמודי המודל הפיננסי). כל תמונה כזו:</p>
+  <ul>
+    <li>מקבלת שם ייחודי משלה, ומצטרפת לאותה רשימת "תמונות ברירת מחדל" שמנוהלת בפאנל הניהול - הרשימה בונה את עצמה מחדש בכל פעם, ולא מוגבלת לחמש קבועות.</li>
+    <li>ממוקמת בדף באופן שמכבד את המבנה הפנימי שלו - ברוב הדפים היא נכנסת ממש לפני הכותרת התחתונה המשותפת; בעמוד השער, שבנוי אחרת ואין לו כותרת תחתונה כזו, היא נכנסת בתוך העטיפה הפנימית הייעודית שלו.</li>
+    <li>ניתנת למילוי בקישור <strong>או</strong> בהעלאת קובץ ישירה - קובץ שמועלה נשמר מוטמע בתוך קובץ ה-HTML עצמו, לא כקישור לאחסון חיצוני.</li>
+  </ul>
+
+  <div class="callout">
+    <b>הבדל חשוב מול חמש התמונות הקבועות</b>
+    לחמש התמונות המקוריות יש שדה ייעודי בלוח הבקרה <strong>הרגיל</strong> (לא רק בעורך התבנית), שמאפשר לכל איש מכירות לדרוס אותן להצעה ספציפית אחת בלי לגעת בתבנית. תמונות שנוספות מאוחר יותר <strong>לא</strong> מקבלות יכולת דריסה כזו - יש להן רק ברירת מחדל אחת, ברמת התבנית כולה. זו מגבלה ידועה, לא פספוס.
+  </div>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span> חיבור נכנס: הזנת נתונים מגורם חיצוני</h2>
+  <p class="sub">איך מידע שמגיע מכלי חיצוני (אם קיים - ראו הבהרה) מתפזר בין כמה דפים שונים בפתיחה הראשונה של מחולל ההצעה.</p>
+
+  <div class="callout danger">
+    <b>לפני שנכנסים לפרטים - הבהרת מעמד</b>
+    מחולל ההצעה <strong>מצפה</strong> לקבל חבילת מידע דרך ערוץ הזנה מוגדר, ויודע מה לעשות איתה אם היא קיימת. אבל <strong>לא אותר בפועל שום כלי שכותב לערוץ הזה</strong> - כל מה שמתואר כאן הוא הצד המקבל בלבד. אם הכלי המזין עדיין לא קיים או עדיין בבנייה, שום דבר בסעיף הזה לא קורה בפועל, ומחולל ההצעה פשוט נפתח עם שדות ריקים כרגיל.
+  </div>
+
+  <table class="ref-table">
+    <tr><th>סוג המידע שמגיע</th><th>נחת בדף</th></tr>
+    <tr><td>כותרת פרויקט</td><td>שער</td></tr>
+    <tr><td>שם לקוח, כתובת, איש קשר</td><td>שער</td></tr>
+    <tr><td>תאריך ההצעה</td><td>שער</td></tr>
+    <tr><td>תמונת שער שנבחרה</td><td>שער</td></tr>
+    <tr><td>תמונת גג/לוגו שנבחרו</td><td>תמצית (גג) / כל הדפים (לוגו)</td></tr>
+    <tr><td>גודל מערכת ועלות</td><td>מוזן ישירות לפרמטרי המחשבון הפיננסי</td></tr>
+    <tr><td>הערות ניתוח, קיבולת אגירה, חיסכון שנתי, תשואה, רווח ל-25 שנה, מכסת חיבור לחח"י, סטטוס טופס 4</td><td>מתווספים כטקסט חופשי לתיאור בדף התמצית</td></tr>
+    <tr class="protected-row"><td>תמונות סיכום/תזרים פיננסי מוכנות מראש</td><td>מודל פיננסי 🔒 + גרפים ותעריפים 🔒 (ומעביר אוטומטית למצב "תמונות ידניות")</td></tr>
+    <tr class="protected-row"><td>כל ההנחות הגולמיות של חישוב שנעשה מראש (תעריף, תפוקה, דעיכה, זכאות ותקופת פרמיה אורבנית, הוצאות תפעול, פרמטרי הלוואה, פרמטרי אגירה)</td><td>מודל פיננסי 🔒 - מוזנים ישירות לאותם שדות שאיש מכירות היה ממלא ידנית, כדי שהמחשבון יחשב מחדש ויגיע לאותה תוצאה בדיוק</td></tr>
+  </table>
+
+  <p>שני דברים שווה להדגיש לגבי איך זה עובד בפועל:</p>
+  <ul>
+    <li><strong>הכיוון הוא חד-סטרי.</strong> מחולל ההצעה קורא את המידע פעם אחת, ברגע הפתיחה. הוא אף פעם לא כותב חזרה לאותו ערוץ הזנה, ואין שום דרך שהשינויים שאיש המכירות עושה בהצעה "יחזרו" למקור.</li>
+    <li><strong>לא רק תוצאה סופית, גם הנחות גולמיות.</strong> אילו הכלי החיצוני היה מעביר רק את המספר הסופי (למשל "תשואה: 8.2%"), הדף היה יכול להציג אותו כטקסט - אבל לא לחשב איתו הלאה. העברת ההנחות הגולמיות (לא רק התוצאה) מאפשרת למחשבון החי בעמוד 11 לשחזר את אותו החישוב בעצמו ולהישאר עקבי איתו, כולל אם איש המכירות משנה משהו קטן אחר כך.</li>
+  </ul>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span> חיבור מקומי: חתימות</h2>
+  <p class="sub">החיבור הכי "מכיל" - הכל קורה בתוך דף אחד יחיד, בלי להתפזר.</p>
+  <p>בשונה מרוב החיבורים במדריך הזה, אזור החתימות הוא <strong>לא</strong> חוצה-דפים. שני שדות הטקסט (שם מלא, ת.ז./ח.פ) יושבים בבלוק 10 בלוח הבקרה, וזורמים ישירות לתצוגה בדף ההערות - אותו דף בדיוק. שני לוחות הציור לחתימה עצמם קיימים רק בתצוגה המודפסת של דף ההערות, ואין להם שום ייצוג בלוח הבקרה מלבד שני כפתורי "נקה" (שגם הם, בהתאמה, לא מוצגים בהדפסה עצמה).</p>
+  <div class="callout">
+    <b>למה זה מוזכר בכל זאת</b>
+    כי זו נקודת ההשוואה: רוב האלמנטים "המעניינים" במערכת (לוגו, בורר סוג מערכת, נתונים חיצוניים) חוצי-דפים במובהק. החתימות הן דוגמה נגדית שימושית - מזכירה שלא כל דבר בהצעה חייב להיות מקושר לדפים אחרים כדי להיות חשוב.
+  </div>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10</span> נקודות שכדאי לזכור</h2>
+  <p class="sub">ריכוז של כל העובדות הפחות-מובנות-מאליהן מהמדריך הזה, במקום אחד.</p>
+
+  <table class="ref-table">
+    <tr><th>עובדה</th><th>למה זה חשוב</th></tr>
+    <tr>
+      <td>מדדי ה-KPI בדף התמצית (עלות, רווח, תשואה) <strong>אינם</strong> מחוברים לחישוב החי בעמוד המודל הפיננסי</td>
+      <td>שינוי בפרמטרים הפיננסיים <strong>לא</strong> יעדכן אוטומטית את המספרים בדף התמצית - הם נשארים ידניים עד שמישהו עורך אותם בפועל דרך ה-✎. קל להניח בטעות שיש כאן חיבור חי, ואין.</td>
+    </tr>
+    <tr>
+      <td>דף מותאם נכנס במקום <strong>שונה</strong> בתצוגה המודפסת (אחרי המודל הפיננסי) לעומת לוח הבקרה (לפניו)</td>
+      <td>מי שמחפש דף מותאם שהוסיף כרגע צריך לדעת להסתכל בשני מקומות שונים בשתי הרשימות.</td>
+    </tr>
+    <tr>
+      <td>שמות שני שדות התמונה "התחתונות" (<em>עמוד 4</em>, <em>עמוד 9</em>) הם שיוריים ממיקום היסטורי, לא תיאור עדכני</td>
+      <td>עדיין נכונים כרגע במקרה (למה-אנחנו הוא עדיין הרביעי, תשלום עדיין התשיעי) - אבל לא יתעדכנו אוטומטית אם סדר הדפים ישתנה.</td>
+    </tr>
+    <tr>
+      <td>שני עמודי המודל הפיננסי מוחרגים <strong>באופן עקבי ומפורש</strong> מכל יכולת ניהול - לא רק "נשכחו"</td>
+      <td>כל מנגנון חדש שמוסיפים למערכת (מחיקה, גרירה, שיוך) חייב להוסיף את אותו חריג בעצמו - זו לא הגנה גורפת אוטומטית ברמת המערכת, אלא בדיקה שחוזרת בכל מקום בנפרד.</td>
+    </tr>
+    <tr>
+      <td>תמונות שנוספות מאוחר יותר (לא חלק מהחמישייה המקורית) אין להן דריסה פר-הצעה</td>
+      <td>רק ברירת מחדל ברמת התבנית כולה - אם צריך תמונה שונה להצעה ספציפית אחת, אין כרגע דרך לעשות את זה בשביל תמונות "חדשות".</td>
+    </tr>
+    <tr>
+      <td>הלוגו הוא נקודת הכשל הפוטנציאלית עם ה"טווח" הרחב ביותר במערכת</td>
+      <td>מקור אחד מוצג בכל 13 הדפים (ובכל דף מותאם שיתווסף) - כתובת שגויה משפיעה על הכל בבת אחת, לא על דף אחד.</td>
+    </tr>
+    <tr>
+      <td>עמוד הסגירה (יצירת קשר) הוא היחיד בלי שום נקודת אחיזה בלוח הבקרה</td>
+      <td>אי אפשר להסתיר, להזיז, או למחוק אותו - לא כי הוחלט "לנעול" אותו באופן פעיל, אלא כי מבנית אין לו בלוק בקרה שיכול לשמש עוגן ליכולות כאלה.</td>
+    </tr>
+  </table>
+</section>
+
+  <footer class="doc-footer">מפת דפים וחיבורים · מחולל הצעות המחיר בראשית סולאר</footer>
+</main>
+
+</body>
+</html>

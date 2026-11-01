@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מסמך אפיון וסיכום פרויקט - מערכת בראשית סולאר</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+        }
+        h1 { color: #1a3a5f; border-bottom: 3px solid #f39c12; padding-bottom: 10px; }
+        h2 { color: #27ae60; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        h3 { color: #2980b9; }
+        ul { background: #fff; padding: 20px 40px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        li { margin-bottom: 10px; }
+        code { background-color: #eee; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #c0392b; }
+        .highlight { font-weight: bold; color: #d35400; }
+        .note { background-color: #fff3cd; padding: 15px; border-right: 5px solid #ffc107; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>מסמך העברת פרויקט (Handoff) – מערכת CRM, איסוף נתונים וחישוב סולארי</h1>
+
+    <h2>1. תיאור כללי של הפרויקט</h2>
+    <p>
+        המערכת, המפותחת עבור "בראשית סולאר", היא חבילת כלים מבוססת Web (HTML/JS/CSS) הרצה על גבי תשתית <strong>Google Apps Script (GAS)</strong> עם מסד נתונים ב-Google Sheets.
+    </p>
+    <p>
+        <strong>מטרת המערכת:</strong> ניהול לקוחות, הפקת הצעות מחיר למערכות סולאריות, איסוף קפדני של נתוני צריכת חשמל (מכשירי חשמל) מהלקוח עצמו, והרצת סימולציות כדאיות פיננסיות והנדסיות (כולל מערכות אגירה/סוללות) על בסיס פרופיל הצריכה.
+    </p>
+    <p><strong>משתמשים:</strong></p>
+    <ul>
+        <li><strong>נציגי מכירות / מהנדסים:</strong> משתמשים במערכת ה-CRM (<code>Index.html</code>) ובמחשבון ההמלצה (<code>מחשבון_המלצת_מערכת.html</code>).</li>
+        <li><strong>לקוחות הקצה:</strong> מקבלים לינק ייעודי למילוי טופס איסוף נתוני מכשירים (<code>Form.html</code>).</li>
+    </ul>
+
+    <h2>2. רשימת כל היכולות והפיצ'רים שמומשו</h2>
+    <ul>
+        <li><strong>מערכת CRM (Index):</strong> חיפוש לקוחות קיים ב-Sheets, בניית הצעת מחיר דינמית (פאנלים, ממירים, סוללות), בחירת תמונות מתוך ה-Sheets או העלאת תמונות מקומיות, ושמירת נתונים חזרה ל-Sheets.</li>
+        <li><strong>יצירת לינק מותאם ללקוח:</strong> כפתור ב-Index שמייצר URL ייעודי המכיל פרמטר <code>clientId</code>. הלינק מועתק אוטומטית ללוח (Clipboard) ונשלח ללקוח למילוי הטופס.</li>
+        <li><strong>טופס איסוף נתונים חכם (Form):</strong> 
+            טופס למילוי מצאי מכשירי חשמל לפי קטגוריות ומיקומים. הטופס קורא את ה-<code>clientId</code> מה-URL ושואב אוטומטית את פרטי הלקוח (שם, טלפון, וכו') מ-Sheets.
+        </li>
+        <li><strong>הגבלות זמן היררכיות בטופס:</strong> 
+            הגדרת זמני פעילות ברמת <strong>הצרכן הבודד</strong>, ברמת ה<strong>קטגוריה</strong>, וברמת ה<strong>מיקום (חדר/מבנה)</strong>.
+            סוגי ההגבלות:
+            <ul>
+                <li><u>ימים בשבוע:</u> א'-ש'.</li>
+                <li><u>שעות ביום:</u> 00:00 עד 23:00.</li>
+                <li><u>תקופות בשנה:</u> כל השנה, שנת לימודים (ספט'-יוני), שנת ישיבות (חורף, קיץ, אלול), או טווחים מותאמים אישית לפי תאריך לועזי או תאריך עברי. ניתן להזין <strong>מספר טווחים מרובים</strong> במקביל.</li>
+            </ul>
+        </li>
+        <li><strong>הצפנת נתונים (Web Crypto API):</strong> ייצוא נתוני הטופס מתבצע לקובץ <code>.enc</code>. הקובץ מוצפן לחלוטין (AES-GCM) ואינו קריא למשתמש.</li>
+        <li><strong>מחשבון המלצה:</strong> 
+            קולט קבצי CSV מחברת החשמל או קבצי <code>.enc</code> מהטופס. מפענח את הקובץ המוצפן ובונה פרופיל צריכה (שפל/פסגה לפי עונות). מבצע סימולציית "דיספאץ' סוללה" לפי תעריפי רשות החשמל, ומחשב IRR, NPV, החזר השקעה ועוד.
+        </li>
+        <li><strong>הגנות נגד העתקה (Anti-Copy) בטופס:</strong> חסימת בחירת טקסט (<code>user-select: none</code>), חסימת קליק ימני, חסימת קיצורי מקלדת (Ctrl+C, Ctrl+S) וחסימת הדפסה (Ctrl+P מציג דף שגיאה).</li>
+    </ul>
+
+    <h2>3. אלמנטים ב-HTML ובממשק שנוספו או השתנו</h2>
+    <ul>
+        <li><strong>כפתורי Toggle (Form.html):</strong> הוסרו תיבות הסימון (Checkboxes) וכפתורי הרדיו לבחירת ימים ושעות. הוחלפו בכפתורי Toggle מעוצבים (כפתור שנצבע בירוק בלחיצה ומקבל קלאס <code>selected</code>).</li>
+        <li><strong>רשת ימים מרוכזת:</strong> בוטלה הכפילות בבחירת ימים. כעת יש רשת אחת של 7 כפתורים (א'-ש') עם כפתורי פעולה מהירה: "בחר הכל", "נקה הכל", "ימי חול בלבד".</li>
+        <li><strong>ממשק טווחים דינמיים (Form.html):</strong> בבחירת תקופה לועזית או עברית מופיע ממשק המאפשר הוספה של שורות טווח (Range) עם כפתור מחיקה לכל שורה. (שימוש ב-<code>addGregorianRange</code> ו-<code>addHebrewRange</code>).</li>
+        <li><strong>תפריטי היררכיה בטופס:</strong> בשורת הכותרת של כל "מיקום" ובשורת הכותרת של כל "קטגוריה", נוספו כפתורים מיניאטוריים (<code>btn-header-mini</code>) להגדרת ימים, שעות ותקופות שחלות על כל הצרכנים תחתיהם.</li>
+        <li><strong>כפתור יצירת לינק (Index.html):</strong> הוסף כפתור סגול "העתק לינק לטופס נתונים ללקוח זה".</li>
+    </ul>
+
+    <h2>4. חישובים ונוסחאות שמומשו</h2>
+    <ul>
+        <li><strong>לוגיקת שילוב זמנים היררכית (Intersection):</strong> 
+            בזמן פענוח קובץ ה-JSON/ENC במחשבון, המערכת מחשבת חיתוך קבוצות (<code>intersectSets</code>) בין ההגדרות של המיקום, הקטגוריה והצרכן. צרכן פועל <strong>רק ביום/שעה</strong> שמוגדרים גם בצרכן, גם בקטגוריית האב שלו, וגם במיקום שלו. אם אחד מהם מוגדר כ"כל הימים/השעות", הוא אינו מגביל את השאר.
+        </li>
+        <li><strong>חישוב משקל תקופות (Period Ratios):</strong> 
+            מכיוון שקשה לחשב במדויק משקל של תאריך עברי מול לועזי ביום ספציפי, מומשה פונקציה <code>getCombinedPeriodRatios</code> העושה סימולציה על פני שנת לוח שלמה. היא בודקת עבור כל יום בשנה (365 ימים) האם הוא עובר את חיתוך התקופות של המיקום + קטגוריה + צרכן. התוצאה היא אחוז (Ratio מ-0 עד 1) לכל עונה (חורף, קיץ, מעבר), שבו מכפילים את צריכת הפסגה של המכשיר.
+        </li>
+        <li><strong>אלגוריתם תאריכים עבריים:</strong> 
+            הוטמע סט פונקציות להמרת תאריך לועזי לעברי (<code>hc_g2j</code>, <code>hc_j2h</code>, חישובי עיבור <code>hc_isLeap</code> ונירמול אדר א'/ב'). המערכת מזהה חגים יהודיים ושבתות לטובת חישוב זמני שפל/פסגה בתעו"ז.
+        </li>
+        <li><strong>הצפנה (AES-GCM):</strong> 
+            פונקציות <code>encryptJSON</code> ו-<code>decryptJSON</code>. ה-IV נוצר רנדומלית ומצורף לתחילת הקובץ. הקוד הופך למערך בינארי, מקודד ל-Base64 ומוורד למחשב.
+        </li>
+    </ul>
+
+    <h2>5. תיקונים ושינויי כיוון במהלך הדרך (החלטות סופיות)</h2>
+    <ul>
+        <li><strong><span class="highlight">סופי:</span> משיכת נתוני לקוח לטופס דרך השרת (Server-Side Template Injection).</strong> 
+            במקור ניסינו למשוך את ה-<code>clientId</code> מה-URL בעזרת <code>google.script.url.getLocation</code>. התברר שתוספי דפדפן (Ad-blockers, תרגום וכו') גורמים לקריסה של הסקריפטים בסוף הטעינה (window.onload). 
+            <strong>התיקון:</strong> ב-<code>code.js</code> אנו מזריקים את ה-ID ישירות ל-HTML בזמן יצירת התבנית: <code>&lt;?= clientIdParam ?&gt;</code>, ומריצים את הבקשה ב-<code>DOMContentLoaded</code> לקבלת יציבות מקסימלית.
+        </li>
+        <li><strong><span class="highlight">סופי:</span> מזהי (IDs) של חלונות קופצים.</strong> 
+            במקור עבדנו עם <code>customHoursContainer</code>, אך במהלך מעבר לעיצוב ה-Toggle Buttons שונה השם ל-<code>hoursContainer</code>. זה תוקן סופית ב-<code>Form.html</code>.
+        </li>
+        <li><strong><span class="highlight">סופי:</span> איסור מוחלט על שינוי שמות פונקציות קיימות.</strong> הייתה דרישה מפורשת לא לשנות פונקציות קיימות, אלא רק להוסיף את פונקציות ה-Hierarchy וה-Ranges מעליהן או בתוכן.</li>
+    </ul>
+
+    <h2>6. מבנה הנתונים</h2>
+    <p><strong>אובייקט הייצוא המוצפן (JSON בתוך קובץ ה-ENC):</strong></p>
+    <pre><code>
+{
+  "formVersion": "3.0",
+  "exportedAt": "ISO String",
+  "clientDetails": { "name", "phone", "address", "contract", "filledBy", "notes" },
+  "locations": [
+    {
+      "name": "שם המיקום",
+      "consumers": [
+        {
+          "category": "תאורה",
+          "type": "נורות",
+          "fields": { "power": 100, "qty": 5 },
+          "days": [0,1,2,3,4,5,6], // מערך אינטג'רים נבחרים (צרכן)
+          "hours": [17,18,19], // מערך שעות נבחרות (צרכן)
+          "periods": { "type": "gregorian", "ranges": [{"start":"09-01", "end":"06-30"}] },
+          "catDays": [...], "catHours": [...], "catPeriods": {...}, // הגבלות קטגוריה
+          "locDays": [...], "locHours": [...], "locPeriods": {...}  // הגבלות מיקום
+        }
+      ]
+    }
+  ]
+}
+    </code></pre>
+
+    <h2>7. סטטוס נוכחי ודברים פתוחים</h2>
+    <ul>
+        <li><strong>מה עובד:</strong> ה-CRM תקין, הזרקת ה-URL תקינה, הטופס עובד עם חסימת העתקה, המחשבון יודע לקרוא את קובץ ה-ENC ולחשב את ההיררכיות המורכבות.</li>
+        <li><strong>נושא אבטחת IP (Intellectual Property):</strong> 
+            המשתמש שאל כיצד להציג את התוכנה לקונה מבלי שיעתיקו את נוסחאות הפיננסים (ה-Calculator). 
+            <strong>הסטטוס:</strong> כרגע הלוגיקה נמצאת בקובץ ה-HTML בצד הלקוח (Frontend). הוצע למשתמש בעתיד <u>להעביר את פונקציות החישוב (כגון <code>buildCashflow</code>) לצד השרת (<code>code.js</code>)</u> כפתרון קבע. <strong>זה עדיין לא מומש בקוד</strong> - הקוד הקיים מכיל את הלוגיקה ב-HTML.
+        </li>
+    </ul>
+
+    <h2>8. החלטות והגבלות טכניות</h2>
+    <ul>
+        <li>הפרויקט נכתב ב-<strong>Vanilla JavaScript, HTML, CSS</strong>. ללא ספריות Frontend כדוגמת React או Vue.</li>
+        <li>רצון לשמור הכל בקבצים יחידים וארוכים לטובת הזרקה ב-Google Apps Script (HtmlService).</li>
+        <li>ההצפנה מתבצעת באופן מקומי בדפדפן (Web Crypto API) בגלל אופי העבודה.</li>
+    </ul>
+
+    <h2>9. דברים שנפסלו במפורש</h2>
+    <ul>
+        <li>נפסלה האפשרות למשוך את ה-<code>clientId</code> מקריאת פרמטרים ב-JS של הלקוח בגלל התנגשויות עם תוספי דפדפן, והוחלפה בתבנית שרת.</li>
+        <li>נפסלה כפילות ממשק בהגדרת ימים (היו בעבר צ'קבוקסים וכפתורי רדיו מיותרים - נשארנו עם גריד Toggle אחד לכל מודל).</li>
+        <li>נשללה מסירת עותק נסיוני של התוכנה עם קוד פתוח לקונה פוטנציאלי ללא ערבול (Obfuscation) או העברת קוד לשרת.</li>
+    </ul>
+
+    <div class="note">
+        <strong>נקודות לבירור למודל הבא:</strong>
+        <br>
+        הקוד המועבר אליך כולל את החישובים (<code>buildCashflow</code>, IRR וכו') בתוך ה-Frontend. המשתמש מעוניין להגן על קוד זה בעתיד. ייתכן שהמשימה הבאה שלך תהיה "לעקור" את הפונקציות הללו מ-<code>מחשבון_המלצת_מערכת.html</code> ולהעביר אותן אל <code>code.js</code> עם פונקציית <code>google.script.run</code>. עליך לוודא זאת מול המשתמש.
+    </div>
+
+</body>
+</html>

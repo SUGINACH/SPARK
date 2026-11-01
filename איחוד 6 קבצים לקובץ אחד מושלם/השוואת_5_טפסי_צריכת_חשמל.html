@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>השוואת 5 טפסי איסוף נתוני צריכת חשמל — בראשית סולאר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#12283F; --navy-2:#1A3A5F; --navy-3:#2454A0;
+  --orange:#F39C12; --orange-2:#D9820A;
+  --green:#1E8449; --green-bg:#E9F7EF;
+  --red:#C0392B; --red-bg:#FBEAE8;
+  --red-strong-bg:#F6D3CF;
+  --amber-bg:#FDF3DE;
+  --blue-bg:#E8EEF7;
+  --grey:#5B6472; --grey-bg:#EEF0F3;
+  --paper:#F1F4F8; --card:#FFFFFF;
+  --ink:#1B2430; --ink-soft:#5B6472;
+  --line:#DFE4EC; --line-strong:#C7CFDB;
+  --radius:14px; --radius-sm:9px;
+  --font-display:'Frank Ruhl Libre', serif;
+  --font-body:'Assistant', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+  --shadow-sm: 0 1px 3px rgba(18,40,63,.07);
+  --shadow-md: 0 8px 28px rgba(18,40,63,.14);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:15.5px; line-height:1.55;
+  direction:rtl;
+}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;}
+::selection{background:var(--orange); color:#fff;}
+
+.wrap{max-width:1280px; margin:0 auto; padding:0 28px;}
+
+/* ---------------- HERO ---------------- */
+.hero{
+  position:relative; overflow:hidden;
+  background:
+    radial-gradient(1100px 480px at 18% -10%, rgba(243,156,18,.16), transparent 60%),
+    linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 46%, #0c5c8e 130%);
+  color:#fff; padding:56px 0 46px;
+}
+.hero .wrap{position:relative; z-index:2;}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.04em;
+  color:#FCD9A0; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
+  padding:6px 14px; border-radius:999px; margin-bottom:22px;
+}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--orange);}
+h1.title{
+  font-family:var(--font-display); font-weight:700; letter-spacing:-.01em;
+  font-size:clamp(30px, 4.4vw, 50px); line-height:1.16; margin:0 0 18px; max-width:16ch;
+}
+h1.title em{font-style:normal; color:var(--orange);}
+.hero .sub{
+  font-size:17px; line-height:1.7; color:rgba(255,255,255,.82); max-width:62ch; margin:0 0 14px;
+}
+.hero .meta{
+  display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:26px;
+  font-size:13.5px; color:rgba(255,255,255,.72);
+}
+.hero .meta b{color:#fff; font-weight:700;}
+.hero .meta span{display:flex; align-items:center; gap:7px;}
+.hero .meta span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--orange);}
+
+/* ---------------- LINEAGE (signature element) ---------------- */
+.lineage{margin-top:40px; display:flex; flex-direction:column; gap:22px;}
+.lineage-caption{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.05em; color:rgba(255,255,255,.62);
+  margin-bottom:10px; display:block;
+}
+.lineage-chain{display:flex; align-items:stretch; gap:0; flex-wrap:wrap;}
+.lnode{
+  --d:0; opacity:0; transform:translateY(10px); animation:lineIn .55s ease forwards; animation-delay:calc(var(--d) * 85ms);
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.22); border-radius:12px;
+  padding:13px 16px; min-width:168px; backdrop-filter:blur(2px);
+}
+.lnode.solo{border-color:rgba(243,156,18,.55); background:rgba(243,156,18,.10);}
+.lnode-tag{
+  display:inline-block; font-family:var(--font-mono); font-size:10.5px; color:var(--orange);
+  background:rgba(243,156,18,.14); border:1px solid rgba(243,156,18,.3);
+  padding:2px 8px; border-radius:999px; margin-bottom:8px;
+}
+.lnode-file{display:block; font-weight:700; font-size:14px; color:#fff; word-break:break-word;}
+.lnode-note{display:block; font-size:12px; color:rgba(255,255,255,.6); margin-top:4px;}
+.larrow{
+  --d:0; opacity:0; animation:lineIn .55s ease forwards; animation-delay:calc(var(--d) * 85ms);
+  display:flex; align-items:center; justify-content:center; width:34px; color:var(--orange); font-size:19px; flex:0 0 auto;
+}
+.lineage-split{
+  display:flex; align-items:center; gap:14px; color:rgba(255,255,255,.5); font-size:12.5px;
+  margin:2px 0;
+}
+.lineage-split::before,.lineage-split::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.18);}
+@keyframes lineIn{to{opacity:1; transform:none;}}
+@media (max-width:760px){
+  .lineage-chain{flex-direction:column; align-items:stretch;}
+  .larrow{transform:rotate(90deg); width:100%; height:26px;}
+  .lnode{min-width:0;}
+}
+
+/* ---------------- BRIEFING ---------------- */
+.briefing{padding:46px 0 10px;}
+.section-head{display:flex; align-items:baseline; gap:12px; margin-bottom:18px;}
+.section-head .num{font-family:var(--font-mono); color:var(--orange-2); font-size:13px;}
+.section-head h2{
+  font-family:var(--font-display); font-size:24px; margin:0; color:var(--navy);
+}
+.brief-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:16px;}
+.brief-card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 20px 18px; box-shadow:var(--shadow-sm);
+  border-top:4px solid var(--navy-3);
+}
+.brief-card.decide{border-top-color:var(--orange);}
+.brief-card.base{border-top-color:var(--green);}
+.brief-card h3{
+  margin:0 0 9px; font-size:14.5px; font-family:var(--font-body); font-weight:800; color:var(--navy);
+  display:flex; align-items:center; gap:8px;
+}
+.brief-card p{margin:0; font-size:13.8px; color:var(--ink); line-height:1.65;}
+.brief-card p+p{margin-top:8px;}
+
+.note-flag{
+  background:#FDECEA; border:1px solid #F3C6C1; border-radius:var(--radius-sm);
+  padding:14px 16px; font-size:13.3px; color:#7A241C; margin-bottom:26px; line-height:1.6;
+}
+.note-flag b{color:#7A241C;}
+
+.issues{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:6px 0; margin-bottom:30px; box-shadow:var(--shadow-sm); overflow:hidden;
+}
+.issues h3{
+  font-size:14.5px; font-weight:800; color:#7A241C; margin:0; padding:16px 20px 10px;
+  display:flex; align-items:center; gap:8px;
+}
+.issue-row{
+  display:flex; gap:12px; padding:11px 20px; border-top:1px solid var(--line); align-items:flex-start;
+}
+.issue-row .n{
+  font-family:var(--font-mono); font-size:11.5px; color:#fff; background:var(--red);
+  min-width:20px; height:20px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+  flex:0 0 auto; margin-top:1px;
+}
+.issue-row p{margin:0; font-size:13.4px; line-height:1.6; color:var(--ink);}
+
+.filemap{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm); margin-bottom:30px;}
+.filemap th{
+  background:var(--navy); color:#fff; font-size:12px; font-weight:700; text-align:right;
+  padding:11px 14px;
+}
+.filemap td{padding:12px 14px; font-size:13px; border-top:1px solid var(--line); vertical-align:top;}
+.filemap tr:hover td{background:#F7F9FC;}
+.filemap .fname{font-family:var(--font-mono); font-size:12.3px; font-weight:600; color:var(--navy);}
+.filemap .flevel{white-space:nowrap; font-weight:700;}
+.filemap .accent-basic{border-inline-start:3px solid var(--grey);}
+.filemap .accent-advanced{border-inline-start:3px solid var(--navy-3);}
+.filemap .accent-branch{border-inline-start:3px solid var(--orange);}
+
+.legend-row{display:flex; flex-wrap:wrap; gap:9px; margin-bottom:44px;}
+.chip{
+  display:inline-flex; align-items:center; gap:7px; font-size:12.6px; font-weight:600;
+  padding:7px 13px; border-radius:999px; border:1px solid var(--line-strong); background:var(--card);
+}
+.chip .sym{font-size:13px;}
+
+/* ---------------- TOOLBAR ---------------- */
+.toolbar{
+  position:sticky; top:0; z-index:20; background:rgba(241,244,248,.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line-strong); padding:12px 0;
+}
+.toolbar .inner{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.tb-brand{
+  font-family:var(--font-display); font-weight:700; font-size:14.5px; color:var(--navy);
+  white-space:nowrap;
+}
+.tb-search{
+  position:relative; flex:0 1 260px; min-width:170px;
+}
+.tb-search input{
+  width:100%; padding:9px 36px 9px 12px; border-radius:999px; border:1px solid var(--line-strong);
+  font-family:var(--font-body); font-size:13.5px; background:#fff; color:var(--ink);
+}
+.tb-search input:focus{outline:2px solid var(--navy-3); outline-offset:1px;}
+.tb-search .ic{position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--ink-soft); pointer-events:none;}
+.tb-cats{display:flex; gap:6px; overflow-x:auto; flex:1 1 auto; padding-bottom:2px; scrollbar-width:thin;}
+.tb-cats::-webkit-scrollbar{height:5px;}
+.tb-cats::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:3px;}
+.cat-chip{
+  flex:0 0 auto; font-size:12.3px; font-weight:600; padding:7px 13px; border-radius:999px;
+  border:1px solid var(--line-strong); background:#fff; color:var(--ink-soft); cursor:pointer;
+  white-space:nowrap; transition:.15s;
+}
+.cat-chip:hover{border-color:var(--navy-3); color:var(--navy);}
+.cat-chip.active{background:var(--navy); border-color:var(--navy); color:#fff;}
+.tb-count{
+  font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); white-space:nowrap; flex:0 0 auto;
+}
+.tb-count b{color:var(--navy);}
+
+/* ---------------- TABLE SECTION ---------------- */
+.table-section{padding:26px 0 60px;}
+.table-scroll{overflow-x:auto; overflow-y:visible; border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm); background:var(--card);}
+table.cmp{border-collapse:separate; border-spacing:0; width:100%; min-width:1180px;}
+table.cmp thead th{
+  position:sticky; top:57px; z-index:6; background:var(--navy); color:#fff;
+  font-size:12px; font-weight:700; text-align:right; padding:13px 14px; border-bottom:2px solid var(--orange);
+  white-space:nowrap;
+}
+table.cmp thead th small{display:block; font-weight:400; font-size:10.5px; color:#C9D6E6; margin-top:3px; white-space:normal;}
+table.cmp thead th.col-cat, table.cmp thead th.col-feat{position:sticky; z-index:8;}
+table.cmp thead th.col-cat{right:0; width:132px;}
+table.cmp thead th.col-feat{right:132px; width:230px;}
+table.cmp tbody td{
+  padding:12px 14px; font-size:12.9px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.55;
+}
+table.cmp tbody tr:hover td{filter:brightness(.985);}
+table.cmp td.col-cat{
+  position:sticky; right:0; z-index:3; width:132px; background:#F6F8FB; border-inline-end:1px solid var(--line);
+}
+table.cmp td.col-feat{
+  position:sticky; right:132px; z-index:3; width:230px; background:#FBFCFE; font-weight:700; color:var(--navy);
+  border-inline-end:1px solid var(--line);
+}
+.cat-pill{
+  display:inline-block; font-size:10.6px; font-weight:700; color:var(--navy-3); background:var(--blue-bg);
+  border:1px solid #CBD9EE; padding:3px 9px; border-radius:999px; line-height:1.4;
+}
+
+/* status tints */
+td.st-adopt{background:var(--green-bg);}
+td.st-missing{background:var(--red-bg);}
+td.st-critical{background:var(--red-strong-bg);}
+td.st-caution{background:var(--amber-bg);}
+td.st-integrate{background:var(--blue-bg);}
+td.st-decide{background:var(--amber-bg);}
+td.st-rebuild{background:var(--grey-bg);}
+td.st-bug{background:var(--amber-bg);}
+td.col-file, td.col-rec{border-inline-start:3px solid transparent;}
+td.st-adopt{border-inline-start-color:var(--green);}
+td.st-missing{border-inline-start-color:#D98F86;}
+td.st-critical{border-inline-start-color:var(--red);}
+td.st-caution, td.st-decide, td.st-bug{border-inline-start-color:var(--orange);}
+td.st-integrate{border-inline-start-color:var(--navy-3);}
+td.st-rebuild{border-inline-start-color:var(--grey);}
+td.col-rec{font-weight:600;}
+
+.no-results{padding:40px 20px; text-align:center; color:var(--ink-soft); font-size:14px;}
+
+/* ---------------- MOBILE CARD MODE ---------------- */
+@media (max-width:860px){
+  table.cmp{min-width:0;}
+  table.cmp thead{display:none;}
+  table.cmp, table.cmp tbody, table.cmp tr, table.cmp td{display:block; width:100%;}
+  table.cmp tr{
+    border-bottom:10px solid var(--paper); border-radius:0; background:var(--card);
+  }
+  table.cmp td{position:static !important; width:auto !important; border:none !important; background:transparent !important;}
+  table.cmp td.col-cat{padding:14px 16px 0;}
+  table.cmp td.col-feat{
+    padding:5px 16px 12px; font-family:var(--font-display); font-size:16px; font-weight:700;
+    border-bottom:1px solid var(--line) !important; margin-bottom:2px;
+  }
+  table.cmp td.col-file{padding:10px 16px; border-bottom:1px dashed var(--line) !important;}
+  table.cmp td.col-file::before{
+    content:attr(data-label); display:block; font-size:11px; font-weight:800; letter-spacing:.02em;
+    color:var(--ink-soft); margin-bottom:3px;
+  }
+  table.cmp td.st-adopt, table.cmp td.st-missing, table.cmp td.st-critical, table.cmp td.st-caution,
+  table.cmp td.st-integrate, table.cmp td.st-decide, table.cmp td.st-rebuild, table.cmp td.st-bug{
+    background:transparent !important; border-inline-start:5px solid transparent !important;
+  }
+  table.cmp td.st-adopt{border-inline-start-color:var(--green) !important; background:var(--green-bg) !important;}
+  table.cmp td.st-missing{border-inline-start-color:#D98F86 !important; background:var(--red-bg) !important;}
+  table.cmp td.st-critical{border-inline-start-color:var(--red) !important; background:var(--red-strong-bg) !important;}
+  table.cmp td.st-caution, table.cmp td.st-decide, table.cmp td.st-bug{border-inline-start-color:var(--orange) !important; background:var(--amber-bg) !important;}
+  table.cmp td.st-integrate{border-inline-start-color:var(--navy-3) !important; background:var(--blue-bg) !important;}
+  table.cmp td.st-rebuild{border-inline-start-color:var(--grey) !important; background:var(--grey-bg) !important;}
+  table.cmp td.col-rec{padding:13px 16px 16px;}
+  table.cmp td.col-rec::before{
+    content:"המלצה ליישום"; display:block; font-size:11px; font-weight:800; color:var(--ink-soft); margin-bottom:3px;
+  }
+  .table-scroll{border-radius:var(--radius); overflow:visible;}
+  table.cmp thead th.col-cat, table.cmp thead th.col-feat{position:static;}
+}
+@media (max-width:640px){
+  .brief-grid{grid-template-columns:1fr;}
+  .wrap{padding:0 18px;}
+  h1.title{max-width:none;}
+}
+
+/* ---------------- FOOTER ---------------- */
+footer{padding:34px 0 50px; border-top:1px solid var(--line);}
+footer p{font-size:12.5px; color:var(--ink-soft); margin:0 0 6px; line-height:1.7;}
+footer .fmark{font-family:var(--font-display); font-weight:700; color:var(--navy);}
+
+@media print{
+  .toolbar{position:static; backdrop-filter:none;}
+  table.cmp thead th{position:static;}
+  table.cmp td.col-cat, table.cmp td.col-feat{position:static;}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span>בדיקת תאימות קבצים · בראשית סולאר</span>
+    <h1 class="title">חמישה טפסים. שתי משפחות מוצר.<br><em>קובץ מושלם אחד.</em></h1>
+    <p class="sub">ניתוח מלא של הקוד, המבנה והפערים בין הקבצים שהועלו — כדי לדעת בדיוק מה לשמר, מה לשלב ומה להשליך לפני שבונים את הגרסה הסופית.</p>
+    <div class="meta">
+      <span><b>5</b>&nbsp;קבצים ייחודיים נותחו (6 הועלו · שניים זהים)</span>
+      <span><b>49</b>&nbsp;נקודות השוואה</span>
+      <span><b>15</b>&nbsp;קטגוריות</span>
+      <span><b>7</b>&nbsp;ממצאים קריטיים</span>
+    </div>
+    
+<div class="lineage">
+  <div class="lineage-row main">
+    <span class="lineage-caption">משפחה ראשית — 4 שלבי התפתחות רצופים (90% קוד משותף)</span>
+    <div class="lineage-chain"><div class="lnode" style="--d:0"><span class="lnode-tag">שלב 1</span><span class="lnode-file">טופס_נתוני_צריכה.html</span><span class="lnode-note">בסיסי — בלי כרטיס לקוח, בלי ייצוא</span></div><div class="larrow" style="--d:2">‹</div><div class="lnode" style="--d:3"><span class="lnode-tag">שלב 2</span><span class="lnode-file">טופס_נתוני_צריכה (2).html</span><span class="lnode-note">מיתוג "בראשית" מלא</span></div><div class="larrow" style="--d:5">‹</div><div class="lnode" style="--d:6"><span class="lnode-tag">שלב 3 · v1.0</span><span class="lnode-file">טופס_לאיסוף_נתוני_חשמל.html</span><span class="lnode-note">אקורדיון + ייצוא JSON</span></div><div class="larrow" style="--d:8">‹</div><div class="lnode end" style="--d:9"><span class="lnode-tag">שלב 4 · v3.0</span><span class="lnode-file">Form.html</span><span class="lnode-note">תקופות, הצפנה, חיבור CRM</span></div></div>
+  </div>
+  <div class="lineage-split"><span>לעומת מוצר נפרד לגמרי</span></div>
+  <div class="lineage-row branch">
+    <span class="lineage-caption">משפחה שנייה — טופס עצמאי בתהליך רב-שלבי</span>
+    <div class="lineage-chain">
+      <div class="lnode solo" style="--d:13">
+        <span class="lnode-tag">"טופס 1 מתוך 4"</span>
+        <span class="lnode-file">1_טופס_נתוני_צריכה.html</span>
+        <span class="lnode-note">מנוע חישוב קוט"ש חי + פרופיל שעתי שנתי</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+</header>
+
+
+<section class="briefing" id="briefing">
+  <div class="wrap">
+
+    <div class="section-head"><span class="num">01</span><h2>תקציר מנהלים</h2></div>
+
+    <div class="note-flag">
+      <b>⚠️ הערה על הקלט:</b> הועלו 6 קבצים, אך שניים מהם ("טופס_לאיסוף_נתוני_חשמל.html") זהים ביט-לביט (טביעת אצבע MD5 זהה). בפועל נותחו 5 קבצים ייחודיים בלבד — הם אלה שמופיעים בטבלה שבהמשך הדף.
+    </div>
+
+    <div class="brief-grid">
+      <div class="brief-card">
+        <h3>🔎 הממצא המרכזי</h3>
+        <p>אלו אינן 5 גרסאות של אותו טופס — אלא <b>שתי משפחות מוצר שונות במהותן</b>. ארבעה קבצים הם שלבי התפתחות רצופים של אותו טופס (חולקים כ-90% מהקוד). הקובץ החמישי הוא מוצר נפרד: "טופס 1 מתוך 4", עם מנוע חישוב קוט"ש חי ופרופיל צריכה שעתי שנתי שאינם קיימים בשום קובץ אחר.</p>
+      </div>
+      <div class="brief-card decide">
+        <h3>🧭 החלטה נדרשת לפני האיחוד</h3>
+        <p>האם "הקובץ המושלם" הוא <b>עמוד טופס עצמאי</b> (בהמשך למשפחה הראשונה) או <b>שלב פתיחה בתהליך רב-שלבי</b> (בהמשך לקובץ החמישי)? זו החלטה עסקית שמשפיעה כמעט על כל שורה בטבלה שבהמשך.</p>
+      </div>
+      <div class="brief-card base">
+        <h3>✅ המלצת הבסיס</h3>
+        <p>לאמץ את <b>1_טופס_נתוני_צריכה.html</b> כשלד — מנוע החישוב ופרופיל השעות שלו קשים לשחזור. לשלב לתוכו את התקופות/לוח-עברי, החיבור ל-Google Apps Script וכרטיס הלקוח המלא מ-<b>Form.html</b>.</p>
+      </div>
+    </div>
+
+    <div class="issues">
+      <h3>🚨 ממצאים קריטיים שדורשים תשומת לב מיוחדת</h3>
+      <div class="issue-row"><span class="n">01</span><p>הצפנת הייצוא ב-Form.html משתמשת במפתח AES קבוע וחשוף בקוד המקור הגלוי - זו אינה הצפנה אפקטיבית מול מי שפותח "הצג מקור".</p></div><div class="issue-row"><span class="n">02</span><p>בתוך 1_טופס_נתוני_צריכה.html עצמו קיימת אי-עקביות: התצוגה החיה מחשבת קוט"ש בקירוב, בעוד הייצוא בפועל (hourlySeries) מחשב במדויק - שני מספרים שונים לאותו מכשיר.</p></div><div class="issue-row"><span class="n">03</span><p>קטלוג המכשירים (consumerData) משוכפל ב-4 עותקים נפרדים שכבר סטו זה מזה עם הזמן - זהו שורש הבעיה שהובילה לצורך בהשוואה הזו מלכתחילה.</p></div><div class="issue-row"><span class="n">04</span><p>"שנת לימודים"/"שנת ישיבה" ב-Form.html הן תוויות בלבד, ללא טווחי חודשים מוגדרים בפועל בקוד (בניגוד ל"עונה" בקובץ החמישי שכן מוגדרת).</p></div><div class="issue-row"><span class="n">05</span><p>אף אחד מ-5 הקבצים אינו רספונסיבי אמיתי למסך טלפון - כולם מניחים מסך רחב.</p></div><div class="issue-row"><span class="n">06</span><p>קובץ ההמשך "2_מחשבון_המלצת_מערכת.html", שאליו הקובץ החמישי מפנה ישירות, לא סופק - לא ניתן לאמת תאימות מבנה הנתונים המיוצא אליו.</p></div><div class="issue-row"><span class="n">07</span><p>אין אימות קלט (validation) לפני ייצוא באף אחד מהקבצים - אפשר לייצא עם שם לקוח ריק, ושורות מכשיר לא שלמות נמחקות בשקט מהייצוא בלי להתריע.</p></div>
+    </div>
+
+    <div class="section-head"><span class="num">02</span><h2>מפת 5 הקבצים</h2></div>
+    <table class="filemap">
+      <thead><tr><th>קובץ</th><th>תפקיד במשפחה</th><th>רמת שכלול</th><th>הכי בולט בו</th></tr></thead>
+      <tbody><tr class="accent-basic"><td class="fname">טופס_נתוני_צריכה.html</td><td>משפחה ראשית · שלב 1 (בסיסי ביותר)</td><td class="flevel">נמוכה</td><td>אין כרטיס לקוח, אין קיפול, אין ייצוא כלל</td></tr><tr class="accent-basic"><td class="fname">טופס_נתוני_צריכה (2).html</td><td>משפחה ראשית · שלב 2 (ביניים)</td><td class="flevel">בינונית-נמוכה</td><td>מיתוג "בראשית" מלא, עדיין בלי קיפול/ייצוא</td></tr><tr class="accent-basic"><td class="fname">טופס_לאיסוף_נתוני_חשמל.html</td><td>משפחה ראשית · שלב 3 (v1.0) · הועלה פעמיים, קובץ זהה</td><td class="flevel">בינונית</td><td>אקורדיון + ייצוא JSON, בלי תקופות/אבטחה</td></tr><tr class="accent-advanced"><td class="fname">Form.html</td><td>משפחה ראשית · שלב 4 - הגרסה המתקדמת (v3.0)</td><td class="flevel">גבוהה</td><td>היררכיית הגבלות תלת-רמתית, לוח עברי, הצפנה, חיבור CRM</td></tr><tr class="accent-branch"><td class="fname">1_טופס_נתוני_צריכה.html</td><td>מוצר נפרד · "טופס 1 מתוך 4"</td><td class="flevel">גבוהה, בכיוון שונה</td><td>מחשבון קוט"ש חי, פרופיל שעתי שנתי, ייבוא/ייצוא מלא</td></tr></tbody>
+    </table>
+
+    <div class="section-head"><span class="num">03</span><h2>מקרא הסימונים בטבלה</h2></div>
+    <div class="legend-row"><span class="chip"><span class="sym">✅</span>קיים / מומלץ לאמץ כפי שהוא</span><span class="chip"><span class="sym">❌</span>לא קיים / מומלץ לוותר</span><span class="chip"><span class="sym">⚠️</span>קיים חלקית / בעיה שיש להכיר</span><span class="chip"><span class="sym">🔀</span>מומלץ לשלב תוך שינוי או שיפור</span><span class="chip"><span class="sym">🤔</span>נדרשת החלטה עסקית לפני יישום</span><span class="chip"><span class="sym">🆕</span>אף מימוש קיים אינו מספק - נדרש בנייה מחדש</span><span class="chip"><span class="sym">🚨</span>הערה קריטית שדורשת תשומת לב מיוחדת</span><span class="chip"><span class="sym">🐛</span>באג בפועל שזוהה בקוד הקיים</span></div>
+
+  </div>
+</section>
+
+
+<div class="toolbar" id="toolbar">
+  <div class="wrap inner">
+    <span class="tb-brand">📋 טבלת ההשוואה</span>
+    <div class="tb-search">
+      <input id="tbSearch" type="text" placeholder="חיפוש חופשי בטבלה…">
+      <span class="ic">⌕</span>
+    </div>
+    <div class="tb-cats"><button class="cat-chip active" data-filter="all">הכל</button><button class="cat-chip" data-filter="זהות ומטרה">זהות ומטרה</button><button class="cat-chip" data-filter="עיצוב ותצוגה">עיצוב ותצוגה</button><button class="cat-chip" data-filter="פרטי לקוח">פרטי לקוח</button><button class="cat-chip" data-filter="מיקומים">מיקומים</button><button class="cat-chip" data-filter="קטגוריות וטקסונומיה">קטגוריות וטקסונומיה</button><button class="cat-chip" data-filter="הגבלת ימים">הגבלת ימים</button><button class="cat-chip" data-filter="הגבלת שעות">הגבלת שעות</button><button class="cat-chip" data-filter="תקופה/עונה בשנה">תקופה/עונה בשנה</button><button class="cat-chip" data-filter="חישובים חיים וסיכומים">חישובים חיים וסיכומים</button><button class="cat-chip" data-filter="ייצוא נתונים">ייצוא נתונים</button><button class="cat-chip" data-filter="ייבוא ושמירה">ייבוא ושמירה</button><button class="cat-chip" data-filter="אבטחה והגנות">אבטחה והגנות</button><button class="cat-chip" data-filter="אינטגרציות חיצוניות">אינטגרציות חיצוניות</button><button class="cat-chip" data-filter="חוויית משתמש נוספת">חוויית משתמש נוספת</button><button class="cat-chip" data-filter="איכות קוד ותחזוקה">איכות קוד ותחזוקה</button></div>
+    <span class="tb-count" id="tbCount"></span>
+  </div>
+</div>
+
+
+<section class="table-section" id="table">
+  <div class="wrap">
+    <div class="section-head"><span class="num">04</span><h2>ההשוואה המפורטת</h2></div>
+    <div class="table-scroll">
+      <table class="cmp">
+        <thead><tr><th class="col-cat">קטגוריה</th><th class="col-feat">תכונה / פריט</th><th>טופס_נתוני_צריכה.html<small>הבסיסי</small></th><th>טופס_נתוני_צריכה (2).html<small>גרסת ביניים</small></th><th>טופס_לאיסוף_נתוני_חשמל.html<small>v1.0</small></th><th>Form.html<small>v3.0 · המתקדם</small></th><th>1_טופס_נתוני_צריכה.html<small>"טופס 1 מתוך 4"</small></th><th>המלצה ליישום בקובץ המושלם</th></tr></thead>
+        <tbody><tr data-category="זהות ומטרה"><td class="col-cat"><span class="cat-pill">זהות ומטרה</span></td><td class="col-feat">כותרת הדף (תגית title בראש הקובץ)</td><td class="col-file st-plain" data-label="קובץ בסיסי">מערכת נתוני צריכת חשמל</td><td class="col-file st-plain" data-label="גרסה 2">מערכת איסוף נתוני צריכת חשמל</td><td class="col-file st-plain" data-label="לאיסוף v1.0">מערכת איסוף נתוני צריכת חשמל</td><td class="col-file st-plain" data-label="Form v3.0">מערכת איסוף נתוני צריכת חשמל</td><td class="col-file st-plain" data-label="טופס 1/4">טופס איסוף נתוני צריכת חשמל — בראשית סולאר, עם באדג' "טופס 1 מתוך 4" בגוף העמוד</td><td class="col-rec st-adopt">✅ לאמץ: לנסח לפי הדוגמה של הקובץ החמישי - עם שם החברה בכותרת הטאב, לצורך מיתוג ואיתור קל כשיש כמה טאבים פתוחים.</td></tr><tr data-category="זהות ומטרה"><td class="col-cat"><span class="cat-pill">זהות ומטרה</span></td><td class="col-feat">מיצוב בתוך תהליך רב-שלבי</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ עמוד עצמאי, אין רמז לשלבים נוספים</td><td class="col-file st-missing" data-label="גרסה 2">❌ עמוד עצמאי, אין רמז לשלבים נוספים</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ עמוד עצמאי, אין רמז לשלבים נוספים</td><td class="col-file st-missing" data-label="Form v3.0">❌ עמוד עצמאי, אין רמז לשלבים נוספים</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ מתויג "טופס 1 מתוך 4", עם כפתור "שמור ופתח מחשבון" שמעביר לקובץ 2_מחשבון_המלצת_מערכת.html (לא סופק לבדיקה)</td><td class="col-rec st-decide">🤔 להחליט: זו ההחלטה הארכיטקטונית המרכזית של כל המיזוג - ראו "החלטה נדרשת" בתקציר. מומלץ לאמץ את מודל 4 השלבים, אך יש לוודא קודם תאימות לקבצים 2-4 שלא סופקו.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">ערכת צבעים (משתני CSS)</td><td class="col-file st-plain" data-label="קובץ בסיסי">כחול מודרני עצמאי (#2563eb) - לא תואם למיתוג "בראשית"</td><td class="col-file st-plain" data-label="גרסה 2">כחול-כהה/כתום "בראשית" (#1a3a5f / #f39c12)</td><td class="col-file st-plain" data-label="לאיסוף v1.0">זהה לגרסה 2 (#1a3a5f / #f39c12)</td><td class="col-file st-plain" data-label="Form v3.0">זהה לגרסה 2 (#1a3a5f / #f39c12)</td><td class="col-file st-plain" data-label="טופס 1/4">זהה לשאר + גרדיאנט רקע כחול-טורקיז + לוגו ☀️ בהדר</td><td class="col-rec st-adopt">✅ לאמץ את פלטת "בראשית" המשותפת ל-4 מתוך 5 קבצים כערכה הרשמית, ולשלב את שיפור ההדר הממותג (לוגו+גרדיאנט) מהקובץ החמישי. לנטוש את הכחול העצמאי של הקובץ הבסיסי.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">גופן</td><td class="col-file st-plain" data-label="קובץ בסיסי">Segoe UI / Tahoma / Verdana (גופן מערכת)</td><td class="col-file st-plain" data-label="גרסה 2">Segoe UI / Tahoma / Verdana (גופן מערכת)</td><td class="col-file st-plain" data-label="לאיסוף v1.0">Segoe UI / Tahoma / Verdana (גופן מערכת)</td><td class="col-file st-plain" data-label="Form v3.0">Segoe UI / Tahoma / Verdana (גופן מערכת)</td><td class="col-file st-plain" data-label="טופס 1/4">Heebo מ-Google Fonts (טעינה מרשת)</td><td class="col-rec st-adopt">✅ לאמץ Heebo - קריא משמעותית יותר בעברית. להוסיף מחסנית גופנים מקומית (fallback) למקרה שהטופס נפתח בלי אינטרנט.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">מבנה קיפול - רמת המיקומים</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין קיפול, כל מיקום גלוי תמיד</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין קיפול, כל מיקום גלוי תמיד</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ אקורדיון - מיקום אחד פתוח בו-זמנית (פתיחת מיקום סוגרת אוטומטית את האחרים)</td><td class="col-file st-adopt" data-label="Form v3.0">✅ זהה ל-v1.0 (מיקום אחד פתוח בכל רגע)</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ אקורדיון, אך מאפשר כמה מיקומים פתוחים בו-זמנית (אין סגירה אוטומטית)</td><td class="col-rec st-adopt">✅ לאמץ אקורדיון על פני תצוגה שטוחה - עם 7-9 קטגוריות למיקום, גלילה בלי קיפול אינה שמישה. מומלץ "מיקום אחד פתוח" (v1.0/v3.0) כדי למנוע עמוד ארוך מדי כשיש כמה מיקומים.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">מבנה קיפול - רמת הקטגוריות</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ תמיד גלוי (מסגרת בלבד סביב כל קטגוריה)</td><td class="col-file st-missing" data-label="גרסה 2">❌ תמיד גלוי (כותרת h3 בלבד, בלי מסגרת)</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ אקורדיון - קטגוריה אחת פתוחה בו-זמנית בתוך כל מיקום</td><td class="col-file st-adopt" data-label="Form v3.0">✅ זהה ל-v1.0</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ אקורדיון, אך מאפשר כמה קטגוריות פתוחות בו-זמנית</td><td class="col-rec st-adopt">✅ לאמץ אקורדיון עם קטגוריה אחת פתוחה בכל רגע - אותו הגיון עיצובי כמו רמת המיקומים, עקבי ופחות עמוס.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">רספונסיביות למובייל/טאבלט</td><td class="col-file st-caution" data-label="קובץ בסיסי">⚠️ שורות flex-wrap שמתקפלות, בלי layout ייעודי לטלפון</td><td class="col-file st-missing" data-label="גרסה 2">❌ item-row עם min-width:1000px, גלילה אופקית חובה</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ זהה לגרסה 2 - גלילה אופקית חובה</td><td class="col-file st-missing" data-label="Form v3.0">❌ זהה - גלילה אופקית חובה</td><td class="col-file st-caution" data-label="טופס 1/4">⚠️ grid בלי min-width - נדחס לעמודות צרות מדי בטלפון במקום להישבר לשורות</td><td class="col-rec st-rebuild">🆕 לבנות מחדש: אף קובץ לא פותר מובייל כראוי. נציג שממלא טופס אצל הלקוח עובד לרוב מטלפון/טאבלט. לתכנן שורת-מכשיר שנערמת אנכית מתחת ל-768px, לא טבלה קשיחה.</td></tr><tr data-category="עיצוב ותצוגה"><td class="col-cat"><span class="cat-pill">עיצוב ותצוגה</span></td><td class="col-feat">טיפול בהדפסה (@media print)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין טיפול ייעודי - הדפסה תפיק עמוד לא מעוצב</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין טיפול ייעודי</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין טיפול ייעודי</td><td class="col-file st-adopt" data-label="Form v3.0">✅ חוסם לגמרי - מציג הודעת אזהרה בעברית במקום תוכן</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין טיפול ייעודי</td><td class="col-rec st-decide">🤔 להחליט: אם רוצים סיכום מודפס נקי ללקוח - לבנות תצוגת הדפסה ייעודית במקום לחסום. אם המטרה מניעת העתקה - ראו הערה קריטית בסעיף אבטחה (חסימה כזו לא אפקטיבית).</td></tr><tr data-category="פרטי לקוח"><td class="col-cat"><span class="cat-pill">פרטי לקוח</span></td><td class="col-feat">קיום כרטיס פרטי לקוח</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין בכלל</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין בכלל</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ יש</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש (עם id="clientDetailsCard" ייעודי למילוי אוטומטי מהשרת)</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש</td><td class="col-rec st-adopt">✅ לאמץ - חובה לאיסוף ליד תקין. לתת ל-container את אותו id כמו ב-v3.0 כדי לאפשר חיבור CRM עתידי.</td></tr><tr data-category="פרטי לקוח"><td class="col-cat"><span class="cat-pill">פרטי לקוח</span></td><td class="col-feat">שדות פרטי הלקוח הקיימים</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">שם, טלפון, כתובת, מס' חוזה/מונה, איש קשר ממלא הטופס, הערות (6 שדות)</td><td class="col-file st-plain" data-label="Form v3.0">זהה ל-v1.0 (אותם 6 שדות בדיוק)</td><td class="col-file st-plain" data-label="טופס 1/4">שם, טלפון, כתובת, ממלא הטופס, סוג צרכן (פרטי/בית כנסת/עסק/בי"ס/חקלאות), הערות - ללא מס' חוזה/מונה, עם "סוג צרכן" במקום</td><td class="col-rec st-integrate">🔀 לשלב: לאחד ל-7 שדות - כל 6 השדות של v1.0/v3.0 בתוספת שדה "סוג צרכן" הייחודי לקובץ החמישי (רלוונטי מאוד לענף הסולארי).</td></tr><tr data-category="מיקומים"><td class="col-cat"><span class="cat-pill">מיקומים</span></td><td class="col-feat">הוספה/מחיקה של מיקומים מרובים</td><td class="col-file st-adopt" data-label="קובץ בסיסי">✅ יש</td><td class="col-file st-adopt" data-label="גרסה 2">✅ יש</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ יש</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש</td><td class="col-rec st-adopt">✅ לאמץ כפי שהוא - אין הבדל מהותי בין המימושים בחמשת הקבצים.</td></tr><tr data-category="מיקומים"><td class="col-cat"><span class="cat-pill">מיקומים</span></td><td class="col-feat">עריכת שם המיקום</td><td class="col-file st-plain" data-label="קובץ בסיסי">contenteditable (div) - לא נראה כמו שדה קלט, פחות ברור למשתמש</td><td class="col-file st-plain" data-label="גרסה 2">input רגיל עם גבול מקווקו בפוקוס</td><td class="col-file st-plain" data-label="לאיסוף v1.0">input רגיל, זהה</td><td class="col-file st-plain" data-label="Form v3.0">input רגיל, זהה</td><td class="col-file st-plain" data-label="טופס 1/4">input רגיל עם "תג מספר" עגול לצד השם</td><td class="col-rec st-adopt">✅ לאמץ input רגיל (4 מתוך 5) - contenteditable מבלבל משתמשים שלא יבחינו שניתן לערוך.</td></tr><tr data-category="מיקומים"><td class="col-cat"><span class="cat-pill">מיקומים</span></td><td class="col-feat">תג/badge סיכום צריכה חי למיקום</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - "X קוט"ש/שנה" מתעדכן חי ליד כותרת כל מיקום</td><td class="col-rec st-adopt">✅ לאמץ - משוב מיידי מגדיל אמון ומעורבות בזמן מילוי הטופס.</td></tr><tr data-category="מיקומים"><td class="col-cat"><span class="cat-pill">מיקומים</span></td><td class="col-feat">הגבלת ימים/שעות/תקופה ברמת המיקום כולו</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ רק ברמת המכשיר הבודד</td><td class="col-file st-missing" data-label="גרסה 2">❌ רק ברמת המכשיר הבודד</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ רק ברמת המכשיר הבודד</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש - לכל מיקום כפתורי "הגבלת מיקום" (ימים/שעות/תקופה) עצמאיים</td><td class="col-file st-missing" data-label="טופס 1/4">❌ רק ברמת המכשיר הבודד</td><td class="col-rec st-critical">🚨 הערה קריטית: ב-v3.0 הנתונים האלה נאספים ומיוצאים (locDays/locHours/locPeriods) אך שום קוד לא ממזג אותם עם הגבלת המכשיר בפועל - שדה שהמשתמש ממלא ושום חישוב לא צורך. אם משמרים את הרעיון, לממש בפועל לוגיקת חיתוך בין הרמות; אחרת עדיף להסיר.</td></tr><tr data-category="קטגוריות וטקסונומיה"><td class="col-cat"><span class="cat-pill">קטגוריות וטקסונומיה</span></td><td class="col-feat">טקסונומיית קטגוריות הצרכנים</td><td class="col-file st-plain" data-label="קובץ בסיסי">7 קטגוריות: מיזוג, תאורה, מטבח, תפעול, משרד, כללי, אחר</td><td class="col-file st-plain" data-label="גרסה 2">זהה - אותן 7 קטגוריות</td><td class="col-file st-plain" data-label="לאיסוף v1.0">זהה</td><td class="col-file st-plain" data-label="Form v3.0">זהה</td><td class="col-file st-plain" data-label="טופס 1/4">9 קטגוריות שונות: תאורה, קירור/חימום, בישול/פלטות, כביסה/ניקיון, חימום מים, מחשבים/משרד, קירור מזון, מנועים/שאיבה, אחר</td><td class="col-rec st-decide">🤔 להחליט: שתי הטקסונומיות הגיוניות אך שונות מהותית. יש לבחור מקור אמת יחיד, ולוודא התאמה למבנה שמצפה לו קובץ ההמשך "2_מחשבון" (לא סופק).</td></tr><tr data-category="קטגוריות וטקסונומיה"><td class="col-cat"><span class="cat-pill">קטגוריות וטקסונומיה</span></td><td class="col-feat">מודל השדות לכל סוג מכשיר</td><td class="col-file st-plain" data-label="קובץ בסיסי">רשימה נפתחת קבועה (consumerData) עם 2-3 שדות ייעודיים דינמיים לסוג (מזגן: הספק+כ"ס+כמות; מקרר: הספק+נפח+כמות)</td><td class="col-file st-plain" data-label="גרסה 2">זהה לבסיסי</td><td class="col-file st-plain" data-label="לאיסוף v1.0">זהה</td><td class="col-file st-plain" data-label="Form v3.0">זהה</td><td class="col-file st-plain" data-label="טופס 1/4">מודל גנרי אחיד: שם חופשי + הספק (W) + כמות בלבד, בלי שדות ייעודיים לפי סוג</td><td class="col-rec st-integrate">🔀 לשלב: המודל המפורט מדויק יותר אך מסורבל. המודל הגנרי מהיר יותר אך פחות מדויק. מומלץ שילוב: קטלוג פריטים עם הספק ברירת-מחדל, בלי שדות ייעודיים נוספים שכמעט ואינם משפיעים על חישוב קוט"ש.</td></tr><tr data-category="קטגוריות וטקסונומיה"><td class="col-cat"><span class="cat-pill">קטגוריות וטקסונומיה</span></td><td class="col-feat">קטלוג/פריסטים מהירים להוספת מכשיר</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש ("⚡ בחר מקטלוג") - חלון prompt() עם מכשירים נפוצים לקטגוריה, מפענח וואט אוטומטית משם הפריט (כולל המרת BTU)</td><td class="col-rec st-integrate">🔀 לשלב עם שיפור: הרעיון מצוין ומאיץ מילוי משמעותית, אך prompt() דפדפן גולמי לא מקצועי. לבנות רשימת כפתורים בתוך modal מעוצב במקום prompt().</td></tr><tr data-category="קטגוריות וטקסונומיה"><td class="col-cat"><span class="cat-pill">קטגוריות וטקסונומיה</span></td><td class="col-feat">מחיקת שורת מכשיר בודדת</td><td class="col-file st-adopt" data-label="קובץ בסיסי">✅ יש</td><td class="col-file st-adopt" data-label="גרסה 2">✅ יש</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ יש</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש</td><td class="col-rec st-adopt">✅ לאמץ כפי שהוא - זהה בעיקרון בכל הקבצים.</td></tr><tr data-category="הגבלת ימים"><td class="col-cat"><span class="cat-pill">הגבלת ימים</span></td><td class="col-feat">מנגנון הבחירה (UI)</td><td class="col-file st-plain" data-label="קובץ בסיסי">checkbox ישירות בשורה (ללא חלון קופץ), 8 תיבות כולל "שבת יהודי"</td><td class="col-file st-plain" data-label="גרסה 2">רשימה נפתחת (כל הימים/יום בודד/"custom") הפותחת checkbox מוטמע (לא modal)</td><td class="col-file st-plain" data-label="לאיסוף v1.0">חלון קופץ עם radio (יום בודד/שבת יהודי/כל הימים) + "custom" הפותח checkbox-ים באותו modal</td><td class="col-file st-plain" data-label="Form v3.0">חלון קופץ עם 7 כפתורי toggle לבחירה מרובה + בחר הכל/נקה הכל/ימי חול בלבד</td><td class="col-file st-plain" data-label="טופס 1/4">חלון קופץ עם צ'יפים מוכנים (כל הימים/ימי חול/א-ה/ו-ש/שבת) + 7 checkbox לבחירה מרובה</td><td class="col-rec st-adopt">✅ לאמץ מודל הקובץ החמישי (חלון קופץ + צ'יפי פריסט + checkbox חופשי) - הכי מהיר: קליק אחד על פריסט נפוץ, עם גמישות מלאה בעת הצורך.</td></tr><tr data-category="הגבלת ימים"><td class="col-cat"><span class="cat-pill">הגבלת ימים</span></td><td class="col-feat">אפשרות "שבת יהודי" (שקיעת שישי-צאת שבת, שונה מיום קלנדרי)</td><td class="col-file st-adopt" data-label="קובץ בסיסי">✅ checkbox ייעודי, מובחן מ"יום שבת" הרגיל</td><td class="col-file st-adopt" data-label="גרסה 2">✅ קיים ברשימה, נפרד מ"יום ז'"</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ קיים כ-radio נפרד מ"יום ז'"</td><td class="col-file st-missing" data-label="Form v3.0">❌ אינו קיים - רק 7 ימי שבוע רגילים</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אינו קיים כלל</td><td class="col-rec st-critical">🚨 הערה קריטית: קיים רק ב-3 מתוך 5 קבצים, ובאף אחד הוא לא באמת מחושב שונה מיום שבת רגיל - כרגע רק תווית בייצוא, בלי לוגיקת שקיעה/צאת כוכבים אמיתית. אם קהל היעד כולל בתי כנסת/ישיבות, מומלץ לממש חישוב זמנים הלכתיים אמיתי.</td></tr><tr data-category="הגבלת ימים"><td class="col-cat"><span class="cat-pill">הגבלת ימים</span></td><td class="col-feat">פורמט השדה בקוד (ברירת מחדל בשורה חדשה)</td><td class="col-file st-plain" data-label="קובץ בסיסי">מרומז בלבד, אין ערך התחלתי מפורש</td><td class="col-file st-plain" data-label="גרסה 2">מרומז - "כל הימים" עד שמשנים</td><td class="col-file st-plain" data-label="לאיסוף v1.0">מחרוזת תווית: ['כל הימים']</td><td class="col-file st-plain" data-label="Form v3.0">מערך אינדקסים מספריים: [0,1,2,3,4,5,6]</td><td class="col-file st-plain" data-label="טופס 1/4">מערך אינדקסים מספריים: [0,1,2,3,4,5,6]</td><td class="col-rec st-adopt">✅ לאמץ פורמט מספרי (v3.0/הקובץ החמישי) - קל משמעותית לחישוב ולסינון מאשר מחרוזות תווית.</td></tr><tr data-category="הגבלת שעות"><td class="col-cat"><span class="cat-pill">הגבלת שעות</span></td><td class="col-feat">מנגנון הבחירה (UI)</td><td class="col-file st-plain" data-label="קובץ בסיסי">טווח בודד "מ-עד" (input type=time) - לא ניתן לבחור כמה טווחים ביום</td><td class="col-file st-plain" data-label="גרסה 2">רשימה נפתחת (כל השעות/custom) הפותחת 24 checkbox בעמודה כפולה</td><td class="col-file st-plain" data-label="לאיסוף v1.0">חלון קופץ עם radio (כל השעות/custom) הפותח 24 checkbox ב-grid של 4 עמודות</td><td class="col-file st-plain" data-label="Form v3.0">חלון קופץ עם 24 כפתורי toggle לבחירה מרובה ישירה + בחר הכל/נקה הכל</td><td class="col-file st-plain" data-label="טופס 1/4">חלון קופץ עם צ'יפי פריסט (בוקר/צהריים/ערב/לילה/שינה) + 24 checkbox ב-grid של 6 עמודות</td><td class="col-rec st-adopt">✅ לאמץ מודל הקובץ החמישי - פריסטים לשעות טיפוסיות ("ערב" 17-22) חוסכים המון קליקים לעומת סימון 24 תיבות ידנית.</td></tr><tr data-category="הגבלת שעות"><td class="col-cat"><span class="cat-pill">הגבלת שעות</span></td><td class="col-feat">פורמט השדה בקוד (ברירת מחדל בשורה חדשה)</td><td class="col-file st-plain" data-label="קובץ בסיסי">ריק - המשתמש חייב למלא טווח</td><td class="col-file st-plain" data-label="גרסה 2">מרומז - "כל השעות" עד שמשנים</td><td class="col-file st-plain" data-label="לאיסוף v1.0">מחרוזת תווית: ['כל שעות היום']</td><td class="col-file st-plain" data-label="Form v3.0">מערך אינדקסים מספריים [0..23]</td><td class="col-file st-plain" data-label="טופס 1/4">מערך אינדקסים מספריים [0..23]</td><td class="col-rec st-adopt">✅ לאמץ פורמט מספרי - עקבי עם ההמלצה המקבילה בהגבלת הימים.</td></tr><tr data-category="תקופה/עונה בשנה"><td class="col-cat"><span class="cat-pill">תקופה/עונה בשנה</span></td><td class="col-feat">קיום מנגנון תקופתי בכלל</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין בכלל</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין בכלל</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין בכלל</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש - המנגנון המתקדם ביותר מבין כל הקבצים</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - מנגנון "עונה" פשוט יותר, אך מחובר בפועל לחישוב</td><td class="col-rec st-adopt">✅ חובה לאמץ - חיוני לדיוק בחישוב צריכה (מזגן/דוד לא פועלים באותה עצימות בחורף ובקיץ).</td></tr><tr data-category="תקופה/עונה בשנה"><td class="col-cat"><span class="cat-pill">תקופה/עונה בשנה</span></td><td class="col-feat">סוגי תקופה נתמכים</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">—</td><td class="col-file st-plain" data-label="Form v3.0">5 סוגים: כל השנה / שנת לימודים (ספט-יוני) / שנת ישיבה (חורף/קיץ/אלול) / טווח קלנדרי מותאם / טווח עברי מותאם עם חודש עברי</td><td class="col-file st-plain" data-label="טופס 1/4">5 סוגים שונים: כל השנה / קיץ בלבד / חורף בלבד / מעבר (מרץ-מאי, אוק-נוב) / כל השנה חוץ מקיץ</td><td class="col-rec st-integrate">🔀 לשלב: "העונה" בקובץ החמישי מוגדרת בקוד עם חודשים קונקרטיים (SEASON_MONTHS) וניתנת לחישוב מיידי; "שנת לימודים"/"שנת ישיבה" ב-v3.0 הן כרגע רק תוויות בלי טווחי חודשים בקוד. יש להגדיר בפועל אילו חודשים מהוות אותן ולהוסיפן ל-SEASON_MONTHS.</td></tr><tr data-category="תקופה/עונה בשנה"><td class="col-cat"><span class="cat-pill">תקופה/עונה בשנה</span></td><td class="col-feat">תמיכה בלוח שנה עברי (חודשים עבריים, טווחים)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש - 12 חודשים עבריים + בחירת יום בחודש, עם אפשרות למספר טווחים</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-decide">🤔 להחליט: תכונה ייחודית, רלוונטית מאוד לקהל דתי/ישיבתי, אך מוסיפה מורכבות פיתוח (המרת תאריך עברי↔לועזי). אם קהל יעד משמעותי דורש - לשלב; אחרת אפשר להתחיל בלעדיה.</td></tr><tr data-category="חישובים חיים וסיכומים"><td class="col-cat"><span class="cat-pill">חישובים חיים וסיכומים</span></td><td class="col-feat">חישוב קוט"ש לכל מכשיר בזמן אמת</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין שום חישוב</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין שום חישוב</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין שום חישוב</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין שום חישוב - מתבצע (אם בכלל) מחוץ לקובץ, ב"מחשבון הסולארי"</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - calcDeviceKwh() מציג קוט"ש/שנה חי ליד כל שורת מכשיר, מתעדכן מיידית</td><td class="col-rec st-adopt">✅ לאמץ - לב הערך המוסף של הקובץ החמישי, הופך את הטופס לכלי אינטראקטיבי ולא רק שאלון. הליבה קירוב (ראו שורה הבאה) ודורשת שדרוג.</td></tr><tr data-category="חישובים חיים וסיכומים"><td class="col-cat"><span class="cat-pill">חישובים חיים וסיכומים</span></td><td class="col-feat">דיוק החישוב - קירוב מול חישוב מדויק</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">—</td><td class="col-file st-plain" data-label="Form v3.0">—</td><td class="col-file st-caution" data-label="טופס 1/4">⚠️ calcDeviceKwh() מקרב ימים-בחודש לפי יחס (ימים/7)×ימים-נבחרים, בעוד generateHourlySeries() (המזין את הייצוא) עובר על 365 תאריכים אמיתיים ומחשב מדויק. שתי הפונקציות עלולות להניב מספר שונה במעט לאותו מכשיר.</td><td class="col-rec st-bug">🐛 באג לתיקון לפני שילוב: לאחד לפונקציית חישוב יחידה (מומלץ להסתמך על הגישה המדויקת של generateHourlySeries) כך שהמספר המוצג חי תמיד יהיה זהה למיוצא בפועל.</td></tr><tr data-category="חישובים חיים וסיכומים"><td class="col-cat"><span class="cat-pill">חישובים חיים וסיכומים</span></td><td class="col-feat">סרגל סיכום כולל (מיקומים/מכשירים/קוט"ש יום/שנה)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - מתעדכן אוטומטית עם כל שינוי בטופס</td><td class="col-rec st-adopt">✅ לאמץ - תמונת מצב מיידית לפני שליחה, מעודד בדיקת סבירות עוד בזמן המילוי.</td></tr><tr data-category="חישובים חיים וסיכומים"><td class="col-cat"><span class="cat-pill">חישובים חיים וסיכומים</span></td><td class="col-feat">יצירת סדרה שעתית שנתית (8,760 שעות) לפרופיל עומס</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - generateHourlySeries() מייצר [תאריך-שעה, קוט"ש] לכל שעה בשנה, לפי חיתוך ימים/שעות/עונה של כל מכשיר</td><td class="col-rec st-adopt">✅ לאמץ במלואו - זהו בדיוק הקלט הדרוש לתכנון וסיזינג נכון של מערכת סולארית. התכונה החשובה ביותר עסקית מבין כל הקבצים.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">קיום פונקציית ייצוא</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין בכלל</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין בכלל</td><td class="col-file st-adopt" data-label="לאיסוף v1.0">✅ יש</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש</td><td class="col-rec st-adopt">✅ חובה - טופס איסוף נתונים ללא יכולת ייצוא הוא חסר תכלית מעשית.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">פורמט קובץ הייצוא</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">JSON גולמי קריא (application/json), formVersion 1.0</td><td class="col-file st-plain" data-label="Form v3.0">JSON מוצפן (AES-GCM) בבסיס-64, בקובץ .json.enc, formVersion 3.0</td><td class="col-file st-plain" data-label="טופס 1/4">JSON גולמי קריא, fileType='bereshit-solar-v2', version 2.0</td><td class="col-rec st-critical">🚨 ראו הערה קריטית באבטחה - ההצפנה ב-v3.0 משתמשת במפתח קבוע חשוף בקוד, ולכן אינה הצפנה אמיתית. אם אין דרישה רגולטורית - מומלץ לוותר ולהשתמש ב-JSON גולמי כמו בקובץ החמישי, קל יותר לדבג ולתחזק.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">תוכן קובץ הייצוא</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">clientDetails + locations (consumers גולמיים: קטגוריה/סוג/שדות/ימים/שעות)</td><td class="col-file st-plain" data-label="Form v3.0">זהה ל-v1.0, + periods, + נתוני locDays/catDays/locHours/catHours/locPeriods/catPeriods גולמיים</td><td class="col-file st-plain" data-label="טופס 1/4">client + rawConsumers (עם קוט"ש מחושב לכל מכשיר) + hourlySeries (8,760 נקודות) + annualTotal + סיכום למיקום</td><td class="col-rec st-integrate">🔀 לשלב: לשמור את מבנה הקובץ החמישי כבסיס (היחיד עם סדרת השעות הקריטית לחישוב סולארי), ולהוסיף אליו את שדות התקופה/לוח-עברי המפורטים מ-v3.0.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">מוסכמת שם קובץ הייצוא</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">נתוני_צריכה_{שם_לקוח}_{תאריך}.json</td><td class="col-file st-plain" data-label="Form v3.0">נתוני_צריכה_{שם_לקוח}_{תאריך}.json.enc</td><td class="col-file st-plain" data-label="טופס 1/4">נתוני_צריכה_{שם_לקוח}_{תאריך}.json</td><td class="col-rec st-adopt">✅ לאמץ כפי שהוא - עקבי ותקין בשלושת הקבצים שיש בהם ייצוא.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">תיוג גרסת קובץ (formVersion / version / fileType)</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">'1.0'</td><td class="col-file st-plain" data-label="Form v3.0">'3.0'</td><td class="col-file st-plain" data-label="טופס 1/4">'2.0' עם fileType='bereshit-solar-v2'</td><td class="col-rec st-adopt">✅ לאמץ ולתקנן: להתחיל את "הקובץ המושלם" מגרסה 1.0 חדשה, ולשמור בדיקת fileType כמו בקובץ החמישי כדי שכלי ההמשך ידע לדחות קבצים לא תואמים.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">חותמת זמן בקובץ הייצוא</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-plain" data-label="לאיסוף v1.0">exportedAt: תאריך+שעה מלאים (ISO)</td><td class="col-file st-plain" data-label="Form v3.0">exportedAt: תאריך+שעה מלאים (ISO)</td><td class="col-file st-plain" data-label="טופס 1/4">generatedAt: תאריך בלבד (YYYY-MM-DD)</td><td class="col-rec st-adopt">✅ לאמץ תאריך+שעה מלאים (v1.0/v3.0) - מדויק יותר למעקב ולדיבוג מאשר תאריך בלבד.</td></tr><tr data-category="ייצוא נתונים"><td class="col-cat"><span class="cat-pill">ייצוא נתונים</span></td><td class="col-feat">"שמור ופתח" - מעבר ישיר לכלי המשך</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - שומר ל-localStorage ופותח 2_מחשבון_המלצת_מערכת.html בטאב חדש</td><td class="col-rec st-decide">🤔 תלוי בהחלטה הארכיטקטונית. אם עוברים למודל 4 השלבים - תכונה חיונית. שימו לב שהיא תלויה בקובץ שלא סופק, ושפתיחה מנתיב אחר עלולה להישבר.</td></tr><tr data-category="ייבוא ושמירה"><td class="col-cat"><span class="cat-pill">ייבוא ושמירה</span></td><td class="col-feat">ייבוא קובץ JSON קיים חזרה לטופס</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין יכולת ייבוא כלל</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - importFromFile()/handleImportFile() בונה מחדש את כל הטופס (לקוח+מיקומים+קטגוריות+מכשירים) מקובץ JSON תקין</td><td class="col-rec st-adopt">✅ לאמץ - קריטי לתרחיש "התחלתי למלא, שמרתי, רוצה להמשיך אחר כך", ומאפשר לנציג לשלוח טיוטה ללקוח לעריכה עצמית.</td></tr><tr data-category="ייבוא ושמירה"><td class="col-cat"><span class="cat-pill">ייבוא ושמירה</span></td><td class="col-feat">שחזור אוטומטי בטעינת העמוד (localStorage)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ רענון עמוד = איבוד כל הנתונים</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - בודק localStorage בטעינה ומציע לשחזר טופס שמור קודם</td><td class="col-rec st-adopt">✅ לאמץ - הגנה בסיסית וחשובה מפני איבוד עבודה בשוגג (רענון, סגירת טאב בטעות).</td></tr><tr data-category="אבטחה והגנות"><td class="col-cat"><span class="cat-pill">אבטחה והגנות</span></td><td class="col-feat">הצפנת תוכן הייצוא</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ AES-GCM עם מפתח קבוע "BereshitSolarSecureKey1234567890" כתוב וגלוי בקוד המקור</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-critical">🚨 הערה קריטית: זו לא הצפנה אפקטיבית - המפתח חשוף בקוד ה-JS שרץ בדפדפן, כל מי שיפתח "הצג מקור" יכול לפענח תוך שניות. אם המטרה מניעת שיתוף מקרי - זה מספיק; אם חיסיון אמיתי מול מתחרים - נדרשת הצפנת שרת או מפתח שאינו בקוד הלקוח. לוודא מול בעל המוצר מה בדיוק המטרה.</td></tr><tr data-category="אבטחה והגנות"><td class="col-cat"><span class="cat-pill">אבטחה והגנות</span></td><td class="col-feat">חסימת קליק ימני / תפריט הקשר</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-missing">❌ לוותר: נעקף בקלות (השבתת JS, כלי פיתוח), פוגע בפעולות לגיטימיות (פתיחת קישור בטאב חדש), לא מספק הגנה אמיתית.</td></tr><tr data-category="אבטחה והגנות"><td class="col-cat"><span class="cat-pill">אבטחה והגנות</span></td><td class="col-feat">חסימת קיצורי מקלדת (Ctrl+C / Ctrl+P / Ctrl+S)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-missing">❌ לוותר, מאותה סיבה - הגנה קוסמטית שנעקפת בקלות, ועלולה לתסכל מי שרוצה לשמור טיוטה מהרגל ב-Ctrl+S.</td></tr><tr data-category="אבטחה והגנות"><td class="col-cat"><span class="cat-pill">אבטחה והגנות</span></td><td class="col-feat">חסימת אירוע העתקה ומניעת סימון טקסט</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש (user-select:none על body, מותר רק בשדות קלט)</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-missing">❌ לוותר על user-select:none גורף - אם רוצים להגן על קטלוג המכשירים, עדיף בצד שרת ולא לפגוע בחוויית כלל שדות הטופס.</td></tr><tr data-category="אינטגרציות חיצוניות"><td class="col-cat"><span class="cat-pill">אינטגרציות חיצוניות</span></td><td class="col-feat">חיבור ל-Google Apps Script (משיכת נתוני לקוח קיים)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-adopt" data-label="Form v3.0">✅ יש - קורא clientId שהוזרק דרך תבנית שרת, קורא ל-google.script.run.getCustomerData(id), וממלא אוטומטית שם/טלפון/כתובת/מס' חוזה/איש קשר. יש נתיב גיבוי דרך google.script.url.getLocation</td><td class="col-file st-missing" data-label="טופס 1/4">❌ אין</td><td class="col-rec st-adopt">✅ לאמץ - ערך עסקי גבוה (חוסך הקלדה חוזרת ללקוח קיים במערכת), ובלבד שהטופס המאוחד ירוץ כ-Google Apps Script Web App.</td></tr><tr data-category="אינטגרציות חיצוניות"><td class="col-cat"><span class="cat-pill">אינטגרציות חיצוניות</span></td><td class="col-feat">קריאות רשת חיצוניות נוספות (fetch / XHR / API)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ לא נמצא</td><td class="col-file st-missing" data-label="גרסה 2">❌ לא נמצא</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ לא נמצא</td><td class="col-file st-missing" data-label="Form v3.0">❌ לא נמצא (רק google.script.run הפנימי)</td><td class="col-file st-missing" data-label="טופס 1/4">❌ לא נמצא (רק טעינת גופן מ-Google Fonts)</td><td class="col-rec st-plain">מידע בלבד - אין קריאות שרת נוספות באף קובץ.</td></tr><tr data-category="חוויית משתמש נוספת"><td class="col-cat"><span class="cat-pill">חוויית משתמש נוספת</span></td><td class="col-feat">הודעות משוב מוקפצות (Toast)</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ אין</td><td class="col-file st-missing" data-label="Form v3.0">❌ אין</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - הודעת הצלחה צפה (למשל "קובץ JSON נשמר בהצלחה!") שנעלמת אוטומטית</td><td class="col-rec st-adopt">✅ לאמץ - משוב חזותי מיידי חשוב סביב פעולות ייצוא/ייבוא/שמירה.</td></tr><tr data-category="חוויית משתמש נוספת"><td class="col-cat"><span class="cat-pill">חוויית משתמש נוספת</span></td><td class="col-feat">אנימציית פתיחה/סגירה של חלונות קופצים</td><td class="col-file st-missing" data-label="קובץ בסיסי">❌ אין (אין חלונות קופצים בקובץ)</td><td class="col-file st-missing" data-label="גרסה 2">❌ אין (אין חלונות קופצים בקובץ)</td><td class="col-file st-missing" data-label="לאיסוף v1.0">❌ הופעה/היעלמות מיידית (display:none/flex)</td><td class="col-file st-missing" data-label="Form v3.0">❌ זהה - הופעה מיידית</td><td class="col-file st-adopt" data-label="טופס 1/4">✅ יש - אנימציית הגדלה+דהייה (keyframes) בפתיחת modal</td><td class="col-rec st-adopt">✅ לאמץ - שינוי CSS מינורי בעלות פיתוח נמוכה שמשפר משמעותית את תחושת הגימור המקצועית.</td></tr><tr data-category="איכות קוד ותחזוקה"><td class="col-cat"><span class="cat-pill">איכות קוד ותחזוקה</span></td><td class="col-feat">מיקום קטלוג המכשירים (consumerData) בקוד</td><td class="col-file st-plain" data-label="קובץ בסיסי">מוטמע כאובייקט JS בתוך הקובץ</td><td class="col-file st-plain" data-label="גרסה 2">זהה - עותק עצמאי</td><td class="col-file st-plain" data-label="לאיסוף v1.0">זהה - עותק עצמאי</td><td class="col-file st-plain" data-label="Form v3.0">זהה - עותק עצמאי</td><td class="col-file st-plain" data-label="טופס 1/4">מוטמע כמערך CATEGORIES שונה לחלוטין, ללא זיקה ל-consumerData של שאר הקבצים</td><td class="col-rec st-rebuild">🆕 לבנות מחדש: זהו שורש הבעיה שהובילה לצורך בהשוואה הזו - 5 עותקים נפרדים שהתפצלו עם הזמן. להוציא את הקטלוג ל-object JS יחיד בראש הקובץ (מקור אמת בודד), כך שעדכון עתידי ייעשה במקום אחד בלבד.</td></tr><tr data-category="איכות קוד ותחזוקה"><td class="col-cat"><span class="cat-pill">איכות קוד ותחזוקה</span></td><td class="col-feat">אימות קלט לפני ייצוא (Validation)</td><td class="col-file st-plain" data-label="קובץ בסיסי">—</td><td class="col-file st-plain" data-label="גרסה 2">—</td><td class="col-file st-caution" data-label="לאיסוף v1.0">⚠️ אין אימות - אפשר לייצא עם שם לקוח ריק. שורת מכשיר בלי סוג נבחר נמחקת בשקט מהייצוא</td><td class="col-file st-caution" data-label="Form v3.0">⚠️ זהה - אין אימות, מחיקה שקטה של שורות לא שלמות</td><td class="col-file st-caution" data-label="טופס 1/4">⚠️ אין אימות - אפשר לייצא עם שם לקוח ריק</td><td class="col-rec st-rebuild">🆕 לבנות מחדש: להוסיף בדיקות מינימליות לפני ייצוא - שם לקוח כשדה חובה, ואזהרה גלויה אם קיימת שורת מכשיר לא שלמה שעומדת להימחק בשקט.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="no-results" id="noResults" style="display:none;">לא נמצאו שורות תואמות לחיפוש/הסינון הנוכחיים.</div>
+  </div>
+</section>
+
+
+<footer>
+  <div class="wrap">
+    <p><span class="fmark">בראשית סולאר</span> · השוואת 5 טפסי איסוף נתוני צריכת חשמל</p>
+    <p>המסמך נבנה מניתוח קוד ישיר של הקבצים שהועלו בלבד. שני קבצים בשם זהה שהועלו על-ידי המשתמש התגלו כזהים ביט-לביט ומוזגו לרשומה אחת. קובץ ההמשך "2_מחשבון_המלצת_מערכת.html" שאליו מפנה אחד הקבצים לא סופק ולכן לא נבדק.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var rows = Array.prototype.slice.call(document.querySelectorAll('table.cmp tbody tr'));
+  var searchInput = document.getElementById('tbSearch');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.cat-chip'));
+  var countEl = document.getElementById('tbCount');
+  var noResults = document.getElementById('noResults');
+  var total = rows.length;
+  var activeCat = 'all';
+
+  function apply(){
+    var q = (searchInput.value || '').trim().toLowerCase();
+    var shown = 0;
+    rows.forEach(function(tr){
+      var matchesCat = (activeCat === 'all') || (tr.getAttribute('data-category') === activeCat);
+      var matchesText = !q || tr.textContent.toLowerCase().indexOf(q) !== -1;
+      var show = matchesCat && matchesText;
+      tr.style.display = show ? '' : 'none';
+      if(show) shown++;
+    });
+    countEl.innerHTML = 'מציג <b>' + shown + '</b> מתוך ' + total + ' שורות השוואה';
+    noResults.style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      activeCat = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+
+  searchInput.addEventListener('input', apply);
+  apply();
+})();
+</script>
+</body>
+</html>

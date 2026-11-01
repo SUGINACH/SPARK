@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת ה-CRM לאיש המכירות (Index) — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 05 מתוך 6 · בראשית סולאר</div>
+    <h1>מערכת ה-CRM לאיש המכירות (Index)</h1>
+    <p class="lede">נקודת הכניסה שמחברת בין כל רכיבי המערכת — טופס, מחשבון, והצעת מחיר. כאן מרוכזים באגי האינטגרציה החמורים ביותר בפרויקט, כולל מנוע חישוב כפול וגשר נתונים שבור.</p>
+    <div class="hero-meta"><div><b>1</b>קובץ קוד שנשמר</div><div><b>4</b>נתיבי ניתוב</div><div><b>1</b>באג קריטי מתוקן בהחלטה</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip current" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תפקיד ותפוקה</a></li><li><a href="#p2">2 · קובץ הקוד שנשמר</a></li><li><a href="#p3">3 · ניתוב הדפים — doGet</a></li><li><a href="#p4">4 · הבעיה הקריטית: מנוע חישוב מוטמע כפול</a></li><li><a href="#p5">5 · גשר הנתונים השבור — localStorage מול Same-Origin</a></li><li><a href="#p6">6 · הפתרון הארכיטקטוני שהוחלט</a></li><li><a href="#p7">7 · כפילות באיסוף נתוני צרכנים</a></li><li><a href="#p8">8 · פעולות נדרשות</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תפקיד ותפוקה</h2></div>
+  
+  
+<p>נקודת הכניסה הראשית של איש המכירות למערכת כולה — מסך הבית שממנו הוא בוחר לקוח, פותח עבורו טופס נתונים, מריץ חישוב, ומדפיס הצעת מחיר. זהו למעשה ה"CRM" הפנימי הקל של בראשית סולאר, בנוי על Google Apps Script עם Google Sheets כמסד נתונים.</p>
+<div class="callout-strip">מסמך זה, יחד עם מסמכים 01–04, מכסה את כל חמשת קבצי המערכת. זהו הקובץ ה"מחבר" ביניהם בפועל — ולכן גם המקום שבו מרוכזים רוב באגי האינטגרציה שתועדו.</div>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>קובץ הקוד שנשמר</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge success">הקובץ היחיד — אומת ישירות מול הארכיטקטורה המתועדת</span>
+  <div><div class="fname">שיחה קלוד 3 - Index.html</div><div class="fnote">45KB. אומת בבדיקת קוד ישירה: מכיל את שלושת דפוסי הניתוב (<code class="inline">?page=form&amp;clientId=...</code>, <code class="inline">?page=print</code>, <code class="inline">?page=calculator</code>) המתוארים במפורש במסמך המאוחד (מסמך 00).</div></div>
+</li>
+</ul>
+
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>ניתוב הדפים — doGet</h2></div>
+  <p class="part-sub">מנגנון הניתוב המרכזי שמחבר את כל רכיבי המערכת יחד.</p>
+  
+<p>הקובץ פועל כ-Web App יחיד של Google Apps Script, עם פונקציית <code class="inline">doGet(e)</code> בצד השרת שמנתבת לפי פרמטר <code class="inline">page</code> ב-URL:</p>
+<pre>function doGet(e) {
+  const page = e.parameter.page;
+  if (page === 'form')       return renderPage('Form', e.parameter.clientId);
+  if (page === 'calculator') return renderPage('Calculator');
+  if (page === 'print')      return renderPage('PrintQuote');
+  return renderPage('Index'); // ברירת מחדל: מסך הבית לאיש המכירות
+}</pre>
+<table class="compact">
+<tr><th>נתיב</th><th>עמוד</th><th>מסמך רלוונטי</th></tr>
+<tr><td><code class="inline">?page=form&amp;clientId=X</code></td><td>Form.html — טופס איסוף נתונים</td><td>04</td></tr>
+<tr><td><code class="inline">?page=calculator</code></td><td>Calculator.html — מחשבון עומק</td><td>01</td></tr>
+<tr><td><code class="inline">?page=print</code></td><td>PrintQuote.html — הצעת מחיר</td><td>03</td></tr>
+<tr><td>(ברירת מחדל)</td><td>Index.html עצמו — מסך CRM</td><td>מסמך זה</td></tr>
+</table>
+
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>הבעיה הקריטית: מנוע חישוב מוטמע כפול</h2></div>
+  
+  
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">מנוע חישוב פיננסי מוטמע (calcView), לא מסונכרן עם המחשבון החיצוני</span></div><span class="badge danger">הוחלט להסיר</span></div>
+  <p>בתוך Index.html קיים בלוק קוד מוטמע (מקור: שורות 203–291) שמכיל <strong>עותק עצמאי</strong> של מנוע החישוב הפיננסי — נפרד לגמרי מהמחשבון החיצוני המתועד במסמך 01. כשמתקנים באג או מעדכנים נוסחה במחשבון החיצוני, העותק המוטמע כאן <strong>לא</strong> מתעדכן אוטומטית, ונוצר מצב שבו שני חלקים של אותה מערכת נותנים תוצאות שונות לאותו לקוח.</p>
+</div>
+<div class="callout-strip"><b>ההחלטה שהתקבלה במסמך המאוחד:</b> למחוק את calcView במלואו מ-Index.html, כך שה-CRM יישאר ממוקד בניהול לקוחות בלבד, ויסתמך <strong>אך ורק</strong> על המחשבון החיצוני האחד (מסמך 01) לכל חישוב פיננסי — מקור אמת יחיד.</div>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>גשר הנתונים השבור</h2></div>
+  <p class="part-sub">מדוע localStorage נכשל בין דפי Google Apps Script.</p>
+  
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">localStorage לא עובד בין דפים ב-Google Apps Script</span></div><span class="badge danger">כשל ארכיטקטוני מתועד</span></div>
+  <p>השיטה המקורית להעברת תוצאות מהמחשבון בחזרה ל-Index הייתה: המחשבון שומר <code class="inline">localStorage.setItem('transferredCalcData', ...)</code> ונסגר; Index קורא מ-localStorage. <strong>זה נכשל באופן שיטתי</strong> — ב-Google Apps Script כל עמוד web-app מוגש בפועל מתת-דומיין <code class="inline">googleusercontent.com</code> נפרד (לעיתים בתוך iframe), ומדיניות המקור-הזהה (Same-Origin Policy) של הדפדפן <strong>חוסמת שיתוף localStorage</strong> בין שני "מקורות" שונים — גם אם שניהם טכנית "אותה מערכת". התוצאה בפועל: אובדן נתונים אקראי, תלוי-דפדפן, קשה לשחזור ולדיבוג.</p>
+</div>
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>הפתרון הארכיטקטוני שהוחלט</h2></div>
+  
+  
+<div class="card decision">
+  <div class="card-head"><div><span class="card-title">מעבר לפרמטרי URL + שמירה ישירה לשרת</span></div><span class="badge decision">הפתרון שהוחלט</span></div>
+  <p>במקום להסתמך על שיתוף מצב בצד הלקוח (Client-side), הארכיטקטורה החדשה:</p>
+<ol>
+<li>Index פותח את המחשבון עם נתוני הלקוח <strong>כפרמטרי URL</strong> — למשל <code class="inline">?clientId=123&amp;roofArea=100</code> — במקום לצפות שהמחשבון "יזכור" משהו מוקדם יותר.</li>
+<li>בסיום החישוב, המחשבון שולח את התוצאה <strong>ישירות לשרת</strong> באמצעות <code class="inline">google.script.run.saveCustomerData(payload)</code> — לא דרך הדפדפן של הלקוח בכלל.</li>
+<li>Index (ו-PrintQuote) שולפים את התוצאה מהשרת/מ-Google Sheets לפי <code class="inline">clientId</code>, במקום לחכות שהיא "תעבור" מדף לדף.</li>
+</ol>
+<p>הגישה הזו גם פותרת את בעיית מגבלת 5MB של localStorage שתועדה במסמך 01 (חלק 9) עבור מערכי צריכה שעתיים גדולים.</p>
+</div>
+</section><section class="part" id="p7">
+  <div class="part-head"><span class="part-num">07</span><h2>כפילות באיסוף נתוני צרכנים</h2></div>
+  
+  
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">Index אוסף נתוני צרכנים בצורה בסיסית, Form אוסף בעושר — יש לאחד כיוון</span></div><span class="badge warning">כפילות מתועדת</span></div>
+  <p>ל-Index.html יש יכולת בסיסית משלו להזין פרטי צרכן/לקוח, במקביל ליכולת העשירה הרבה יותר של Form.html (מסמך 04: מכשירים, מיקומים, שעות הפעלה). כאשר איש מכירות ממלא נתונים ישירות ב-Index ולא מפנה את הלקוח לטופס המלא, המחשבון מקבל תמונה חלקית בהרבה. <strong>כיוון מומלץ:</strong> להפוך את Index ל"ניתוב" בלבד — כל הזנת נתוני צריכה מפורטת מנותבת תמיד ל-Form.html, ו-Index משמש רק לניהול רשימת לקוחות וסטטוסים.</p>
+</div>
+</section><section class="part" id="p8">
+  <div class="part-head"><span class="part-num">08</span><h2>פעולות נדרשות</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge danger">עדיפות עליונה</span>
+  <div><div class="fname">מחיקת calcView המוטמע</div><div class="fnote">הסרת שורות 203–291 (המנוע הכספי המוטמע) מ-Index.html במלואן.</div></div>
+</li>
+<li><span class="ftag badge danger">עדיפות עליונה</span>
+  <div><div class="fname">מימוש google.script.run.saveCustomerData</div><div class="fnote">בניית פונקציית השרת שמקבלת את תוצאות המחשבון ושומרת ב-Sheets לפי clientId, ומחליפה את מנגנון ה-localStorage.</div></div>
+</li>
+<li><span class="ftag badge warning">שיפור UX ודיוק נתונים</span>
+  <div><div class="fname">ניתוב מלא לטופס העשיר במקום קלט בסיסי ב-Index</div><div class="fnote">לוודא שכל נתיב הזנת-נתונים ב-Index מוביל בפועל ל-Form.html ולא משכפל שדות בסיסיים.</div></div>
+</li>
+</ul>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>

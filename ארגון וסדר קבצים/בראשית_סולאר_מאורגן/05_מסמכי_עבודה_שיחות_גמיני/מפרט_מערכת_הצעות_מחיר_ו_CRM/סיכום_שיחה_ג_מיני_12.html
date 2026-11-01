@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסמך אפיון והעברת פרויקט - מחולל הצעות מחיר בראשית סולאר</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #005a70;
+            border-bottom: 2px solid #00798c;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #00798c;
+            margin-top: 30px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2a9d8f;
+        }
+        p, li {
+            font-size: 11pt;
+        }
+        ul {
+            margin-bottom: 15px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .highlight {
+            background-color: #eef2f6;
+            padding: 10px;
+            border-left: 4px solid #00798c;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>מסמך מסירה (Handover) - מחולל הצעות מחיר סולאריות</h1>
+    <p><strong>תאריך עדכון אחרון:</strong> יולי 2026</p>
+
+    <h2>1. תיאור כללי של הפרויקט</h2>
+    <p>
+        הפרויקט הוא אפליקציית דף-יחיד (Single Page Application) מבוססת HTML, CSS ו-Vanilla JavaScript. המטרה היא כלי פנימי עבור נציגי המכירות והמהנדסים של חברת <strong>"בראשית סולאר"</strong> ליצירת הצעות מחיר מורכבות למערכות פוטו-וולטאיות (סולאריות) ומערכות אגירה, ייצואן לקובץ PDF (בגודל A4 מותאם להדפסה), והצגת מודל כלכלי מלא ללקוח.
+    </p>
+    <p>
+        הבעיה שהמערכת פותרת: יצירת מסמך אחיד, מעוצב, נטול שגיאות חישוב, שניתן לערוך אותו בזמן אמת (Live Preview) ללא צורך בתוכנות עריכה מורכבות, וכולל בתוכו את כל התנאים המסחריים, הטכניים והמשפטיים בצורה מודולרית.
+    </p>
+
+    <h2>2. רשימת היכולות והפיצ'רים</h2>
+    <ul>
+        <li><strong>סנכרון נתונים בזמן אמת:</strong> הזנת נתוני לקוח (שם, כתובת, איש קשר, תאריך, סוג מערכת) בסרגל הצידי משתקפת באופן מיידי בעמוד השער (עמוד 1) ובטקסטים הרלוונטיים.</li>
+        <li><strong>ניהול נראות מודולרי:</strong> שימוש בתיבות סימון (Checkboxes) להצגה או הסתרה של עמודים שלמים (למשל: דף אודות, דף תנאי תשלום) או שורות ספציפיות בטבלאות (למשל: הסתרת ממליץ ספציפי, הסתרת שורת החרגה של "ארונות מניה").</li>
+        <li><strong>עריכת תוכן דינמית (Inline Editing):</strong> ליד כל שורת מידע/החרגה/סעיף בסרגל הצידי מופיע כפתור עריכה (✎). לחיצה עליו פותחת שדות טקסט/Textarea המאפשרים לדרוס את התוכן הדיפולטיבי של אותו סעיף במסמך מבלי לגעת בקוד.</li>
+        <li><strong>מנוע פיננסי אוטומטי (Financial Engine):</strong> קליטת נתוני שטח, תעריפים (תעריפית, תחרותית, משולב, מונה נטו), ועלויות הקמה (CAPEX/OPEX), וחישוב אוטומטי של תזרים מזומנים על פני 25 שנה, כולל החזרי הלוואות (שפיצר), NPV, ו-IRR.</li>
+        <li><strong>טעינת תמונות דינמית מ-URL:</strong> הפרויקט מאפשר להזין כתובות אינטרנט (URLs) לתמונות וללוגו. במקרה שהשדה ריק, המערכת מושכת אוטומטית תמונות מאובייקט מרוכז של "כתובות ברירת מחדל". קיימת גם תמיכה בהעלאת תמונה מקומית (Base64) כגיבוי.</li>
+        <li><strong>הדפסה מותאמת (Print CSS):</strong> לחיצה על כפתור "הדפסה ישירה ל-PDF" מעלימה את הסרגל הצידי, ומחילה חוקי <code>@page { size: A4; margin: 0; }</code> ליצירת מסמך של 13 עמודים מדויקים.</li>
+    </ul>
+
+    <h2>3. אלמנטים ב-HTML/ממשק שנוספו או עודכנו</h2>
+    <p>הממשק מחולק ל-2 אזורים עיקריים: סרגל צידי (Sidebar) ברוחב 450px ואזור תצוגה מקדימה (Preview Area). התוספות והשינויים האחרונים שבוצעו בממשק:</p>
+    <ul>
+        <li><strong>אובייקט DEFAULT_URLS:</strong> נוסף בתחילת תגית הסקריפט (Script) כדי לרכז במקום אחד את כל כתובות התמונות (לוגו ה-SVG, תמונת שער, תמונת גג, תחתית עמוד 4, תחתית עמוד 9).</li>
+        <li><strong>הזרקת לוגו (injectLogo):</strong> שונתה מפונקציה שמשכפלת קוד SVG פנימי, לפונקציה שיוצרת תגית <code>&lt;img&gt;</code> ולוקחת את ה-URL מ-DEFAULT_URLS, ומשתילה אותו בכל הדיבים עם קלאס <code>logo-target</code>.</li>
+        <li><strong>שדות תמונות (URL Inputs):</strong> עודכנו ה-Inputs של התמונות כך שה-Placeholder מבקש URL. שונה ה-ID לטובת אחידות (למשל <code>inp-cover-local</code>, <code>inp-page9-local</code>). במידה והמשתמש מוחק את התוכן בשדה, מופעלת פונקציית <code>updateImageSrc</code> ששואבת את תמונת הדיפולט.</li>
+        <li><strong>תמונת תחתית לעמוד 9:</strong> 
+            <ul>
+                <li>נוסף שדה קלט ב-Sidebar תחת קבוצת "9. תנאי תשלום".</li>
+                <li>נוסף דיב תצוגה בתחתית עמוד 9 (מעל הפוטר): <code>&lt;div class="bottom-image-container"&gt;&lt;img id="img-page9-bottom"&gt;&lt;/div&gt;</code>.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>4. חישובים ונוסחאות (המודל הפיננסי)</h2>
+    <p>החישובים מבוצעים בפונקציה <code>updateCalculations()</code>. להלן הלוגיקה המדויקת:</p>
+    <ul>
+        <li><strong>CAPEX (עלות הקמה כוללת):</strong> מחושב כ-<code>הספק מותקן (capacity) * עלות ל-kWp (capexPerKwp)</code>. המשתמש יכול גם להזין עלות כוללת ישירות, מה שיעדכן את ה-CAPEX ל-kWp אחורה.</li>
+        <li><strong>הלוואה (Loan):</strong>
+            <ul>
+                <li>גובה הלוואה: <code>CAPEX * אחוז מימון (loanPct)</code>. הון עצמי הוא היתרה.</li>
+                <li>החזר שפיצר שנתי: אם הריבית גדולה מ-0, החישוב הוא: <code>(interestRate * loanAmount) / (1 - (1 + interestRate)^(-loanTerm))</code>. אם הריבית 0, ההחזר הוא פשוט החוב חלקי שנות ההלוואה.</li>
+                <li>פיצול קרן וריבית נעשה בכל שנה בהתאם ליתרת הקרן.</li>
+            </ul>
+        </li>
+        <li><strong>הכנסות ותפוקה (לפי שנה Y מ-1 עד 25):</strong>
+            <ul>
+                <li>תפוקה שנתית (Active Yield): <code>yieldVal * (1 - degradation)^(Y-1)</code>.</li>
+                <li>תעריף שנתי: <code>(baseTariff + urbanPremium) * (1 + escalation)^(Y-1)</code>.</li>
+                <li>הכנסה שנתית: <code>תפוקה כוללת של המתקן * תעריף שנתי</code>.</li>
+            </ul>
+        </li>
+        <li><strong>הוצאות תפעול (OPEX):</strong> מורכב מ-OPEX קבוע ל-kWp + דמי רשת (מחושב לפי תפוקה כוללת * תעריף רשת) + שכר דירה (מחושב כאחוז מתוך ההכנסות).</li>
+        <li><strong>תזרים חופשי (FCF):</strong> <code>הכנסה - OPEX - החזר הלוואה באותה שנה</code>.</li>
+        <li><strong>מדדי כדאיות:</strong>
+            <ul>
+                <li><strong>NPV:</strong> מחושב מתוך התזרים החופשי בעזרת שיעור ההיוון (Discount Rate).</li>
+                <li><strong>IRR:</strong> חישוב איטרטיבי המחפש את שיעור ההיוון שמאפס את ה-NPV. מחושב עבור הפרויקט כולו (ללא מימון) ועבור ההון העצמי (FCF אחרי מימון). מגבלות באג: מחזיר <code>NaN</code> אם אין תזרים חיובי/שלילי (סימנים הפוכים).</li>
+                <li><strong>LCOE:</strong> סך ההוצאות על פני 25 שנה (כולל הון עצמי, שפיצר ו-OPEX) מחולק בסך האנרגיה המיוצרת ב-25 שנה.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>5. תיקונים ושינויי כיוון במהלך העבודה</h2>
+    <div class="highlight">
+        <strong>שים לב לשינוי הקריטי הבא (הגרסה הסופית):</strong>
+        <p>בתחילה, הלוגו של החברה היה מוטמע ישירות בתוך קוד ה-HTML כקוד SVG ארוך מאוד (תחת <code>id="master-logo-container"</code>). לבקשת הלקוח, <strong>ה-SVG המחריד הזה נמחק לחלוטין.</strong></p>
+        <p>במקום זאת, הוחלט לעבור למודל של "כתובות רשת בלבד" (URLs). כעת, כל הלוגואים והתמונות מנוהלים דרך אובייקט JavaScript הנקרא <code>DEFAULT_URLS</code>. הפונקציות עודכנו למשוך את הלינקים משם. הקוד נקי יותר משמעותית.</p>
+    </div>
+
+    <h2>6. מבנה הנתונים (State Management)</h2>
+    <p>אין מסד נתונים (Backend). המצב (State) מנוהל כולו דרך ה-DOM (קריאת ערכים מ-Inputs). יחד עם זאת, ישנו מנגנון המאזין ל-<code>localStorage.getItem('pendingQuote')</code> בזמן טעינת העמוד (<code>window.onload</code>). אם נמצא JSON תקין ב-localStorage, המערכת תאכלס אוטומטית את השדות (שם פרויקט, לקוח, גודל, עלות, טקסט אודות, ותמונות). מבנה ה-JSON המצופה:</p>
+    <pre style="background: #eee; padding: 10px; border-radius: 5px; direction: ltr; text-align: left;">
+{
+    "projectTitle": "String",
+    "clientName": "String",
+    "clientAddress": "String",
+    "clientContact": "String",
+    "quoteDate": "String",
+    "analysisNotes": "String",
+    "sysSize": Number,
+    "sysCost": Number,
+    "selectedCover": "String (URL/Base64)",
+    "selectedProject": "String (URL/Base64)",
+    "selectedLogo": "String (URL/Base64)"
+}
+    </pre>
+
+    <h2>7. סטטוס נוכחי ובאגים ידועים</h2>
+    <ul>
+        <li><strong>עובד ותקין:</strong> חישובי המודל הפיננסי מדויקים. סידור ה-A4 עובד מושלם בהדפסה לכרום. מנגנון טעינת התמונות החדש מ-URLs עובד במלואו, כולל חזרה לברירת מחדל אם מוחקים את הטקסט בשדה.</li>
+        <li><strong>משימות פתוחות / באגים:</strong> חישוב ה-IRR תוכנת כחיפוש בינארי בטווח שבין 0.999- עד 2.0. במקרה קצה בו התשואה ענקית (מעל 200%), הפונקציה לא תמצא ערך. כמו כן, הטבלה של "תעריפי תעוז" מודפסת סטטית (Hardcoded) ואינה משפיעה על המודל הפיננסי (שמחשב לפי ממוצע תעריף אחיד).</li>
+    </ul>
+
+    <h2>8. החלטות והגבלות טכניות</h2>
+    <ul>
+        <li>הפרויקט נכתב כקובץ אחד (Vanilla HTML/CSS/JS) בכוונה, כדי שיהיה ניתן לשמור אותו כקובץ מקומי במחשב (Offline) או לשתול אותו בקלות בתוך מערכות CRM אחרות.</li>
+        <li>נעשה שימוש בספריית <strong>Chart.js</strong> (דרך CDN) לצורך יצירת גרף העמודות והעוגה בעמוד 12. מעבר לזה, <strong>אין ספריות חיצוניות</strong> (ללא React, jQuery וכו').</li>
+        <li>עיצוב המסמך בנוי על חוקי חיתוך עמוד מדויקים (Page Breaks) שמותאמים למנוע ההדפסה של דפדפני Chromium.</li>
+    </ul>
+
+    <h2>9. דברים שנפסלו במפורש</h2>
+    <ul>
+        <li><strong>אחסון תמונות מקומי בקוד:</strong> כאמור, נפסלה לחלוטין האפשרות להטמיע קודי Base64 ענקיים או SVG בתוך ה-HTML כברירת מחדל. חובה להשתמש ב-URL חיצוני בלבד למען ניקיון הקוד.</li>
+    </ul>
+
+    <h2>נקודות לבירור מול הלקוח (הנחיות לקלוד)</h2>
+    <ul>
+        <li>המשתמש הציב אובייקט <code>DEFAULT_URLS</code> בתחילת הסקריפט, אך הכתובות בו מוגדרות כרגע כ-<code>https://example.com/...</code>. יהיה עליך לוודא איתו מהן הכתובות האמיתיות (שרת הקבצים שלו) כדי להחליף אותן בפרודקשן.</li>
+    </ul>
+
+</div>
+
+</body>
+</html>

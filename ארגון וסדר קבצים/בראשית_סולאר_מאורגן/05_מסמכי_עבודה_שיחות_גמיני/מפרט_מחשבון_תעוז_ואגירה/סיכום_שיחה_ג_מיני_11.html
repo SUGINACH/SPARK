@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מפרט דרישות וארכיטקטורה — מחשבון סולארי מאוחד</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f6fa; color: #2f3640; line-height: 1.6; margin: 0; padding: 30px; }
+        .spec-container { max-width: 1200px; margin: 0 auto; background: white; padding: 45px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        h1 { color: #1a3a5f; border-bottom: 4px solid #f39c12; padding-bottom: 12px; margin-top: 0; font-size: 2.3em; text-align: center; }
+        h2 { color: #2c3e50; border-right: 5px solid #3498db; padding-right: 15px; margin-top: 40px; font-size: 1.6em; }
+        h3 { color: #34495e; margin-top: 25px; font-size: 1.25em; border-bottom: 1px solid #ecf0f1; padding-bottom: 8px; }
+        p, li { text-align: justify; font-size: 1.05em; color: #34495e; }
+        ul { padding-right: 20px; }
+        
+        /* טבלאות מפרטים */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; font-size: 0.92em; }
+        th, td { border: 1px solid #dcdde1; padding: 12px 14px; text-align: right; vertical-align: top; }
+        th { background-color: #1a3a5f; color: white; font-weight: bold; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        
+        .code-inline { font-family: 'Consolas', 'Courier New', monospace; background-color: #f1f2f6; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; color: #c0392b; }
+        pre { background: #f8fafc; border-right: 4px solid #f39c12; padding: 15px; border-radius: 0 6px 6px 0; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.88em; line-height: 1.5; color: #2c3e50; }
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; margin-left: 6px; }
+        .badge-fixed { background: #d4efdf; color: #196f3d; }
+        .badge-client { background: #fdebd0; color: #b7950b; }
+        
+        .block-step { background: #fdfefe; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .block-step h4 { margin-top: 0; color: #1a3a5f; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="spec-container">
+    <h1>מסמך דרישות הנדסי ומפרט ארכיטקטורה פונקציונלי</h1>
+    <p style="text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 30px;">
+        פרויקט: מחשבון כדאיות, אגירה שעתית וניתוח צריכה סולארית (מקור יחיד ומאוחד — גרסה 5)<br>
+        תאריך עדכון אחרון: 16 ביולי 2026
+    </p>
+
+    <h2>1. תיאור כללי של הפרויקט</h2>
+    <p>
+        מטרת המערכת היא להעניק פתרון שלם, הנדסי ופיננסי מדויק להקמת מערכות פוטו-וולטאיות (PV) בשילוב מערכות אגירת אנרגיה בסוללות (BESS) עבור צרכנים בישראל (הן במגזר הפרטי והן במגזר העסקי והמוסדי) המושפעים מהסדרי תעריפי תעו"ז (תעריף עומס וזמן) של רשות החשמל.
+    </p>
+    <p>
+        <strong>קהל היעד של המערכת:</strong> אנשי הנדסת פרויקטים, מתכננים כלכליים, ואנשי מכירות הנמצאים בקשר מול הלקוחות. 
+        המערכת פותרת את שלוש הבעיות המרכזיות הבאות בשוק הסולארי הישראלי:
+    </p>
+    <ul>
+        <li><strong>חישוב ידני מורכב של פערי תעו"ז:</strong> המערכת קולטת קבצי צריכה חצי-שעתיים של חברת החשמל, ומסווגת אוטומטית את הצריכה לשעות שיא (פסגה) ושפל בהתאם לעונות השנה הרשמיות וללוח חגי ישראל הדינמי.</li>
+        <li><strong>תכנון נפח אגירה אופטימלי:</strong> המערכת מריצה סימולציית דיספאץ' שעתית מלאה (Dispatch State Machine) המחשבת טעינה ופריקה ריאליות, הפסדי המרה ומחזורי טעינה שנתיים בהתאם לפרופיל הצריכה של הלקוח.</li>
+        <li><strong>התאמה למגזר הדתי ולמוסדות חינוך (חשמל כשר):</strong> המערכת כוללת מנוע אסטרונומי וליטורגי מובנה (המרה ללוח עברי וחישוב זמני שקיעה לפי NOAA) כדי להתחשב בדרישות שמירת שבת, נירמול נתוני עבר בשבתות בהם הופעל גנרטור, ותכנון נפח גיבוי ייעודי לשבתות וחגים.</li>
+    </ul>
+
+    <h2>2. רשימת יכולות ופיצ'רים (Functional Capabilities)</h2>
+    
+    <div class="block-step">
+        <h4>2.1 פענוח קבצי נתוני צריכה (CSV/Excel Ingestion)</h4>
+        <p>
+            המערכת מסוגלת לקלוט קבצי נתוני צריכה היסטוריים בשני פורמטים מובילים: קובץ CSV של חברת החשמל וקובץ Excel (SheetJS). 
+            קריאת הקובץ מבוצעת בצורה גמישה על ידי סריקת שורות הכותרת ואיתור שורת המפתח "קוד ומספר מונה" המהווה את תחילת טבלת הנתונים. המערכת מחלצת את השדות: סוג מונה, תאריך, שעה, ערך נוכחי וערך קודם.
+        </p>
+        <p><strong>מקרי קצה וטיפול בשגיאות:</strong></p>
+        <ul>
+            <li><strong>שדות ריקים או שורות חלקיות:</strong> המערכת מדלגת על שורות ריקות וקריאות פגומות ללא קריסה של תהליך הפענוח.</li>
+            <li><strong>פורמט תאריך לא אחיד:</strong> המערכת מריצה לוגיקת המרה גמישה המסוגלת לקרוא תאריכים בפורמטים מגוונים (כגון DD/MM/YYYY או YYYY-MM-DD).</li>
+        </ul>
+    </div>
+
+    <div class="block-step">
+        <h4>2.2 זיהוי וסינון מונים כפולים (Duplicate Meter Cleansing)</h4>
+        <p>
+            קבצי חח"י מכילים לעיתים קרובות קריאות חופפות מאותו סוג מונה באותם זמנים בדיוק עקב שימוש במוני אימות מקבילים. 
+            המערכת מיישמת מנגנון ניקוי מובנה (<code class="code-inline">DataCleanser</code>) המקבץ את כלל הקריאות לפי מפתח ייחודי <code class="code-inline">תאריך_שעה_סוגמונה</code>. 
+            במידה ומזוהות קריאות כפולות באותו מפתח זמן, המערכת מחשבת ממוצע מתמטי נקי שלהן, רושמת את הבדלי המניה הזעירים ביניהן, ומציגה באנר התראה שקוף למשתמש המפרט את כמות הכפילויות והסטייה הממוצעת ביניהן.
+        </p>
+    </div>
+
+    <div class="block-step">
+        <h4>2.3 שאיבה אוטומטית של מוני ייצור קיים</h4>
+        <p>
+            אם קובץ הנתונים שהועלה מכיל מונה מסוג "ייצור" או "ייצור סולארי" (המעיד על מערכת סולארית קיימת בנכס), המערכת מזהה זאת אוטומטית. 
+            היא מאתרת את קריאת שיא הייצור שנרשמה בקובץ, גוזרת ממנה את הספק המערכת הקיים (קוו"ט AC נומינלי) לפי היחס הפיזיקלי, ומעדכנת אוטומטית את השדה $P_0$ (הספק מערכת קיימת) בשלב 2 של הממשק, תוך הצגת באנר ירוק המפרט את הגודל שזוהה.
+        </p>
+    </div>
+
+    <div class="block-step">
+        <h4>2.4 נירמול וסינתזת נתוני צריכה חלופיים (Alternative Data Synthesis)</h4>
+        <p>
+            כאשר למשתמש אין קובץ CSV/Excel של חברת החשמל, הוא יכול לבחור באחד משלושה מקורות קלט חלופיים: קובץ JSON של סקר מכשירים (Bottom-Up), מטריצה ידנית מפורטת של עונות ושעות, או הזנת סה"כ צריכה שנתית בלבד.
+            במצב זה נחשף סרגל כלים מיוחד המאפשר למשתמש ללחוץ על לחצן <strong>"נרמל נתונים"</strong>.
+        </p>
+        <p>
+            מנוע הנירמול (<code class="code-inline">DataNormalizer</code>) מריץ הדמיה שלמה ומסנתז סדרת זמנים חצי-שעתית מלאה של 8,760 שעות לשנה (מיושרת לשנת 2026), תוך פיזור הצריכה לפי תבניות התעו"ז והעונתיות. 
+            סדרת הזמנים המנורמלת נשמרת ב-`localStorage` של הדפדפן, מזינה את טבלאות הדיווח וסימולציות האגירה, וחושפת לחצן הורדה המאפשר להוריד את הקובץ המנורמל כקובץ CSV גולמי תקני לחלוטין בפורמט חח"י.
+        </p>
+    </div>
+
+    <div class="block-step">
+        <h4>2.5 מנוע אסטרונומי וליטורגי מורחב (Astro & Calendar Engine)</h4>
+        <p>
+            המערכת כוללת מנוע מתמטי שלם לחישוב זמני זריחה ושקיעה המבוסס על משוואות השמש הרשמיות של NOAA (<code class="code-inline">AstroEngine</code>). 
+            המנוע מזין את מנגנון לוח השנה העברי המורחב המזהה שנים מעוברות, חודשי אדר א'/ב' ואת כל חגי ומועדי ישראל הליטורגיים בטווח השנים 2020-2030.
+            המערכת מזהה ומסווגת את המידע לצרכי "חשמל כשר" וזמני לימוד מוסדיים (זמן חורף, זמן קיץ, זמן אלול וחופשות מוסדות חינוך כלליים ביולי-אוגוסט).
+        </p>
+    </div>
+
+    <div class="block-step">
+        <h4>2.6 סימולציית אגירה ודיספאץ' שעתית (Battery Dispatch Machine)</h4>
+        <p>
+            הסימולטור מריץ הדמיה דינמית שעתית מלאה של הסוללה על פני שנה שלמה (365 ימים אחרונים). 
+            מנהל המצב מחשב בכל צעד זמן את מצב טעינת הסוללה (SoC) בהתחשב במגבלת עומק פריקה (DoD), מגבלת קצב פריקה וטעינה מרבי (C-rate המושפע מהספק הממיר שהוזן), והפסדי המרה מפורשים:
+            יעילות טעינה מוגדרת כ-93% (<code class="code-inline">eff_charge: 0.93</code>) ויעילות פריקה מוגדרת כ-94% (<code class="code-inline">eff_discharge: 0.94</code>), המעניקים יעילות מחזורית ריאלית (Round-trip) של 87.42%.
+        </p>
+    </div>
+
+    <h2>3. אלמנטים בממשק המשתמש (UI/UX Elements)</h2>
+    <p>
+        הממשק מעוצב באופן מודרני, נקי ואינטואיטיבי ומחולק לשלושה שלבים ברורים (SPA Steps):
+    </p>
+
+    <h3>שלב 1: קליטה וניתוח צריכה</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">אלמנט ממשק</th>
+                <th style="width: 15%;">מזהה (ID) בקוד</th>
+                <th style="width: 35%;">התנהגות ואינטראקציה בלחיצה/מילוי</th>
+                <th style="width: 30%;">דרישות עיצוב וצבעים</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>סלקטור מקור קלט</td>
+                <td><code class="code-inline">#consMode</code></td>
+                <td>משנה דינמית את חשיפת כרטיסי הקלט (CSV, מטריצה ידנית, הערכה שנתית ובאנר נירמול).</td>
+                <td>תפריט Select סטנדרטי תואם לעיצוב.</td>
+            </tr>
+            <tr>
+                <td>כפתור נירמול נתונים</td>
+                <td>ללא ID ספציפי (מפעיל פונקציה)</td>
+                <td>מפעיל את סינתזת 8760 השעות, מעדכן את ה-state ומציג את כפתור ההורדה.</td>
+                <td>צבע כתום תוסס (<code class="code-inline">--accent</code>), מופיע בתוך באנר תכלת מובנה.</td>
+            </tr>
+            <tr>
+                <td>כפתור הורדת CSV מנורמל</td>
+                <td><code class="code-inline">#downloadNormalizedCsvBtn</code></td>
+                <td>מפיק קובץ CSV גולמי בפורמט חח"י ומפעיל הורדה לדפדפן.</td>
+                <td>צבע ירוק רשמי (<code class="code-inline">--success</code>), מציג אייקון הורדה.</td>
+            </tr>
+            <tr>
+                <td>באנרי התראות דינמיים</td>
+                <td><code class="code-inline">#duplicateMeterAlert</code>, <code class="code-inline">#productionMeterAlert</code></td>
+                <td>נחשפים דינמית רק אם מזוהים מונים כפולים או מוני ייצור סולאריים בקובץ.</td>
+                <td>בורדר ימני עבה (5px) בצבעי אזהרה (כתום) או הצלחה (ירוק), רקע פסטל רך.</td>
+            </tr>
+            <tr>
+                <td>טבלאות דיווח היסטוריות</td>
+                <td><code class="code-inline">#hourlyTable</code>, <code class="code-inline">#dailyMergedTable</code>, <code class="code-inline">#peakOnlyTable</code></td>
+                <td>מציגות את הנתונים לאחר עיבוד. עמודות שבת ושישי מציגות זמני שקיעה ויציאה משוערים.</td>
+                <td><strong>חשיבות עליונה:</strong> שעות פסגה צבועות באדום רך (<code class="code-inline">.peak-cell</code>), שפל בירוק רך (<code class="code-inline">.offpeak-cell</code>), וימי שבוע באפור (<code class="code-inline">.day-cell</code>).</td>
+            </tr>
+            <tr>
+                <td>כפתור ייצוא אקסל מפורט</td>
+                <td><code class="code-inline">#exportExcelBtn</code></td>
+                <td>מפעיל את מנוע ה-ExcelJS להפקת דוח פרופורציונלי רב-שנתי מורכב.</td>
+                <td>כפתור ירוק בולט ורחב (גובה 15px פדינג, רוחב מקסימלי 450px) מתחת לטבלאות.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>שלב 2: סימולציות ואגירה שעתית</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">אלמנט ממשק</th>
+                <th style="width: 15%;">מזהה (ID) בקוד</th>
+                <th style="width: 35%;">התנהגות ואינטראקציה בלחיצה/מילוי</th>
+                <th style="width: 30%;">דרישות עיצוב וצבעים</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>קלט שטח גג (מ"ר)</td>
+                <td><code class="code-inline">#calc_roofArea</code></td>
+                <td>סנכרון דו-כיווני: מעדכן אוטומטית את הספק המערכת המבוקש לפי יחס של 5.5 מ"ר לקוו"ט.</td>
+                <td>תיבת מספר סטנדרטית.</td>
+            </tr>
+            <tr>
+                <td>קלט הספק מבוקש (קוו"ט)</td>
+                <td><code class="code-inline">#calc_targetKw</code></td>
+                <td>סנכרון דו-כיווני: מעדכן את שטח הגג הנדרש (הספק כפול 5.5).</td>
+                <td>תיבת מספר סטנדרטית.</td>
+            </tr>
+            <tr>
+                <td>תאריכי סימולציה סולארית</td>
+                <td><code class="code-inline">#yieldStartDate</code>, <code class="code-inline">#yieldEndDate</code></td>
+                <td>מתעדכנים אוטומטית ל-12 החודשים האחרונים של קובץ הצריכה. המשתמש יכול לשנותם ידנית.</td>
+                <td>תיבות בחירת תאריך (Date Pickers).</td>
+            </tr>
+            <tr>
+                <td>קלט נפח סוללה לבדיקה</td>
+                <td><code class="code-inline">#sim_batterySize</code></td>
+                <td>קובע את גודל האגירה השמיש (קוט"ש) שיורץ בסימולציית הדיספאץ' השעתית.</td>
+                <td>תיבת מספר.</td>
+            </tr>
+            <tr>
+                <td>כפתור הרצת דיספאץ'</td>
+                <td>ללא ID ספציפי (מפעיל פונקציה)</td>
+                <td>מריץ את סימולציית הדיספאץ' השעתית ומציג את כרטיס תוצאות החיסכון, הגרף וקוביות הגדלים.</td>
+                <td>כפתור כחול קלאסי.</td>
+            </tr>
+            <tr>
+                <td>קנבס הגרף השבועי/שנתי</td>
+                <td><code class="code-inline">#comboChartCanvas</code></td>
+                <td>מרנדר תרשים משולב (קו לחיסכון מצטבר, עמודות לתרומה שולית).</td>
+                <td><strong>חשיבות עליונה:</strong> רינדור עם רקע לבן מובנה בקנבס כדי למנוע רקע שקוף/שחור בייצוא לאקסל.</td>
+            </tr>
+            <tr>
+                <td>גריד קוביות גדלים</td>
+                <td><code class="code-inline">#batteryGrid</code></td>
+                <td>מציג דינמית 10 חלופות נפח סוללה שונות והחיסכון השנתי המופק מכל אחת.</td>
+                <td>תיבות לבנות בעלות בורדר כחול דק, משנות צבע לכתום בריחוף (Hover).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>שלב 3: ניתוח פיננסי ודוח סופי</h3>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">אלמנט ממשק</th>
+                <th style="width: 15%;">מזהה (ID) בקוד</th>
+                <th style="width: 35%;">התנהגות ואינטראקציה בלחיצה/מילוי</th>
+                <th style="width: 30%;">דרישות עיצוב וצבעים</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>כרטיס סיכום פרטי לקוח</td>
+                <td><code class="code-inline">#customerSummaryCard</code></td>
+                <td>נחשף אוטומטית רק אם יובא שם לקוח ופרטים משלב 1.</td>
+                <td>כרטיס פסטל ירוק רך, מציג את פרטי הלקוח בכתב מודגש.</td>
+            </tr>
+            <tr>
+                <td>סלקטור מגבלת רשת</td>
+                <td><code class="code-inline">#zeroExport</code></td>
+                <td>בבחירת "כן (Zero Export)" - נועל דינמית את שדה זכאות לפרמיה אורבנית ומציג באנר הסבר.</td>
+                <td>תיבת בחירה (Select).</td>
+            </tr>
+            <tr>
+                <td>כפתור הרצת סימולציה סופית</td>
+                <td><code class="code-inline">#calcBtn_3</code></td>
+                <td>מריץ את מודל ה-25 שנה המלא ומציג את טבלת ההשוואה הסופית.</td>
+                <td>כפתור כתום רחב בולט ומרכזי.</td>
+            </tr>
+            <tr>
+                <td>טבלת תוצאות סופיות</td>
+                <td><code class="code-inline">#calc_results</code></td>
+                <td>נחשפת לאחר החישוב ומציגה השוואה מלאה בין סולארי בלבד לסולארי + אגירה.</td>
+                <td>טבלה מעוצבת. עמודי תוצאות האגירה מודגשים ברקע ירוק רך (<code class="code-inline">.calc-highlight</code>).</td>
+            </tr>
+            <tr>
+                <td>כפתור הורדת "טבלת הענק"</td>
+                <td><code class="code-inline">#exportUnifiedExcelBtn</code></td>
+                <td>מפיק את קובץ האקסל השעתי המלא והמעוצב (8,760 שורות) באמצעות ExcelJS.</td>
+                <td>כפתור ירוק בולט המופיע רק לאחר הרצת החישוב הפיננסי בשלב 3.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. חישובים ונוסחאות (Mathematical & Physical Models)</h2>
+    <p>
+        להלן פירוט הנוסחאות והלוגיקה המדויקת המיושמת בכל מנוע חישוב במערכת:
+    </p>
+
+    <div class="block-step">
+        <h4>4.1 מדרגות תעריף הזרמה שוליות (Staircase Fit Tariff)</h4>
+        <p>
+            המערכת מחשבת את תעריף ההזרמה המשוקלל לקוו"ש עבור המתקן החדש (הספק $P_{AC}$) בהתחשב בהספק המתקן הקיים ($P_0$). 
+            המדרגות מוגדרות ללא מע"מ באגורות לקוט"ש:
+        </p>
+        <ul>
+            <li><strong>מדרגה 1:</strong> מ-0 עד 15 קוו"ט — תעריף: <code class="code-inline">0.48 ₪/קוט"ש</code></li>
+            <li><strong>מדרגה 2:</strong> מ-15 עד 100 קוו"ט — תעריף: <code class="code-inline">0.3731 ₪/קוט"ש</code> (כאשר משולבת אגירה, חלה הפחתה רגולטורית אוטומטית של 5% על מדרגה זו בלבד, קרי: <code class="code-inline">0.3544 ₪/קוט"ש</code>)</li>
+            <li><strong>Mדרגה 3:</strong> מ-100 עד 300 קוו"ט — תעריף: <code class="code-inline">0.3437 ₪/קוט"ש</code></li>
+        </ul>
+        <p><strong>נוסחת השקלול השולי המדויקת:</strong></p>
+        <pre>
+Total_Capacity = P0 + pAc
+In_Tier1 = Max(0, Min(Total_Capacity, 15) - P0)
+In_Tier2 = Max(0, Min(Total_Capacity, 100) - Max(P0, 15))
+In_Tier3 = Max(0, Total_Capacity - Max(P0, 100))
+
+Blended_Tariff = (In_Tier1 * Rate1 + In_Tier2 * Rate2 + In_Tier3 * Rate3) / pAc
+if (isUrban & !zeroExport) Blended_Tariff += 0.06 // תוספת פרמיה אורבנית
+        </pre>
+    </div>
+
+    <div class="block-step">
+        <h4>4.2 סימולציית מצב טעינה שעתית (Hourly BESS Dispatch Simulation)</h4>
+        <p>
+            מנוע הדיספאץ' השעתי רץ על פני סדרת זמנים. בכל צעד זמן (של 30 או 60 דקות):
+        </p>
+        <p><strong>א) זיהוי העונה והתעריף האקטיבי בשעה זו:</strong></p>
+        <ul>
+            <li><strong>קיץ (חודשים 6,7,8,9):</strong> שפל = 0.4358 ₪/קוט"ש, פסגה = 1.4597 ₪/קוט"ש (רק בימי חול, לא כולל סופ"ש וחגים).</li>
+            <li><strong>חורף (חודשים 12,1,2):</strong> שפל = 0.4022 ₪/קוט"ש, פסגה = 0.9774 ₪/קוט"ש (חל בכל ימות השבוע, כולל שבתות וחגים).</li>
+            <li><strong>מעבר (שאר החודשים):</strong> שפל = 0.4022 ₪/קוט"ש, פסגה = 0.4022 ₪/קוט"ש (אין הפרש ארביטראז' בפועל).</li>
+        </ul>
+        <p><strong>ב) לוגיקת הדיספאץ' ההנדסית:</strong></p>
+        <pre>
+Max_Charge_Energy = Inverter_Power * Step_Hours
+Max_Discharge_Energy = Inverter_Power * Step_Hours
+
+if (!isPeak) {
+    // שעות שפל - טעינה מהרשת
+    Space_Available = Nominal_Capacity - Current_SoC
+    Charged_Energy = Min(Space_Available, Max_Charge_Energy)
+    Current_SoC = Current_SoC + (Charged_Energy * eff_charge) // הפסד יעילות טעינה
+    Grid_Import = Consumption + Charged_Energy
+} else {
+    // שעות פסגה - פריקה לצריכה עצמית
+    Energy_Available = Current_SoC - Min_SoC
+    Deliverable_Energy = Energy_Available * eff_discharge // הפסד יעילות פריקה
+    Discharged_Energy = Min(Consumption, Deliverable_Energy, Max_Discharge_Energy)
+    Current_SoC = Current_SoC - (Discharged_Energy / eff_discharge)
+    Grid_Import = Consumption - Discharged_Energy
+}
+        </pre>
+    </div>
+
+    <div class="block-step">
+        <h4>4.3 מודל 25 שנה כלכלי ומיסוי</h4>
+        <ul>
+            <li><strong>בלאי שנתי (PV Degradation):</strong> תפוקת הפאנלים יורדת ליניארית בשיעור מוגדר של 0.35% בכל שנה (<code class="code-inline">CALC_CONSTANTS.degradation = 0.0035</code>).</li>
+            <li><strong>לוח סילוקין הלוואה:</strong> הקרן והריבית השנתית מחושבות מדי שנה לפי נוסחת שפיצר (PMT). הריבית השנתית האמיתית מחושבת על יתרת החוב השנתית הפוחתת ומשמשת כהוצאה מוכרת להפחתת מס הכנסה לעסקים.</li>
+            <li><strong>מיסוי פרטי:</strong> פטור מלא ממס הכנסה על הכנסות המערכת עד תקרה של 27,900 ₪ לשנה. כל שקל מעבר לתקרה ממוסה ב-10% מס אחיד (ללא הכרה בהוצאות פחת או מימון).</li>
+            <li><strong>מיסוי עסקי:</strong> קיזוז מע"מ מלא על ה-CAPEX (עלות ההקמה מופחתת ב-17%). הכרה בפחת מואץ של 25% לשנה למשך 4 שנים ראשונות. הרווח הממוסה מחושב בניכוי פחת, הוצאות תפעול (OPEX) והוצאות הריבית השנתיות, וממוסה ב-23% מס חברות.</li>
+        </ul>
+    </div>
+
+    <h2>5. תיקונים ושינויי כיוון (Changelog & Chronology)</h2>
+    <p>
+        במהלך פיתוח הפרויקט בוצעו מספר שינויים הנדסיים מהותיים שנועדו להבטיח את יציבות המערכת ודיוקה:
+    </p>
+    <ul>
+        <li><strong>שגיאות ה-NaN ברינדור נתונים מנורמלים:</strong> בגרסה 4, מנוע הנירמול סינתז קבצים ללא השדות `actualKwh` ו-`isPeak`, מה שגרם לקריסה והצגת `NaN` בטבלאות בשלב 1. בגרסה 5 שוחזר המבנה לחלוטין, והנתונים המנורמלים מיוצרים בפורמט זהה לחלוטין ל-CSV אמיתי.</li>
+        <li><strong>סתירת יעילות הסוללה:</strong> בגרסאות המוקדמות הונחה יעילות סוללה מושלמת של 100%. בגרסה הסופית הוגדר מחזור יעילות ריאלי של כ-87.42% (93% בטעינה ו-94% בפריקה) התואם את הרף ההנדסי הקיים בשטח, המונע הצגת כדאיות מופרזת ללקוח.</li>
+        <li><strong>מעבר מ-SheetJS ל-ExcelJS בייצוא:</strong> בגרסאות הביניים נעשה שימוש ב-SheetJS לצורך ייצוא אקסל פשוט. המשתמש פסל זאת והתעקש על שחזור מנוע ה-ExcelJS המקורי מקובץ 1 המאפשר מיזוגים מורכבים ועיצוב תאים צבעוניים. בגרסה 5 הוחזר מנוע ה-ExcelJS במלואו כברירת המחדל לייצוא דוחות.</li>
+    </ul>
+
+    <h2>6. מבנה הנתונים וחוזים (Data Contracts)</h2>
+    <p>
+        המערכת מבוססת על הפרדת תפקידים מלאה, כאשר המידע בין המנועים השונים מועבר באמצעות מבנה נתונים קשיח ואחיד (Data Schema) השמור ב-State הגלובלי וב-`localStorage`:
+    </p>
+    <pre>
+AppController.state = {
+    customerMeta: {
+        name: "ישראל ישראלי",      // String
+        address: "הרצל 10, ת"א",    // String
+        contract: "12345678",       // String
+        type: "דו-כיווני + ייצור",  // String
+        code: "123",                // String
+        number: "987654"            // String
+    },
+    activeTimeSeries: [
+        // מערך של 17,520 קריאות (חצי-שעתי לשנה שלמה)
+        {
+            dateStr: "01/01/2026",  // String (DD/MM/YYYY)
+            timeStr: "17:30",       // String (HH:MM)
+            dateObj: Date,          // JS Date Object
+            isPeak: true,           // Boolean
+            importKwh: 1.25,        // Number
+            exportKwh: 0.0,         // Number
+            genKwh: 0.0,            // Number
+            stdKwh: 0.0,            // Number
+            hasSolar: true,         // Boolean
+            actualKwh: 1.25         // Number (הצריכה האמיתית המחושבת של הנכס)
+        }
+    ],
+    simulatedDispatch: {
+        results: [
+            // תוצאות הדיספאץ' ברמת השעה
+            {
+                dateObj: Date,
+                actualKwh: 1.25,
+                gridKwh: 0.25,
+                soc: 11.2,
+                charged: 0,
+                discharged: 1.0,
+                price: 1.4597
+            }
+        ],
+        annualArbitrageSavings: 3450, // Number (₪ לשנה)
+        cycles: 280,                  // Number
+        coverage: 78.5                // Number (% כיסוי פסגה)
+    }
+};
+    </pre>
+
+    <h2>7. סטטוס נוכחי ובאגים ידועים</h2>
+    <ul>
+        <li><strong>סטטוס מיושם:</strong>
+            <ul>
+                <li>ממשק ה-SPA התלת-שלבי עובד חלק וללא קריסות או השהיות.</li>
+                <li>ניקוי מונים כפולים ומיזוג ממוצעים עובד באופן אוטומטי ומציג באנר דיווח מדויק.</li>
+                <li>הסבת נתוני קלט חלופיים (הערכה שנתית, מטריצה ידנית) לסדרת נתונים שנתית מלאה עובדת בצורה יציבה, מייצרת נתונים תקינים ללא שגיאות NaN, ומאפשרת הורדת קובץ CSV מנורמל בפורמט חח"י.</li>
+                <li>שילוב הלוח העברי והשקיעה המקומית (Astro/Liturgical) עובד ומיושם ישירות בטבלאות התצוגה ובקובץ האקסל המיוצא.</li>
+                <li>ייצוא האקסל המורכב (ExcelJS) בעל המיזוגים הפרופורציונליים והזרקת הגרף שוחזר במלואו ועובד בצורה תקינה.</li>
+            </ul>
+        </li>
+        <li><strong>באגים פתוחים/ידועים:</strong> לא קיימים באגים תפקודיים או שגיאות ריצה (Runtime Errors) בקונסול בגרסה זו. כל שגיאות ה-NaN ובעיות ה-Scope נפתרו לחלוטין.</li>
+    </ul>
+
+    <h2>8. החלטות והגבלות טכניות (Technical Constraints)</h2>
+    <ul>
+        <li><strong>מקור יחיד ומאוחד (Monolith with Namespaces):</strong> הדרישה היא לשמור את כל המערכת בתוך קובץ HTML יחיד ועצמאי לחלוטין לצורך ניידות קלה, אך תוך שמירה על הפרדה קשיחה של מרחבי שמות (Namespaces) בקוד ה-JS כהכנה לפיתוח עתידי מבוזר.</li>
+        <li><strong>תלות ב-CDN רשת עבור ספריות:</strong> המערכת מסתמכת על טעינת ספריות קריטיות דרך CDN חיצוני (PapaParse, SheetJS, ExcelJS, FileSaver, Chart.js). לצורך עבודה אופליין מלאה בעתיד, יש להוריד סקריפטים אלו מקומית.</li>
+        <li><strong>ביצועים בדפדפן:</strong> הרצת מנוע הדיספאץ' השעתי (8,760 שורות) או ייצוא ה-ExcelJS הפרופורציונלי (17,520 קריאות חצי-שעתיות) עלולים לקחת 1-3 שניות בדפדפנים חלשים. הקוד כולל השהיית סנכרון קלה (<code class="code-inline">setTimeout</code>) על מנת לאפשר לדפדפן לרנדר הודעת "מעבד נתונים... ⏳" ולמנוע קפיאה של הממשק.</li>
+    </ul>
+
+    <h2>9. דברים שנפסלו במפורש (Disqualified Features)</h2>
+    <ul>
+        <li><strong>ביטול ייצוא אקסל פשטני (SheetJS בלבד):</strong> המשתמש פסל לחלוטין את הרעיון להסתפק בייצוא בסיסי של SheetJS בשלב 1 ובשלב 3. נדרש שחזור מוחלט של מנוע ה-ExcelJS המעוצב והצבעוני מקובץ 1.</li>
+        <li><strong>איסור שימוש בפתרונות רינדור שקופים בגרפים:</strong> המשתמש ביקש במפורש לוודא שקנבס הגרף לא ירחף מעל רקע שקוף בעת הייצוא לאקסל (תופעה שגרמה לגרף להופיע שחור/מטושטש בחלק מגרסאות האופיס). הוכנס פלאגין ייעודי בקוד המאלץ רקע לבן מוצק תחת התרשים.</li>
+    </ul>
+
+    <h2>10. נקודות לבירור (Points for Clarification)</h2>
+    <p>
+        לפני העברת הפרויקט למודל הבא, מומלץ לקבל הכרעה בנושאים הבאים:
+    </p>
+    <ol>
+        <li><strong>תמיכה רב-שנתית בקובץ ה-CSV המקורי:</strong> כרגע, מנוע האנליטיקה והדיספאץ' מתקבע על ה-365 הימים האחרונים בלבד לצורך ייצוג של שנה קלנדרית אחת שלמה. אם המשתמש מעלה קובץ המכיל 3 שנים של נתונים, שאר השנים מוצגות בטבלאות שלב 1 אך אינן משתתפות בסימולציית האגירה או בייצוא הפרופורציונלי. יש להחליט האם להוסיף סלקטור לבחירת שנת החישוב הרצויה מתוך הקובץ.</li>
+        <li><strong>סנכרון תנאי הלוואה ומיסוי עם מערכת ה-CRM המרכזית:</strong> כרגע מפתח ה-localStorage `transferredCalcData` מעביר רק את המטא-דאטה, הספק ה-PV, גודל הסוללה והחיסכון השנתי המחושב. יש להחליט האם יש צורך להעביר גם את מדדי ה-IRR, ה-NPV ולוח הסילוקין ישירות לטופס הצעת המחיר המרכזי של החברה.</li>
+    </ol>
+</div>
+
+</body>
+</html>

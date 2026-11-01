@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תבנית הצעת מחיר – בראשית סולאר</title>
+<style>
+  /* ====== Google Fonts ====== */
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap');
+
+  /* ====== Reset & Base ====== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue-dark:  #1a4f8a;   /* כחול כהה – כותרות/רקע */
+    --blue-mid:   #2367b0;   /* כחול בינוני – כותרות משנה */
+    --teal:       #2ba5a5;   /* טורקיז – שורות צבעוניות */
+    --gray-light: #f4f6f9;
+    --gray-mid:   #e8ecf1;
+    --gray-text:  #3c4a5c;
+    --white:      #ffffff;
+    --border:     #d0d8e4;
+    --orange:     #e8891a;   /* הדגשות */
+    --green:      #2da44e;
+  }
+
+  body {
+    font-family: 'Heebo', 'Arial Hebrew', Arial, sans-serif;
+    background: #edf1f7;
+    color: var(--gray-text);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  /* ====== PAGE CONTAINER ====== */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: var(--white);
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,.18);
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ====== FOOTER BAR (appears on every page via print) ====== */
+  .footer-bar {
+    background: var(--blue-dark);
+    color: #fff;
+    font-size: 10px;
+    padding: 7px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    direction: rtl;
+  }
+  .footer-bar a { color: #acd4ff; text-decoration: none; }
+
+  /* ====== COVER PAGE ====== */
+  .cover-logo-area {
+    padding: 30px 30px 10px;
+    text-align: center;
+  }
+  .cover-logo-area img { max-height: 90px; }
+  .cover-logo-placeholder {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 90px;
+  }
+  .logo-symbol {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 5px;
+  }
+  .logo-bar {
+    width: 28px;
+    height: 38px;
+    border-radius: 3px 3px 0 0;
+    transform: skewX(-6deg);
+  }
+  .logo-bar-1 { background: var(--orange); }
+  .logo-bar-2 { background: var(--green); }
+  .logo-bar-3 { background: var(--blue-mid); }
+  .logo-name {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--blue-dark);
+    letter-spacing: -0.5px;
+  }
+  .logo-tagline {
+    font-size: 10px;
+    color: #8a9ab0;
+    font-weight: 300;
+  }
+
+  .cover-title-box {
+    background: var(--blue-dark);
+    color: #fff;
+    text-align: center;
+    padding: 14px 20px;
+    margin: 15px 30px;
+    border-radius: 4px;
+  }
+  .cover-title-box h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .cover-client-block {
+    text-align: center;
+    padding: 10px 30px 5px;
+    direction: rtl;
+  }
+  .cover-client-block .main-recipient {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--blue-dark);
+    margin-bottom: 4px;
+  }
+  .cover-client-block .sub-recipient {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue-dark);
+  }
+  .cover-client-block .quote-date {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-top: 6px;
+  }
+  .cover-client-block .contact-line {
+    font-size: 12px;
+    color: #6a7a8e;
+    margin-top: 5px;
+  }
+
+  .cover-photo {
+    margin: 18px 30px;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 200px;
+    background: var(--gray-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 13px;
+    border: 1px solid var(--border);
+  }
+  .cover-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ====== INNER PAGES ====== */
+  .inner-page { padding: 24px 30px; }
+
+  /* ====== SECTION TITLE BOX ====== */
+  .section-title-box {
+    background: var(--blue-dark);
+    color: #fff;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 17px;
+    font-weight: 800;
+    border-radius: 3px;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ====== KV TABLE (Summary bullets) ====== */
+  .kv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+  }
+  .kv-table td {
+    padding: 7px 12px;
+    vertical-align: middle;
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .kv-table tr:nth-child(odd) { background: var(--gray-light); }
+  .kv-table .kv-label {
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-align: right;
+    width: 52%;
+  }
+  .kv-table .kv-value {
+    font-weight: 500;
+    text-align: left;
+    direction: ltr;
+    color: var(--gray-text);
+  }
+  .kv-table .kv-note {
+    font-size: 10.5px;
+    color: #8a9ab0;
+  }
+
+  /* bullet arrow rows (like in the PDF) */
+  .arrow-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+  }
+  .arrow-table td {
+    padding: 7px 14px;
+    vertical-align: middle;
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .arrow-table .at-label {
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-align: right;
+    white-space: nowrap;
+    width: 48%;
+    background: var(--gray-light);
+  }
+  .arrow-table .at-value {
+    font-weight: 600;
+    text-align: center;
+  }
+  .arrow-table .at-note {
+    font-size: 10.5px;
+    color: #8a9ab0;
+    text-align: center;
+    width: 28%;
+  }
+  .arrow-bullet {
+    font-size: 16px;
+    color: var(--blue-dark);
+    margin-left: 5px;
+  }
+
+  /* ====== NUMBERED SECTION HEADING ====== */
+  .num-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 12px;
+  }
+  .num-circle {
+    background: var(--blue-dark);
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .num-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--blue-dark);
+    border-bottom: 2px solid var(--blue-dark);
+    flex: 1;
+    padding-bottom: 3px;
+  }
+
+  /* ====== ORDERED DETAIL LIST ====== */
+  .detail-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  .detail-list td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    vertical-align: top;
+  }
+  .detail-list .dl-num {
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-align: center;
+    width: 28px;
+    white-space: nowrap;
+  }
+  .detail-list .dl-text { }
+  .detail-list .dl-note {
+    color: #8a9ab0;
+    font-size: 11px;
+    text-align: left;
+    direction: ltr;
+    width: 30%;
+  }
+  .detail-list .dl-cost {
+    font-weight: 700;
+    color: var(--orange);
+    white-space: nowrap;
+    text-align: center;
+    width: 90px;
+  }
+
+  /* ====== SPEC TABLE (components) ====== */
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 12px;
+  }
+  .spec-table th {
+    background: var(--blue-dark);
+    color: #fff;
+    padding: 8px 12px;
+    text-align: right;
+    font-weight: 700;
+  }
+  .spec-table td {
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .spec-table tr:nth-child(even) { background: var(--gray-light); }
+  .spec-table .st-label {
+    font-weight: 700;
+    color: var(--blue-dark);
+    width: 22%;
+    white-space: nowrap;
+  }
+  .spec-table .st-value { }
+
+  /* ====== PAYMENT TABLE ====== */
+  .payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .payment-table th {
+    background: var(--blue-dark);
+    color: #fff;
+    padding: 9px 12px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid var(--blue-dark);
+  }
+  .payment-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    text-align: center;
+    vertical-align: middle;
+  }
+  .payment-table tr:nth-child(even) { background: var(--gray-light); }
+  .payment-table .pt-status {
+    text-align: right;
+    font-weight: 500;
+    color: #5a6a7e;
+  }
+  .payment-table .pt-percent {
+    font-weight: 800;
+    color: var(--blue-dark);
+    font-size: 14px;
+  }
+  .payment-table .pt-cumulative { color: var(--teal); font-weight: 700; }
+
+  /* ====== WARRANTY TABLE ====== */
+  .warranty-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .warranty-table th {
+    background: var(--teal);
+    color: #fff;
+    padding: 9px 12px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid var(--teal);
+  }
+  .warranty-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .warranty-table tr:nth-child(even) { background: var(--gray-light); }
+  .warranty-table .wt-type { font-weight: 700; color: var(--blue-dark); text-align: right; }
+  .warranty-table .wt-brand { text-align: center; }
+  .warranty-table .wt-years { font-weight: 700; color: var(--teal); text-align: center; }
+
+  /* ====== SUB-SECTION HEADING (h3 in PDF) ====== */
+  .sub-heading {
+    background: var(--blue-mid);
+    color: #fff;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 2px;
+    margin: 16px 0 10px;
+    text-align: center;
+  }
+
+  /* ====== SIGNATURE BLOCK ====== */
+  .signature-block {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+  }
+  .sig-side {
+    flex: 1;
+    text-align: center;
+  }
+  .sig-label {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--blue-dark);
+    text-decoration: underline;
+    display: block;
+    margin-bottom: 30px;
+  }
+  .sig-fields {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 11px;
+    color: #8a9ab0;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 5px;
+  }
+  .sig-fields span { flex: 1; border-bottom: 1px solid var(--border); }
+
+  /* ====== TESTIMONIALS GRID ====== */
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .testimonial-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    background: var(--gray-light);
+    font-size: 11.5px;
+  }
+  .testimonial-card .tc-name {
+    font-weight: 700;
+    color: var(--blue-dark);
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* ====== WHY US ====== */
+  .why-section {
+    margin-bottom: 14px;
+  }
+  .why-category {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .why-icon {
+    font-size: 28px;
+    width: 40px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .why-content .why-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--blue-dark);
+    border-bottom: 2px solid var(--blue-mid);
+    margin-bottom: 7px;
+    padding-bottom: 3px;
+  }
+  .why-content ul {
+    padding-right: 16px;
+    margin: 0;
+  }
+  .why-content ul li {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  /* ====== FINANCIAL TABLE ====== */
+  .finance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    margin-bottom: 10px;
+  }
+  .finance-table th {
+    background: var(--blue-mid);
+    color: #fff;
+    padding: 8px 8px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid #b0c4de;
+  }
+  .finance-table td {
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .finance-table tr:nth-child(even) { background: var(--gray-light); }
+  .finance-table .ft-label { text-align: right; font-weight: 600; color: var(--blue-dark); }
+  .finance-table .ft-year0 { background: #fff3e0; font-weight: 700; color: var(--orange); }
+  .finance-table .ft-total { background: var(--blue-dark); color: #fff; font-weight: 700; }
+
+  /* ====== NOTES SECTION ====== */
+  .notes-section {
+    margin-top: 18px;
+  }
+  .notes-section ol {
+    padding-right: 18px;
+    margin: 0;
+  }
+  .notes-section ol li {
+    font-size: 12px;
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+  .notes-section ol li strong { color: var(--blue-dark); }
+
+  /* ====== EXTRAS TABLE (excluded items with price) ====== */
+  .extras-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .extras-table th {
+    background: var(--blue-dark);
+    color: #fff;
+    padding: 7px 12px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid var(--blue-dark);
+  }
+  .extras-table td {
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .extras-table tr:nth-child(even) { background: var(--gray-light); }
+  .extras-table .et-item { text-align: right; }
+  .extras-table .et-note { font-size: 11px; color: #8a9ab0; text-align: right; }
+  .extras-table .et-price { font-weight: 700; color: var(--orange); text-align: center; white-space: nowrap; }
+
+  /* ====== SUPPORT BULLETS ====== */
+  .support-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+  }
+  .support-bullets li {
+    padding: 5px 0 5px 0;
+    font-size: 12px;
+    border-bottom: 1px dotted var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .support-bullets li::before {
+    content: "•";
+    color: var(--blue-mid);
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* ====== CONTACT ENDING PAGE ====== */
+  .contact-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 40px 30px;
+    text-align: center;
+  }
+  .contact-page .big-phone {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--blue-dark);
+    letter-spacing: -1px;
+    margin: 18px 0 10px;
+  }
+  .contact-page .contact-sub {
+    font-size: 14px;
+    color: #6a7a8e;
+  }
+
+  /* ====== PRINT ====== */
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; }
+    .no-print { display: none !important; }
+    @page { size: A4; margin: 0; }
+  }
+
+  /* ====== SCREEN SCROLL HELPER ====== */
+  @media screen {
+    body { padding: 30px 0; }
+    .page { margin-bottom: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     PAGE 1 – COVER
+     VARIABLE FIELDS (marked with [[VAR]]): 
+       [[PROJECT_TYPE]]     e.g. "מערכת פוטו-וולטאית לייצור חשמל"
+       [[CLIENT_NAME]]      e.g. "מסילת ישרים"
+       [[CLIENT_ADDRESS]]   e.g. "בית צורי אליהו 7, זכרון יעקב"
+       [[CLIENT_CONTACT]]   e.g. "הרב אברהם ישעיהו ברלינגר"
+       [[QUOTE_DATE]]       e.g. "06/02/2025"
+       [[SALES_CONTACT]]    e.g. "מוטי הורביץ, 050-5333115"
+       [[COVER_PHOTO_SRC]]  URL or base64 of site photo
+================================================================ -->
+<div class="page">
+  <div class="cover-logo-area">
+    <!-- Logo placeholder – replace img src with real logo -->
+    <div class="cover-logo-placeholder">
+      <div class="logo-symbol">
+        <div class="logo-bar logo-bar-1"></div>
+        <div class="logo-bar logo-bar-2"></div>
+        <div class="logo-bar logo-bar-3"></div>
+      </div>
+      <div class="logo-name">בראשית</div>
+      <div class="logo-tagline">אנרגיה שעובדת בשבילך</div>
+    </div>
+  </div>
+
+  <div class="cover-title-box">
+    <h1>הצעת מחיר</h1>
+  </div>
+
+  <div class="cover-client-block">
+    <div class="main-recipient">מערכת פוטו-וולטאית לייצור חשמל</div><!-- [[PROJECT_TYPE]] -->
+    <div class="sub-recipient">לכבוד: <span class="client-name">מסילת ישרים</span></div><!-- [[CLIENT_NAME]] -->
+    <div class="sub-recipient">בית צורי אליהו 7, זכרון יעקב</div><!-- [[CLIENT_ADDRESS]] -->
+    <div class="sub-recipient" style="font-size:14px; margin-top:6px;">לידי: הרב אברהם ישעיהו ברלינגר</div><!-- [[CLIENT_CONTACT]] -->
+    <div class="quote-date">תאריך הצעה: 06/02/2025</div><!-- [[QUOTE_DATE]] -->
+    <div class="contact-line">איש קשר: מוטי הורביץ, 050-5333115</div><!-- [[SALES_CONTACT]] -->
+  </div>
+
+  <div class="cover-photo">
+    <!-- Replace with: <img src="[[COVER_PHOTO_SRC]]" alt="תמונת האתר"> -->
+    📷 תמונת הגג / האתר תוצג כאן
+  </div>
+
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 2 – PROJECT SUMMARY (תמצית הפרויקט)
+     VARIABLE FIELDS:
+       [[SUMMARY_PARAGRAPH]]   Free-text description of the project
+       [[SYSTEM_KW]]           e.g. "45"
+       [[SYSTEM_TYPE]]         e.g. "קילו-וואט" / "KWp"
+       [[TOTAL_PRICE_NIS]]     e.g. "130,500"
+       [[PRICE_PER_KW]]        e.g. "2,900"
+       [[ANNUAL_VALUE_NIS]]    e.g. "31,000"
+       [[ANNUAL_VALUE_PER_KW]] e.g. "690"
+       [[ANNUAL_MAINTENANCE]]  e.g. "4,000"
+       [[ANNUAL_PROFIT_NIS]]   e.g. "27,000"
+       [[TOTAL_25Y_PROFIT]]    e.g. "660,000"
+       [[ANNUAL_ROI_PCT]]      e.g. "20.5"
+       -- FOR HYBRID with storage also:
+       [[STORAGE_KWH]]         e.g. "627"
+       [[STORAGE_PROFIT_NIS]]  e.g. "14,500"
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">תמצית הפרויקט</div>
+
+    <p style="font-size:12.5px; line-height:1.75; margin-bottom:18px; text-align:justify;">
+      <!-- [[SUMMARY_PARAGRAPH]] -->
+      ההצעה מתייחסת לגג המוסדות בית צורי אליהו 7, זכרון יעקב. בשטח הגג ניתן להתקין מערכת בהספק של כ-45 קו"ט באסדרה תעריפית (ע"י שימוש בפאנלים המתקדמים ביותר בארץ). במסגרת האסדרה התעריפית, יחתם הסכם עם חברת החשמל בו היא מתחייבת לרכוש את החשמל שייוצר מהמערכת במחיר המובטח למשך 25 שנים וזאת ללא קשר לצריכת החשמל במבנה. ניתן גם לקזז את צריכת החשמל ישירות ואז החיסכון הוא לפי התעריף כולל מע"מ שהוא גבוה מהתעריף שמשולם ע"י חברת החשמל. בנוסף, ניתן לשלב גם מצברים לאגירת חשמל וכך להשתמש במערכת לפתרון חשמל כשר לשבתות וחגים.
+    </p>
+
+    <!-- Summary KV table (arrow style as in PDF) -->
+    <table class="arrow-table">
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> הספק המערכת:</td>
+        <td class="at-value"><strong>45 קילו-וואט</strong></td><!-- [[SYSTEM_KW]] -->
+        <td class="at-note"></td>
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> עלות המערכת לא כולל מע"מ:</td>
+        <td class="at-value"><strong>130,500 ₪</strong></td><!-- [[TOTAL_PRICE_NIS]] -->
+        <td class="at-note">(2,900 ₪ לקילו-וואט)</td><!-- [[PRICE_PER_KW]] -->
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> שווי החשמל המיוצר בשנה:</td>
+        <td class="at-value"><strong>31,000 ₪</strong></td><!-- [[ANNUAL_VALUE_NIS]] -->
+        <td class="at-note">(כ-690 ₪ לקילו-וואט)</td><!-- [[ANNUAL_VALUE_PER_KW]] -->
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> עלות תחזוקה שנתית:</td>
+        <td class="at-value" style="color:var(--orange);">(4,000 ₪)</td><!-- [[ANNUAL_MAINTENANCE]] -->
+        <td class="at-note"></td>
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> רווח שנתי:</td>
+        <td class="at-value"><strong>27,000 ₪</strong></td><!-- [[ANNUAL_PROFIT_NIS]] -->
+        <td class="at-note"></td>
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> רווח כולל ב-25 שנה (ללא מימון):</td>
+        <td class="at-value"><strong>660,000 ₪</strong></td><!-- [[TOTAL_25Y_PROFIT]] -->
+        <td class="at-note"></td>
+      </tr>
+      <tr>
+        <td class="at-label"><span class="arrow-bullet">›</span> תשואה שנתית:</td>
+        <td class="at-value" style="color:var(--green);"><strong>20.5 %</strong></td><!-- [[ANNUAL_ROI_PCT]] -->
+        <td class="at-note"></td>
+      </tr>
+    </table>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 1</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 3 – ABOUT US (מתחילים מבראשית + מה אומרים עלינו)
+     This page is STATIC – no variable fields
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">מתחילים מבראשית</div>
+
+    <p style="font-size:12.5px; line-height:1.8; margin-bottom:16px; text-align:justify;">
+      'בראשית סולאר' מביאה את בשורת הקיימות וחוסכת בעלויות החשמל למוסדות, עסקים, מפעלים ובתים פרטיים. החברה מתמחה ביעוץ, הקמה וניהול של מערכות סולאריות ביתיות ועסקיות, מערכות Grid-Off, מערכות היברידיות משולבות גנרטור ו/או מצברים וחשמל כשר.
+    </p>
+    <p style="font-size:12.5px; line-height:1.8; margin-bottom:16px; text-align:justify;">
+      מתוך רצון לתרום לסביבה ירוקה ואקולוגית יותר תוך צמצום עלויות, אנו פועלים לטובת הלקוח לאורך כל שלבי הקמת המערכת עם הקפדה על סטנדרטים גבוהים, יסודיות ומקצועיות החל משלב התכנון, הטיפול מול חברת החשמל וההקמה ועד לניהול וניטור התפוקה.
+    </p>
+    <p style="font-size:12.5px; line-height:1.8; margin-bottom:18px; text-align:justify;">
+      לנו, ב'בראשית סולאר' ניסיון עשיר בהקמת מערכות בגדלים שונים והתמחות בניצול אופטימלי של שטח הגג להשגת תוצאה מיטבית. את הלקוח מלווה צוות מיומן המורכב מאנשי תכנון, חשמל והנדסה מקצועיים בעלי ותק רב שנים. העבודה מתבצעת בהתאם לתקנים ולדרישות חברת החשמל תוך שימוש ברכיבים איכותיים ואמינים המיוצרים על ידי מיטב היצרנים המובילים בעולם.
+    </p>
+
+    <div class="section-title-box" style="margin-top:10px;">מה אומרים עלינו?</div>
+
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="tc-name">צבי בראון, ישיבת אופקים:</div>
+        <em>"מאז הקמת המערכת חסכנו 70% מצריכת החשמל השנתית, האמינות מוכחת"</em>
+      </div>
+      <div class="testimonial-card">
+        <div class="tc-name">ערן קופל, נציג האנווה קיוסלס בישראל:</div>
+        <em>"מתוך ניסיוני עם עשרות חברות מתקינות, אני ממליץ בחום על חברת בראשית. זאת בזכות המקצועיות והיסודיות, הקפדה על הפרטים תוך דאגה למיקסום התועלת לבעל המתקן."</em>
+      </div>
+      <div class="testimonial-card">
+        <div class="tc-name">אלי פרידמן, נווה ירושלים:</div>
+        <em>"סיימנו פרויקט ענק עם חברת בראשית ואני ממליץ עליהם בחום מכל הבחינות גם מקצוענים וגם אנושיים"</em>
+      </div>
+      <div class="testimonial-card">
+        <div class="tc-name">דויד זריצקי, ישיבת תפרח:</div>
+        <em>"חברה מקצועית ביותר. עבודה איכותית וזריזה. תכנון מדויק ומפורט. והכי חשוב – אמינות ויושר לפני הכל!"</em>
+      </div>
+    </div>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 2</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 4 – WHY US (למה דווקא אנחנו)
+     This page is STATIC – no variable fields
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">למה דווקא אנחנו?</div>
+
+    <div class="why-section">
+      <div class="why-category">
+        <div class="why-icon">🏆</div>
+        <div class="why-content">
+          <div class="why-title">איכות</div>
+          <ul>
+            <li>לימוד מעמיק של אתר הלקוח והתאמת ההצעה לתנאי השטח, הכיס, והרצון של הלקוח.</li>
+            <li>תכנון קפדני, מיקסום נתוני האתר ופתרונות לבעיות מורכבות.</li>
+            <li>התקנה ע"י בעלי מקצוע מוסמכים ומיומנים.</li>
+            <li>הקפדה על התקנה של ציוד תקני ואיכותי.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="why-category">
+        <div class="why-icon">🤝</div>
+        <div class="why-content">
+          <div class="why-title">שירות</div>
+          <ul>
+            <li>ליווי לאורך כל הדרך עד לחיבור והפעלה של המערכת.</li>
+            <li>שירות אנושי ואישי לכל לקוח.</li>
+            <li>אנו רואים דרך העיניים של הלקוח ועושים את המירב כדי להשביע את רצונו.</li>
+            <li>תמיכה וניהול תקלות באמצעות הטלפון ושליחת טכנאי שירות.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="why-category">
+        <div class="why-icon">✅</div>
+        <div class="why-content">
+          <div class="why-title">אחריות</div>
+          <ul>
+            <li>אחריות רבת שנים על הציוד המותקן.</li>
+            <li>אחריות על פעילות תקינה של המערכת.</li>
+            <li>ניטור ובקרה של פעילות רכיבי המערכת.</li>
+            <li>תחזוקה שוטפת לשמירה על תפוקה מרבית.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 3</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 5 – TECHNICAL SPEC (מפרט טכני)
+     VARIABLE FIELDS:
+       [[SYSTEM_KW]]           e.g. "45"
+       [[TOTAL_PRICE_NIS]]     e.g. "130,500"
+       [[SYSTEM_TYPE_LABEL]]   "קילו-וואט" / "KWp"
+       [[PANEL_MODEL]]         e.g. "AiKo Solar או שו\"ע פאנל 650W"
+       [[INVERTER_MODEL]]      e.g. "Solis/Trina/Tadiran/GoodWe/Sungrow/Jinko/Kstar/Advice/DEYE"
+       [[INVERTER_TYPE]]       "ממיר מתח" / "ממיר היברידי" / "ממיר עצמאי"
+       [[OPTIMIZER_MODEL]]     e.g. "TiGo" or "כלול סולאראדג'" or "—"
+       [[BATTERY_MODEL]]       e.g. "—" or "ABSEN/GSL/EFORE/KAIFA"
+       [[BATTERY_KWH]]         e.g. "—" or "627"
+       [[STORAGE_KW]]          e.g. "—" or "125"
+       [[AC_INFRA_METERS]]     e.g. "25" or "50"
+       [[MONITORING_SYSTEM]]   e.g. "כולל" or "לא כולל – נדרש אינטרנט מהלקוח"
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">מפרט טכני להצעה</div>
+
+    <table class="kv-table" style="margin-bottom:18px;">
+      <tr>
+        <td class="kv-label">הספק המערכת</td>
+        <td class="kv-value"><strong>45 קילו-וואט</strong></td><!-- [[SYSTEM_KW]] [[SYSTEM_TYPE_LABEL]] -->
+      </tr>
+      <tr>
+        <td class="kv-label">עלות המערכת <em>(לא כולל מע"מ)</em></td>
+        <td class="kv-value"><strong>130,500 ₪</strong></td><!-- [[TOTAL_PRICE_NIS]] -->
+      </tr>
+    </table>
+
+    <!-- Section 1: Planning -->
+    <div class="num-section">
+      <div class="num-circle">1</div>
+      <div class="num-title">תכנון, פיקוח וליווי</div>
+    </div>
+    <table class="detail-list">
+      <tr><td class="dl-num">1.</td><td class="dl-text">בדיקת היתכנות ביצוע, יעוץ מקצועי ובחינת כדאיות כלכלית.</td></tr>
+      <tr><td class="dl-num">2.</td><td class="dl-text">הכנת תכנון הנדסי ראשוני הכולל הערכת גודל, הספק, תפוקה ויעילות.</td></tr>
+      <tr><td class="dl-num">3.</td><td class="dl-text">הכנת תכנית מפורטת בהתאם לתנאי ההסדרה וגופי המימון.</td></tr>
+      <tr><td class="dl-num">4.</td><td class="dl-text">הכנת מודל כלכלי לחיזוי התפוקה והכנסות המערכת.</td></tr>
+      <tr><td class="dl-num">5.</td><td class="dl-text">ניהול, פיקוח והתאמת העבודות בהתאם לעומס המערכת על גג המבנה, בהתאם להנחיות קונסטרוקטור.</td></tr>
+      <tr><td class="dl-num">6.</td><td class="dl-text">בקרת איכות רצופה על איכות החומרים והעבודה.</td></tr>
+      <tr><td class="dl-num">7.</td><td class="dl-text">תיאום ביקורות חח"י לאחר ההתקנה וטיפול בקבלת אישור טכני.</td></tr>
+      <tr><td class="dl-num">8.</td><td class="dl-text">ניהול ופיקוח משלב ההזמנה ועד להפעלה תקינה של המערכת.</td></tr>
+      <tr><td class="dl-num">9.</td><td class="dl-text">הדרכה מקיפה ללקוח הכוללת ניטור ותחזוקה.</td></tr>
+      <tr><td class="dl-num">10.</td><td class="dl-text">הגשת תיק תיעוד מערכת הכולל: תוכניות עדות, מפרטים טכניים, דפי הדרכה לתפעול, אישורים הנדסיים, מיפוי האופטימייזרים ותעודות אחריות.</td></tr>
+    </table>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 4</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 6 – COMPONENTS & WORKS (רכיבים ועבודות) + LICENSING
+     VARIABLE FIELDS: same as PAGE 5 component variables above
+     [[HAS_LICENSING]]  true/false – show/hide section 2 (רישוי)
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <!-- Section 2: Licensing (shown for tariff-regulated systems) -->
+    <div class="num-section">
+      <div class="num-circle">2</div>
+      <div class="num-title">רישוי</div><!-- hide if [[HAS_LICENSING]] = false -->
+    </div>
+    <table class="detail-list" style="margin-bottom:18px;">
+      <tr><td class="dl-num">1.</td><td class="dl-text">התנהלות מול מחלקת התכנון של חברת החשמל לקבלת אישור כניסה למכסה.</td></tr>
+      <tr><td class="dl-num">2.</td><td class="dl-text">התנהלות מול הגופים והועדות השונות לקבלת אישורים עד לחיבור המערכת: הוצאת טופס 4 (במידה והוציאו היתר בנייה למערכת), הוצאת היתר הפעלה ממשרד האנרגיה, וקבלת אישורים מחברת החשמל.</td></tr>
+      <tr><td class="dl-num">3.</td><td class="dl-text">ליווי הנדסי ומשפטי הכולל אנשי מקצוע כגון מהנדס חשמל, מהנדס קונסטרוקציה, אדריכל ועורך דין.</td></tr>
+    </table>
+
+    <!-- Section 3: Components -->
+    <div class="num-section">
+      <div class="num-circle">3</div>
+      <div class="num-title">רכיבים ועבודות</div>
+    </div>
+
+    <table class="spec-table">
+      <tr>
+        <td class="st-label">פאנלים דו-צדדיים</td>
+        <td class="st-value">
+          <!-- [[PANEL_MODEL]] -->
+          AiKo Solar או שו"ע – פאנלים המדורגים כ-TIER-1 (בלומברג).<br>
+          <strong>הספק יושג ע"י שימוש בפאנל 650 וואט המתקדם בארץ!</strong>
+        </td>
+      </tr>
+      <tr>
+        <td class="st-label">ממירים <!-- [[INVERTER_TYPE]] --></td>
+        <td class="st-value">
+          <!-- [[INVERTER_MODEL]] -->
+          Solis / Trina / Tadiran / GoodWe / Sungrow / Jinko / Kstar / Advice / DEYE
+        </td>
+      </tr>
+      <tr>
+        <td class="st-label">אופטימייזרים</td><!-- show/hide based on [[OPTIMIZER_MODEL]] -->
+        <td class="st-value">TiGo (שימוש באופטימייזרים לפי המלצת המתכנן הסולארי)</td>
+      </tr>
+      <tr><!-- show only if [[BATTERY_MODEL]] != "—" -->
+        <td class="st-label">מצברים / אגירה</td>
+        <td class="st-value">
+          <!-- [[BATTERY_MODEL]] [[BATTERY_KWH]] קוט"ש -->
+          מצברי ליתיום באיכות גבוהה – כולל 5 שנות אחריות
+        </td>
+      </tr>
+      <tr>
+        <td class="st-label">קונסטרוקציה</td>
+        <td class="st-value">מערכת אחיזה מאלומיניום עמידה בפני פגעי מזג האוויר בעלת תקן ישראלי. עיגון הקונסטרוקציה לגג המבנה בהתאם לתקן. אביזרי חיבור מאלומיניום ונירוסטה. שימוש בגומי מבודד EPDM.</td>
+      </tr>
+      <tr>
+        <td class="st-label">חשמל</td>
+        <td class="st-value">לוחות DC וקופסאות של חברת ABB או שו"ע. כולל מיתוג באמצעות מפסקים דו-קוטביים של חברת ABB או שו"ע (ללא שימוש בנתיכים) והגנת מתח יתר (הגנת ברקים). ארונות AC כולל הגנות מתח יתר ושקע שירות לחיבור תקשורת. תשתית AC לכבלי הזנה ראשיים עד <!-- [[AC_INFRA_METERS]] --> 25 מ' (לא כולל חציבה/חפירה/הטמנה). כבלי DC סולאריים עם בידוד כפול מוגן UV מנחושת – תוצרת Top Cable ספרד.</td>
+      </tr>
+      <tr>
+        <td class="st-label">הובלה והתקנה</td>
+        <td class="st-value">הובלה והנפה של הציוד באתר הלקוח. התקנה מלאה של כלל הציוד כולל חיבור לארונות החשמל של הלקוח.</td>
+      </tr>
+    </table>
+
+    <!-- Section 4: Monitoring -->
+    <div class="num-section">
+      <div class="num-circle">4</div>
+      <div class="num-title">ניטור ובקרה</div>
+    </div>
+    <table class="detail-list">
+      <tr><td class="dl-num">1.</td><td class="dl-text">חיבור כבל תקשורת בין הממירים והכנת קופסה לתקשורת סמוך ללוח המאסף.</td></tr>
+      <tr><td class="dl-num">2.</td><td class="dl-text">מערכת לאיסוף נתונים מרכיבי המערכת.</td></tr>
+      <tr><td class="dl-num">3.</td><td class="dl-text">אפשרות גישה מרחוק למעקב אחר תפוקות בזמן אמת, גילוי תקלות והפקת דוחות וסטטיסטיקות. כולל חיבור לאינטרנט וגישה מהסלולרי.</td></tr>
+    </table>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 5</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 7 – EXCLUSIONS (החרגות ותוספות בתשלום)
+     VARIABLE FIELDS:
+       [[AC_INFRA_METERS]]          e.g. "25" or "50"
+       [[OPTIMIZER_UNIT_PRICE]]     e.g. "200" or "250"
+       [[EXTRA_STORAGE_OPTION_1]]   optional row: e.g. storage upgrade 128 kWh + price
+       [[EXTRA_STORAGE_OPTION_2]]   optional row: e.g. storage upgrade 256 kWh + price
+       [[LADDER_PRICE_PER_M]]       e.g. "980"
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="num-section">
+      <div class="num-circle">5</div>
+      <div class="num-title">החרגות ותוספות בתשלום</div>
+    </div>
+
+    <table class="extras-table">
+      <thead>
+        <tr>
+          <th style="text-align:right; width:50%;">פריט</th>
+          <th>מצב</th>
+          <th>הערה / מחיר</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="et-item">הוספת אופטימייזרים TIGO לפי הצורך</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">200 ₪ / יחידה</td><!-- [[OPTIMIZER_UNIT_PRICE]] -->
+        </tr>
+        <tr>
+          <td class="et-item">כלוב ממירים כולל גגון</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">—</td>
+        </tr>
+        <tr>
+          <td class="et-item">סולמות עלייה תקניים לגג</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">980 ₪ / מ'</td><!-- [[LADDER_PRICE_PER_M]] -->
+        </tr>
+        <tr>
+          <td class="et-item">ארונות מניה של חברת החשמל</td>
+          <td style="text-align:center;">לא נדרש במערכת ביתית</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="et-item">תשתית AC מעל <!-- [[AC_INFRA_METERS]] --> 25 מ'</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">עלות בראשית +15%</td>
+        </tr>
+        <tr>
+          <td class="et-item">התאמות גג לפי הוראת קונסטרוקטור</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td>לפי הוראת קונסטרוקטור</td>
+        </tr>
+        <tr>
+          <td class="et-item">תשלומים ואגרות חח"י</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="et-item">חיבור מערכת ניטור לאינטרנט</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">חלופה סלולרית: 990 ₪ + 12 חודשים</td>
+        </tr>
+        <tr>
+          <td class="et-item">הזזת ציוד קיים (דוד שמש, מדחסי מזגן וכו')</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td>באחריות הלקוח</td>
+        </tr>
+        <tr>
+          <td class="et-item">עלויות חריגות (אסבסט, כלוב ממירים, קווי חיים, מנוף וכו')</td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td>יתומחר בנפרד</td>
+        </tr>
+        <!-- OPTIONAL: Storage upgrades (shown only if [[HAS_STORAGE_UPGRADE_OPTIONS]]) -->
+        <tr>
+          <td class="et-item">
+            שדרוג לממיר היברידי 50 קו"ט + אגירה 128 קוט"ש
+            <div class="et-note">(חשמל כשר לשבת + ניצול עודפי יום בלילה)</div>
+          </td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">139,000 ₪ + מע"מ</td>
+        </tr>
+        <tr>
+          <td class="et-item">
+            שדרוג לממיר היברידי 50 קו"ט + אגירה 256 קוט"ש
+            <div class="et-note">(חשמל כשר לשבת + ניצול עודפי יום בלילה)</div>
+          </td>
+          <td style="text-align:center; color:var(--orange);">לא כלול</td>
+          <td class="et-price">249,000 ₪ + מע"מ</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 6</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 8 – WARRANTY & SUPPORT (אחריות ותחזוקה)
+     VARIABLE FIELDS:
+       [[PANEL_BRAND]]          e.g. "AiKo Solar"  
+       [[PANEL_WARRANTY_PROD]]  e.g. "10 שנים"
+       [[PANEL_WARRANTY_PERF]]  e.g. "30 שנים"  (or "25 שנים")
+       [[INVERTER_BRAND]]       e.g. "GoodWe/Sungrow/..."
+       [[INVERTER_WARRANTY]]    e.g. "5 שנים"
+       [[STORAGE_WARRANTY]]     e.g. "5 שנות ציוד / 10 שנות ביצועים" or "—"
+       [[OPTIMIZER_BRAND]]      e.g. "TiGo 25 שנה" or "—"
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">אחריות ותחזוקה</div>
+
+    <div class="sub-heading">אחריות יצרן</div>
+    <table class="warranty-table">
+      <thead>
+        <tr>
+          <th style="text-align:right; width:20%;">#</th>
+          <th style="text-align:right;">רכיב</th>
+          <th>יצרן/מותג</th>
+          <th>אחריות</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="wt-type">1. פאנלים</td>
+          <td class="wt-brand"><!-- [[PANEL_BRAND]] --> AiKo Solar</td>
+          <td class="wt-years">מוצר: 10 שנים<br>תפוקה: 30 שנים</td><!-- [[PANEL_WARRANTY_PROD]] [[PANEL_WARRANTY_PERF]] -->
+        </tr>
+        <tr>
+          <td class="wt-type">2. ממירים</td>
+          <td class="wt-brand"><!-- [[INVERTER_BRAND]] --> GoodWe / Sungrow / Jinko / Kstar / DEYE / Tadiran / Solis / Trina / Advice</td>
+          <td class="wt-years">5 שנים<br><em style="font-size:10.5px;">(ניתן להרחבה בתשלום)</em></td><!-- [[INVERTER_WARRANTY]] -->
+        </tr>
+        <tr><!-- show only if [[HAS_OPTIMIZER]] -->
+          <td class="wt-type">3. אופטימייזרים</td>
+          <td class="wt-brand">TiGo</td>
+          <td class="wt-years">25 שנה</td>
+        </tr>
+        <tr><!-- show only if [[HAS_STORAGE]] -->
+          <td class="wt-type">4. מצברים / אגירה</td>
+          <td class="wt-brand"><!-- [[BATTERY_BRAND]] --> ליתיום איכות גבוהה</td>
+          <td class="wt-years">5 שנות ציוד<br>+5 שנות ביצועים</td><!-- [[STORAGE_WARRANTY]] -->
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sub-heading">אחריות "בראשית"</div>
+    <table class="warranty-table">
+      <tbody>
+        <tr>
+          <td class="wt-type">מתן אחריות מקיפה לטיב הרכיבים ותקינות המערכת</td>
+          <td class="wt-brand" colspan="2"></td>
+          <td class="wt-years">24 חודשים</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title-box" style="margin-top:16px;">שירות ותמיכה</div>
+
+    <ul class="support-bullets">
+      <li>בראשית סולאר מעמידה לרשות לקוחותיה מרכז תמיכה טלפוני הזמין לפניות: 1599-505-125 | support@beresheetSolar.co.il</li>
+      <li>במידה ולא נפתרה התקלה בצורה טלפונית מתחייבת בראשית סולאר לשלוח טכנאי לאתר הלקוח בתוך שלושה ימי עבודה.</li>
+      <li>עלות הביקור בהתאם לתעריף הנהוג בחברה באותו המועד. בתוך תקופת האחריות הביקור הינו ללא תוספת תשלום.</li>
+    </ul>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 7</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 9 – PAYMENT TERMS (תנאי תשלום)
+     VARIABLE FIELDS:
+       [[PAYMENT_SCHEDULE_TYPE]]   "tariff" (5-stage) or "standalone" (3-stage)
+       The table rows below can be toggled based on system type.
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">תנאי תשלום</div>
+    <p style="font-size:11px; color:#8a9ab0; margin-bottom:10px;">* כל התשלומים יבוצעו בפועל בשיק מזומן או העברה בנקאית</p>
+
+    <!-- TARIFF SYSTEM payment (5 rows) – show when [[PAYMENT_SCHEDULE_TYPE]] = "tariff" -->
+    <table class="payment-table">
+      <thead>
+        <tr>
+          <th>מועד התשלום</th>
+          <th>סכום לתשלום</th>
+          <th>סך מצטבר</th>
+          <th>מצב התקנה</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>במועד אישור ההזמנה</td>
+          <td class="pt-percent">15%</td>
+          <td class="pt-cumulative">15%</td>
+          <td class="pt-status">הכנת תכניות ורישום למכסה</td>
+        </tr>
+        <tr>
+          <td>לאחר הגעת הקונסטרוקציה לאתר והתחלת עבודות</td>
+          <td class="pt-percent">35%</td>
+          <td class="pt-cumulative">50%</td>
+          <td class="pt-status">הקמת קונסטרוקציה</td>
+        </tr>
+        <tr>
+          <td>עם הגעת הפאנלים והנפתם לגג</td>
+          <td class="pt-percent">35%</td>
+          <td class="pt-cumulative">85%</td>
+          <td class="pt-status">שחרור והובלה לאתר הלקוח</td>
+        </tr>
+        <tr>
+          <td>סיום ההתקנה כולל עמידה בהצלחה בבדיקת המתקן</td>
+          <td class="pt-percent">10%</td>
+          <td class="pt-cumulative">95%</td>
+          <td class="pt-status">מערכת מותקנת ממתינה לחיבור ע"י חח"י</td>
+        </tr>
+        <tr>
+          <td>חיבור לרשת או כעבור 90 יום מסיום העבודה</td>
+          <td class="pt-percent">5%</td>
+          <td class="pt-cumulative">100%</td>
+          <td class="pt-status">מערכת מותקנת ומחוברת</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- STANDALONE SYSTEM payment (3 rows) – show when [[PAYMENT_SCHEDULE_TYPE]] = "standalone" -->
+    <!--
+    <table class="payment-table">
+      <thead><tr><th>מועד התשלום</th><th>סכום</th><th>מצטבר</th><th>מצב</th></tr></thead>
+      <tbody>
+        <tr><td>במועד אישור ההזמנה וחתימת ההסכם</td><td class="pt-percent">50%</td><td class="pt-cumulative">50%</td><td class="pt-status">הזמנת הציוד מהיצרנים</td></tr>
+        <tr><td>לאחר אספקת הציוד ללקוח</td><td class="pt-percent">35%</td><td class="pt-cumulative">85%</td><td class="pt-status">הציוד סופק ללקוח</td></tr>
+        <tr><td>לאחר חיבור והפעלה של המתקן</td><td class="pt-percent">15%</td><td class="pt-cumulative">100%</td><td class="pt-status">מתקן עובד ועבר תקופת הרצה</td></tr>
+      </tbody>
+    </table>
+    -->
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 8</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 10 – QUOTE NOTES & SIGNATURE (הערות להצעה + חתימה)
+     VARIABLE FIELDS:
+       [[VALIDITY_DAYS]]      e.g. "60" or "30"
+       [[DELIVERY_DAYS]]      e.g. "120"
+       [[QUOTE_NUMBER]]       (optional)
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+
+    <div class="section-title-box">הערות להצעה</div>
+
+    <div class="notes-section">
+      <ol>
+        <li>המחירים אינם כוללים מע"מ אלא אם כן צוין אחרת.</li>
+        <li>ההצעה תקפה ל-<strong><!-- [[VALIDITY_DAYS]] -->60</strong> יום מהתאריך הרשום עליה.</li>
+        <li>יש לוודא כי מערכת החשמל של המבנה תואמת את דרישות חח"י. שינויים הנדרשים לתאימות לתנאים אלו אינם כלולים בהצעה והינם באחריות הלקוח.</li>
+        <li>זמן אספקה וסיום ההתקנה מעת קבלת אישור הלקוח – עד <strong><!-- [[DELIVERY_DAYS]] -->120</strong> ימי עבודה.</li>
+        <li>עלות והספק המערכת הסופית יקבעו לפי ההספק המותקן בפועל. במידה וההתקנה בפועל תהיה קטנה מההשערה הראשונית, עקב אילוצים שונים בשטח, יחוייב הלקוח לפי גודל ההתקנה בפועל.</li>
+        <li>ההצעה בתוקף כל עוד הלקוח הוא בעל הנכס או בעל זכות השימוש בו. בנוסף, לצורך השלמת החיבור לרשת, על בעל הנכס לוודא את קיומו של אישור "טופס 4" למבנה, היתר בנייה במידת הצורך, טופס אישור זכויות בנכס וחיבור חשמל קבוע ולא זמני.</li>
+        <li>כל הציוד המותקן הינו רכוש חברת בראשית סולאר בע"מ עד למועד פירעון מלא של התשלום.</li>
+        <li>חברת בראשית סולאר בע"מ משאירה לעצמה את הזכות לבטל הסכם זה עד לאחר ביקור סוקר מקצועי מטעמה. במידה וימצא שהגג / הבית / תנאי השטח אינם מתאימים להתקנת המערכת הסולארית לפי שיקול דעתה הבלעדית של חברת בראשית סולאר בע"מ, יוחזר ללקוח מלא סכום המקדמה ששולם תוך 10 ימים.</li>
+        <li>חברת בראשית סולאר בע"מ מעסיקה את בעלי המקצוע מהמומחים והותיקים ביותר בתחום. לחברה ניסיון רב בהתקנת מערכות במוסדות, מפעלים ובתים פרטיים. המלצות יימסרו לפי דרישה.</li>
+        <li><strong>כל העסקאות בחברה מבוצעות על פי היתר עסקא.</strong></li>
+      </ol>
+    </div>
+
+    <!-- Signature Block -->
+    <div class="signature-block">
+      <div class="sig-side">
+        <span class="sig-label">חתימת הלקוח:</span>
+        <div class="sig-fields">
+          <span>שם</span>
+          <span>מס' זהות</span>
+          <span>חתימה</span>
+        </div>
+      </div>
+      <div class="sig-side">
+        <span class="sig-label">חתימת בראשית:</span>
+        <div class="sig-fields">
+          <span style="min-width:150px;">___________________</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 9</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     PAGE 11 – FINANCIAL MODEL (תחשיב כלכלי)
+     VARIABLE FIELDS  – populated entirely from the quote data
+     This page renders a 25-year cash-flow summary table.
+     [[FINANCE_ROWS]]   Array of year 0-25 data (see structure below)
+     Full structure is identical to existing code.js `saveCustomerData` fields.
+================================================================ -->
+<div class="page">
+  <div class="inner-page">
+    <div class="section-title-box">תחשיב כלכלי</div>
+
+    <!-- Top parameter grid (mirroring the PDF's parameter table) -->
+    <table class="finance-table" style="margin-bottom:16px;">
+      <thead>
+        <tr>
+          <th class="ft-label">סעיף</th>
+          <th>יחידה</th>
+          <th>ערך ל-1 KWp</th>
+          <th>ערך למתקן</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="ft-label">הספק מותקן</td><td>קילו-וואט מותקן</td><td>1</td><td><strong>45.0</strong></td></tr><!-- [[SYSTEM_KW]] -->
+        <tr><td class="ft-label">שטח גג נדרש</td><td>מ"ר</td><td></td><td><strong>338</strong></td></tr>
+        <tr><td class="ft-label">תפוקה שנתית</td><td>קוט"ש לקו"ט מותקן</td><td>1,600</td><td><strong>72,000</strong></td></tr>
+        <tr><td class="ft-label">עלות מערכת ללא מע"מ</td><td>₪/קו"ט</td><td>2,900</td><td><strong>130,500</strong></td></tr><!-- [[PRICE_PER_KW]] [[TOTAL_PRICE_NIS]] -->
+        <tr><td class="ft-label">ערך מינימלי של החשמל המיוצר (תעריף ייצור)</td><td>₪/קוט"ש</td><td>0.44</td><td><strong>31,450</strong></td></tr>
+        <tr><td class="ft-label">עלות תחזוקה, שטיפת פאנלים, ביטוח</td><td>₪/קו"ט/שנה</td><td>90</td><td><strong>4,050</strong></td></tr>
+        <tr><td class="ft-label">תשואה שנתית</td><td>%</td><td></td><td style="color:var(--green);"><strong>20.5%</strong></td></tr><!-- [[ANNUAL_ROI_PCT]] -->
+        <tr class="ft-total"><td class="ft-label" style="color:#fff;">רווח כולל ב-25 שנה</td><td colspan="2"></td><td><strong>660,000 ₪</strong></td></tr><!-- [[TOTAL_25Y_PROFIT]] -->
+      </tbody>
+    </table>
+
+    <!-- Year-by-year table header only (actual rows injected by app) -->
+    <table class="finance-table">
+      <thead>
+        <tr>
+          <th>שנה</th>
+          <th>תפוקה שנתית (KWh)</th>
+          <th>ערך החשמל המיוצר</th>
+          <th>תחזוקה</th>
+          <th>החזר קרן</th>
+          <th>החזר ריבית</th>
+          <th>רווח / (הפסד)</th>
+          <th>תחזית הלוואה</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- [[FINANCE_ROWS]] – injected dynamically by the app -->
+        <tr class="ft-year0">
+          <td>0</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+          <td style="color:var(--orange);">(130,500)</td><td>—</td>
+        </tr>
+        <tr>
+          <td>1</td><td>72,000</td><td>31,450</td><td>(4,050)</td>
+          <td>7,830</td><td>7,380</td><td>12,190</td><td>27,400</td>
+        </tr>
+        <tr>
+          <td>2</td><td>71,820</td><td>31,371</td><td>(4,050)</td>
+          <td>7,277</td><td>7,933</td><td>12,111</td><td>27,321</td>
+        </tr>
+        <tr><td colspan="8" style="text-align:center; color:#aaa; font-style:italic; padding:8px;">... (שנות 3–25 יוצגו על ידי המערכת)</td></tr>
+        <tr class="ft-total">
+          <td colspan="3" style="text-align:right; color:#fff;">סה"כ 25 שנה</td>
+          <td>—</td><td>—</td><td>—</td>
+          <td><strong>509,307</strong></td>
+          <td><strong>661,403</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק | 10</span>
+  </div>
+</div>
+
+
+<!-- ================================================================
+     LAST PAGE – CONTACT
+     STATIC (no variable fields)
+================================================================ -->
+<div class="page">
+  <div class="cover-logo-area" style="margin-top:40px;">
+    <div class="cover-logo-placeholder">
+      <div class="logo-symbol">
+        <div class="logo-bar logo-bar-1"></div>
+        <div class="logo-bar logo-bar-2"></div>
+        <div class="logo-bar logo-bar-3"></div>
+      </div>
+      <div class="logo-name">בראשית</div>
+      <div class="logo-tagline">אנרגיה שעובדת בשבילך</div>
+    </div>
+  </div>
+  <div class="contact-page">
+    <div class="big-phone">1599-505-125</div>
+    <div class="contact-sub">
+      sales@beresheetSolar.co.il &nbsp;|&nbsp; פקס: 072-3730308
+    </div>
+  </div>
+  <div class="footer-bar">
+    <span>טל' 1599-505-125 | פקס 072-3730308</span>
+    <span>office@beresheetsolar.co.il</span>
+    <span>כתובת: רבי עקיבא 86, בני ברק</span>
+  </div>
+</div>
+
+</body>
+</html>

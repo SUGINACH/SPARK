@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת נתוני צריכת חשמל</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+            --text-light: #6b7280;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+
+        .btn-add-consumer {
+            background-color: #10b981;
+            color: white;
+            margin-top: 10px;
+        }
+        .btn-add-consumer:hover { background-color: #059669; }
+
+        .location-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .location-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            border: 1px dashed transparent;
+            padding: 5px;
+            min-width: 200px;
+        }
+        
+        .location-title:hover, .location-title:focus {
+            border-color: var(--primary);
+            background-color: #f8fafc;
+            outline: none;
+        }
+
+        .category-section {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            color: #374151;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .consumer-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-start;
+            background-color: white;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .consumer-row > * {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .remove-row-wrapper {
+            flex: 0 0 auto !important;
+            min-width: auto !important;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        select, input[type="text"], input[type="number"], input[type="time"] {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .schedule-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 10px;
+            flex: 2 !important;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .schedule-title {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #166534;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #bbf7d0;
+            padding-bottom: 5px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .jewish-shabbat {
+            grid-column: 1 / -1;
+            background-color: #eff6ff;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #bfdbfe;
+        }
+
+        .time-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>מערכת איסוף נתוני צריכת חשמל</h1>
+    
+    <div class="header-actions">
+        <button class="btn-primary" onclick="addLocation()">+ הוסף מיקום חדש</button>
+    </div>
+
+    <div id="locations-container"></div>
+
+    <script>
+        // Data Structure defining consumers and their specific fields
+        const consumerData = {
+            "מיזוג": {
+                "מזגן": ["power", "hp", "qty"],
+                "מזגן VRF": ["power", "hp", "qty"],
+                "מזגן אינוורטר": ["power", "hp", "qty"],
+                "רדיאטור": ["power", "qty"],
+                "מפזר חום": ["power", "qty"],
+                "תנור ספירלה": ["power", "qty"],
+                "משאבת חום": ["power", "qty"],
+                "מאווררים וונטות": ["power", "qty"]
+            },
+            "תאורה": {
+                "נורות": ["power", "qty"],
+                "פסי לד": ["power_per_meter", "qty"],
+                "תאורת חוץ/לילה": ["power", "qty"]
+            },
+            "מטבח": {
+                "קומקום (הרתחה חד פעמית)": ["power", "qty", "usage_avg"],
+                "מיחם (שמירת חום)": ["power", "qty"],
+                "מיני בר": ["power", "qty"],
+                "מקרר": ["power", "volume", "qty"],
+                "מקפיא": ["power", "volume", "qty"],
+                "תנור אפייה": ["power", "qty"],
+                "פלטות חימום": ["power", "pots", "qty"],
+                "חדר קירור": ["power", "nominal_power", "qty"],
+                "מדיח כלים": ["power", "qty", "usage_avg"],
+                "כיריים": ["power", "qty", "usage_avg"]
+            },
+            "תפעול": {
+                "דוד חשמל": ["power", "qty"],
+                "מחמם מהיר": ["power", "qty", "usage_avg"],
+                "מכונת כביסה": ["power", "qty", "usage_avg"],
+                "מייבש כביסה": ["power", "qty", "usage_avg"],
+                "מייבשי ידים": ["power", "qty", "usage_avg"]
+            },
+            "משרד": {
+                "מסכים": ["power", "qty"],
+                "מערכות מיחשוב": ["power", "qty"],
+                "אבטחה": ["power", "qty"],
+                "שרתים": ["power", "qty"],
+                "מכונות הדפסה/צילום": ["power", "qty"]
+            },
+            "כללי": {
+                "מטען רכב": ["power", "qty"],
+                "מעלית": ["power", "qty", "usage_avg"],
+                "משאבות": ["power", "qty"],
+                "משאבת מים": ["power", "qty"],
+                "משאבת סחרור": ["power", "qty"]
+            },
+            "אחר": "custom" // Special case
+        };
+
+        // Field definitions for rendering
+        const fieldDefinitions = {
+            "power": { label: "הספק (W)", type: "number" },
+            "power_per_meter": { label: "הספק למטר (W)", type: "number" },
+            "hp": { label: "כוח סוס", type: "number" },
+            "qty": { label: "כמות", type: "number" },
+            "usage_avg": { label: "שימוש ממוצע בשעה (דק')", type: "number" },
+            "volume": { label: "נפח (ליטר)", type: "number" },
+            "pots": { label: "כמות סירים", type: "number" },
+            "nominal_power": { label: "הספק נומינלי (W)", type: "number" }
+        };
+
+        let locationCounter = 0;
+
+        function addLocation() {
+            locationCounter++;
+            const container = document.getElementById("locations-container");
+            
+            const locDiv = document.createElement("div");
+            locDiv.className = "location-card";
+            locDiv.id = `location-${locationCounter}`;
+
+            // Location Header
+            locDiv.innerHTML = `
+                <div class="location-header">
+                    <div contenteditable="true" class="location-title">מיקום ${locationCounter}</div>
+                    <button class="btn-danger" onclick="document.getElementById('${locDiv.id}').remove()">מחק מיקום</button>
+                </div>
+            `;
+
+            // Add Categories
+            for (const category in consumerData) {
+                const catDiv = document.createElement("div");
+                catDiv.className = "category-section";
+                
+                catDiv.innerHTML = `
+                    <h3 class="category-title">${category}</h3>
+                    <div class="consumers-list" id="consumers-loc${locationCounter}-cat${category}"></div>
+                    <button class="btn-add-consumer" onclick="addConsumer('consumers-loc${locationCounter}-cat${category}', '${category}')">
+                        + הוסף ${category === 'אחר' ? 'צרכן אחר' : 'צרכן ' + category}
+                    </button>
+                `;
+                locDiv.appendChild(catDiv);
+            }
+
+            container.appendChild(locDiv);
+        }
+
+        function addConsumer(containerId, category) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement("div");
+            row.className = "consumer-row";
+
+            // Remove Button
+            const removeWrapper = document.createElement("div");
+            removeWrapper.className = "remove-row-wrapper input-group";
+            removeWrapper.innerHTML = `<label>&nbsp;</label><button class="btn-danger" onclick="this.closest('.consumer-row').remove()">X</button>`;
+            row.appendChild(removeWrapper);
+
+            const fieldsContainer = document.createElement("div");
+            fieldsContainer.style.display = "flex";
+            fieldsContainer.style.flexWrap = "wrap";
+            fieldsContainer.style.gap = "15px";
+            fieldsContainer.style.flex = "2";
+
+            // Dropdown or Custom Input
+            if (category === "אחר") {
+                fieldsContainer.innerHTML += `
+                    <div class="input-group">
+                        <label>שם הצרכן</label>
+                        <input type="text" placeholder="הכנס שם צרכן...">
+                    </div>
+                `;
+                renderFields(fieldsContainer, ["power", "qty"]);
+            } else {
+                const selectGroup = document.createElement("div");
+                selectGroup.className = "input-group";
+                
+                const label = document.createElement("label");
+                label.innerText = "בחר צרכן";
+                
+                const select = document.createElement("select");
+                select.innerHTML = `<option value="">-- בחר --</option>`;
+                
+                for (const item in consumerData[category]) {
+                    select.innerHTML += `<option value="${item}">${item}</option>`;
+                }
+
+                const dynamicFields = document.createElement("div");
+                dynamicFields.style.display = "flex";
+                dynamicFields.style.flexWrap = "wrap";
+                dynamicFields.style.gap = "15px";
+                dynamicFields.style.flex = "1";
+
+                select.addEventListener("change", (e) => {
+                    const selected = e.target.value;
+                    dynamicFields.innerHTML = ""; // Clear old fields
+                    if (selected && consumerData[category][selected]) {
+                        renderFields(dynamicFields, consumerData[category][selected]);
+                    }
+                });
+
+                selectGroup.appendChild(label);
+                selectGroup.appendChild(select);
+                fieldsContainer.appendChild(selectGroup);
+                fieldsContainer.appendChild(dynamicFields);
+            }
+
+            row.appendChild(fieldsContainer);
+
+            // Add Schedules (Days & Hours)
+            const scheduleBox = document.createElement("div");
+            scheduleBox.className = "schedule-box";
+            scheduleBox.innerHTML = `
+                <div class="schedule-title">הגדרות זמני פעילות</div>
+                
+                <!-- Days Config -->
+                <div class="input-group">
+                    <label>ימים בשבוע</label>
+                    <select onchange="toggleDisplay(this, 'days')">
+                        <option value="all">כל הימים</option>
+                        <option value="specific">ימים מסויימים</option>
+                    </select>
+                    <div class="checkbox-grid" style="display: none;">
+                        <label class="checkbox-item"><input type="checkbox"> א'</label>
+                        <label class="checkbox-item"><input type="checkbox"> ב'</label>
+                        <label class="checkbox-item"><input type="checkbox"> ג'</label>
+                        <label class="checkbox-item"><input type="checkbox"> ד'</label>
+                        <label class="checkbox-item"><input type="checkbox"> ה'</label>
+                        <label class="checkbox-item"><input type="checkbox"> ו'</label>
+                        <label class="checkbox-item"><input type="checkbox"> שבת</label>
+                        <label class="checkbox-item jewish-shabbat"><input type="checkbox"> שבת יהודי (משקיעת שישי עד צאת שבת)</label>
+                    </div>
+                </div>
+
+                <!-- Hours Config -->
+                <div class="input-group">
+                    <label>שעות ביום</label>
+                    <select onchange="toggleDisplay(this, 'hours')">
+                        <option value="all">כל שעות היום</option>
+                        <option value="specific">שעות מסויימות</option>
+                    </select>
+                    <div class="time-range" style="display: none;">
+                        <label>מ:</label> <input type="time">
+                        <label>עד:</label> <input type="time">
+                    </div>
+                </div>
+            `;
+
+            row.appendChild(scheduleBox);
+            container.appendChild(row);
+        }
+
+        function renderFields(container, fieldsArray) {
+            fieldsArray.forEach(fieldKey => {
+                const fieldDef = fieldDefinitions[fieldKey];
+                const group = document.createElement("div");
+                group.className = "input-group";
+                group.innerHTML = `
+                    <label>${fieldDef.label}</label>
+                    <input type="${fieldDef.type}" min="0">
+                `;
+                container.appendChild(group);
+            });
+        }
+
+        function toggleDisplay(selectElement, type) {
+            const target = selectElement.nextElementSibling;
+            if (selectElement.value === "specific") {
+                target.style.display = type === 'days' ? "grid" : "flex";
+            } else {
+                target.style.display = "none";
+            }
+        }
+
+        // Initialize with one location
+        window.onload = () => {
+            addLocation();
+        };
+    </script>
+
+</body>
+</html>

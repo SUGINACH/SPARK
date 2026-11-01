@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>השוואת 4 קבצי מחשבון סולארי — לקראת קובץ מאוחד</title>
+<style>
+:root{
+  --navy:#16233d; --navy2:#1f3358; --navy3:#0f1829;
+  --gold:#d99a3d; --gold-dark:#b87c22;
+  --bg:#f5f6f8; --card:#ffffff;
+  --text:#1c2430; --muted:#5b6472; --border:#e2e5ea;
+  --green:#1f8a5f; --green-bg:#e7f5ef;
+  --amber:#a8680f; --amber-bg:#fbf1de;
+  --red:#b13b3b; --red-bg:#fbebeb;
+  --blue:#2e5fa3; --blue-bg:#eaf1fb;
+  --rec-bg:#fffaf0; --rec-border:#eecd94;
+  --mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+  --sans: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;}
+body{padding-bottom:80px;}
+a{color:var(--navy2);}
+h1,h2,h3{font-family:var(--sans); font-weight:800; letter-spacing:-.01em;}
+
+/* ---------- top header ---------- */
+.topbar{
+  background:linear-gradient(135deg,var(--navy3),var(--navy) 55%,var(--navy2));
+  color:#fff; padding:34px 26px 26px;
+  position:relative; overflow:hidden;
+}
+.topbar::after{
+  content:""; position:absolute; inset:0;
+  background: radial-gradient(circle at 88% 12%, rgba(217,154,61,.35), transparent 45%),
+              radial-gradient(circle at 8% 90%, rgba(217,154,61,.14), transparent 40%);
+  pointer-events:none;
+}
+.topbar-inner{max-width:1400px;margin:0 auto;position:relative;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78em;font-weight:700;letter-spacing:.06em;color:var(--gold);text-transform:uppercase;background:rgba(217,154,61,.12);border:1px solid rgba(217,154,61,.4);padding:5px 12px;border-radius:20px;}
+.topbar h1{font-size:1.85em;margin:16px 0 8px;color:#fff;}
+.topbar p.lead{color:#c8d0dd;max-width:880px;margin:0;font-size:1.02em;}
+.topbar .stats{display:flex;gap:26px;margin-top:22px;flex-wrap:wrap;}
+.topbar .stat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 18px;min-width:120px;}
+.topbar .stat b{display:block;font-size:1.5em;color:var(--gold);font-family:var(--mono);}
+.topbar .stat span{font-size:.78em;color:#aeb8c8;}
+
+/* ---------- file legend ---------- */
+.filelegend{max-width:1400px;margin:-18px auto 0;padding:0 26px;position:relative;z-index:2;}
+.fl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:var(--card);border-radius:12px;padding:16px;box-shadow:0 8px 30px rgba(20,30,50,.12);}
+.fl-item{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border-inline-start:4px solid var(--border);}
+.fl-item div{font-size:.86em;color:var(--muted);}
+.fl-item b{color:var(--text);font-size:1em;display:block;margin-bottom:2px;}
+.fl-num{flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85em;color:#fff;}
+.c1{border-inline-start-color:#2e5fa3;} .c1 .fl-num{background:#2e5fa3;}
+.c2{border-inline-start-color:#1f8a5f;} .c2 .fl-num{background:#1f8a5f;}
+.c3{border-inline-start-color:#a8680f;} .c3 .fl-num{background:#a8680f;}
+.c4{border-inline-start-color:#8e44ad;} .c4 .fl-num{background:#8e44ad;}
+
+/* ---------- toc ---------- */
+.toc-wrap{position:sticky;top:0;z-index:50;background:rgba(245,246,248,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);}
+.toc{max-width:1400px;margin:0 auto;padding:10px 26px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;}
+.toc a{flex:none;font-size:.82em;color:var(--navy);background:#fff;border:1px solid var(--border);padding:7px 13px;border-radius:20px;white-space:nowrap;text-decoration:none;font-weight:600;transition:.15s;}
+.toc a:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* ---------- main ---------- */
+main{max-width:1400px;margin:0 auto;padding:30px 26px 10px;}
+
+.callout{background:var(--card);border:1px solid var(--border);border-inline-start:5px solid var(--gold-dark);border-radius:10px;padding:20px 24px;margin:26px 0;box-shadow:0 2px 10px rgba(20,30,50,.04);}
+.callout h3{margin:0 0 10px;font-size:1.15em;color:var(--navy);}
+.callout p{margin:0 0 10px;color:var(--text);}
+.callout p:last-child{margin-bottom:0;}
+.callout ul{margin:8px 0;padding-inline-start:22px;}
+.callout li{margin-bottom:8px;}
+.callout code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:.9em;}
+.callout .warn{color:var(--red);font-weight:700;}
+
+.legend-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin:20px 0 34px;font-size:.86em;color:var(--muted);}
+.legend-bar .lbl{font-weight:700;color:var(--text);}
+
+.sec{margin:52px 0;scroll-margin-top:64px;}
+.sec h2{font-size:1.35em;color:var(--navy);border-bottom:3px solid var(--gold);padding-bottom:10px;margin-bottom:6px;}
+.sec .intro{color:var(--muted);margin:8px 0 18px;font-size:.95em;max-width:1000px;}
+
+.twrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 14px rgba(20,30,50,.05);background:var(--card);}
+table{border-collapse:collapse;width:100%;min-width:1180px;}
+thead th{position:sticky;top:47px;background:var(--navy);color:#fff;font-size:.82em;padding:12px 10px;text-align:right;z-index:5;font-weight:700;}
+thead th.item-h{min-width:190px;position:sticky;top:47px;right:0;z-index:6;background:var(--navy3);}
+thead th.rec-h{background:var(--gold-dark);min-width:230px;}
+.fc-h{min-width:190px;}
+.hnum{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.2);font-size:.85em;margin-inline-end:6px;}
+.fname{display:block;font-weight:400;font-size:.82em;color:#c3cbdb;margin-top:2px;font-family:var(--mono);direction:ltr;text-align:right;}
+
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:nth-child(even){background:#fafbfc;}
+tbody tr:hover{background:#f1f6fb;}
+td{padding:12px 10px;vertical-align:top;font-size:.88em;}
+td.item{font-weight:700;color:var(--navy);position:sticky;right:0;background:inherit;background-color:#fff;min-width:190px;border-inline-end:1px solid var(--border);}
+tbody tr:nth-child(even) td.item{background-color:#fafbfc;}
+tbody tr:hover td.item{background-color:#f1f6fb;}
+td.item .note{font-weight:400;font-size:.85em;color:var(--muted);margin-top:4px;}
+
+td.fc{min-width:190px;}
+td.fc .ct{margin-top:6px;color:var(--text);}
+td.rec{background:var(--rec-bg);border-inline-start:3px solid var(--rec-border);min-width:230px;}
+td.rec .ct{color:#5c4415;}
+
+.tag{display:inline-block;font-size:.72em;font-weight:800;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+.tag.full{background:var(--green-bg);color:var(--green);}
+.tag.partial{background:var(--amber-bg);color:var(--amber);}
+.tag.diff{background:var(--blue-bg);color:var(--blue);}
+.tag.none{background:var(--red-bg);color:var(--red);}
+.tag.na{background:#eef0f3;color:#7b8494;}
+
+.lg-item{display:inline-flex;align-items:center;}
+
+.issue{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:16px;border-inline-start:5px solid var(--red);}
+.issue h4{margin:0 0 8px;color:var(--red);font-size:1.02em;}
+.issue p{margin:0 0 6px;font-size:.92em;}
+.issue .files{font-size:.8em;color:var(--muted);margin-top:8px;font-family:var(--mono);}
+
+.arch{background:linear-gradient(160deg,var(--navy3),var(--navy));color:#fff;border-radius:16px;padding:34px 30px;margin:30px 0 50px;}
+.arch h2{color:#fff;border-bottom:3px solid var(--gold);}
+.arch h3{color:var(--gold);font-size:1.05em;margin:24px 0 10px;}
+.arch p{color:#dbe2ec;margin:0 0 10px;}
+.arch ol,.arch ul{color:#dbe2ec;padding-inline-start:22px;}
+.arch li{margin-bottom:10px;}
+.arch .step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--navy3);font-weight:800;font-size:.85em;margin-inline-end:8px;}
+.arch code{background:rgba(255,255,255,.1);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:.88em;color:var(--gold);}
+
+footer{max-width:1400px;margin:0 auto;padding:20px 26px 40px;color:var(--muted);font-size:.82em;text-align:center;}
+
+@media print{
+  .toc-wrap{position:static;}
+  thead th{position:static;}
+  td.item{position:static;}
+  body{padding-bottom:0;}
+}
+@media (max-width:900px){
+  .fl-grid{grid-template-columns:1fr 1fr;}
+  .topbar h1{font-size:1.4em;}
+}
+</style>
+</head>
+
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="eyebrow">מסמך עבודה &middot; ניתוח קוד מלא</span>
+    <h1>השוואת 4 קבצי מחשבון סולארי — לקראת בניית הקובץ המושלם</h1>
+    <p class="lead">ריכוז מלא ומדויק (מבוסס קריאת כל שורות הקוד, לא רק שמות פונקציות) של כל תצוגה, פונקציה, חיבור וייצוא בארבעת הקבצים שהועלו, עם המלצה קונקרטית לכל פריט — כיצד ואם לשלב אותו בקובץ המאוחד הסופי.</p>
+    <div class="stats">
+      <div class="stat"><b>4</b><span>קבצים נותחו</span></div>
+      <div class="stat"><b>~6,300</b><span>שורות קוד נקראו</span></div>
+      <div class="stat"><b>21</b><span>סקשני השוואה</span></div>
+      <div class="stat"><b>7</b><span>אי-התאמות קריטיות שזוהו</span></div>
+    </div>
+  </div>
+</div>
+<div class="filelegend">
+  <div class="fl-grid">
+    <div class="fl-item c1"><span class="fl-num">1</span><div><b>מחשבון_סולארי.html</b><br><span>הקובץ המאוחד</span></div></div><div class="fl-item c2"><span class="fl-num">2</span><div><b>מחשבון_המלצת_מערכת_1.html</b><br><span>מחשבון ההמלצה (1 מתוך 2)</span></div></div><div class="fl-item c3"><span class="fl-num">3</span><div><b>solar-calculator-spa.html</b><br><span>ה-SPA התלת-שלבי</span></div></div><div class="fl-item c4"><span class="fl-num">4</span><div><b>ai_studio_code__16_.html</b><br><span>מחשבון הפופ-אפ</span></div></div>
+  </div>
+</div>
+
+<div class="toc-wrap"><nav class="toc"><a href="#general">1. זהות ומבנה</a>
+<a href="#input">2. קלט צריכה</a>
+<a href="#tou">3. תעו״ז וחגים</a>
+<a href="#stats">4. סטטיסטיקה</a>
+<a href="#engineering">5. הנדסי</a>
+<a href="#battery-sim">6. סימולציית דיספאץ׳</a>
+<a href="#battery-input">7. תכנון אגירה</a>
+<a href="#tariff-engine">8. תעריפים ושווי אגירה</a>
+<a href="#financial">9. מנוע פיננסי 25 שנה</a>
+<a href="#recommendation">10. מנוע המלצה</a>
+<a href="#ux-helpers">11. שקיפות UX</a>
+<a href="#charts">12. גרפים</a>
+<a href="#final-report">13. דוח סופי</a>
+<a href="#export">14. ייצוא אקסל</a>
+<a href="#persistence">15. שמירת מצב</a>
+<a href="#settings">16. הגדרות</a>
+<a href="#uiux">17. עיצוב</a>
+<a href="#deps">18. תלויות</a>
+<a href="#constants">19. קבועים כלכליים</a>
+<a href="#issues">20. בעיות שזוהו</a>
+<a href="#architecture">21. סיכום: הארכיטקטורה המומלצת</a></nav></div>
+
+<main>
+
+<div class="callout">
+<h3>🗺️ איך 4 הקבצים מתקשרים זה עם זה (ולמה זה חשוב לפני שממזגים)</h3>
+<p><b>קובץ 1 (הקובץ המאוחד)</b> עצמאי לחלוטין: ניתוח צריכה ← הנדסה/אגירה ← סימולציה ← דוח סופי, הכול באותו עמוד. אין localStorage ואין תלות בקובץ אחר.</p>
+<p><b>קובץ 2 (מחשבון ההמלצה)</b> מוצהר בפירוש בתוך הקוד/הממשק כ&quot;<b>מחשבון 1 מתוך 2</b>&quot; המיועד לאיש מכירות: נותן המלצת-גודל מהירה (כולל מנוע אופטימיזציה אמיתי), ומפנה בהערת-טקסט בלבד (לא בקוד) ל&quot;מחשבון 2&quot; להמשך — קובץ כזה <b>לא נמצא</b> בין 4 הקבצים שסופקו.</p>
+<p><b>קובץ 3 (ה-SPA)</b> ו-<b>קובץ 4 (הפופ-אפ)</b> שניהם כותבים בסיום העבודה לאותו מפתח <code>localStorage['transferredCalcData']</code> בדיוק. קובץ 4 אף סוגר את עצמו (<code>window.close()</code>) בהנחה שהוא נפתח כחלון פופ-אפ מתוך &quot;מסך לקוח ראשי&quot; חיצוני. <span class="warn">אף אחד מ-4 הקבצים לא &quot;קורא&quot; את המפתח הזה בחזרה</span> — כלומר קיים ככל הנראה קובץ חמישי (טופס/CRM ראשי) שלא סופק, וזו נקודה קריטית לברר לפני מיזוג.</p>
+<p><b>אי-התאמת סכימת JSON:</b> גם קובץ 1 וגם קובץ 2 תומכים בייבוא &quot;טופס איסוף נתונים&quot; כ-JSON, אך מצפים למבנה שונה לחלוטין — קובץ 1 מצפה ל-payload מוכן מראש עם <code>fileType:'solar_calc_appliance_estimate_v1'</code> ומערך <code>hourlySeries</code> מחושב מראש; קובץ 2 מצפה למבנה גולמי <code>locations[].consumers[]</code> עם שדות-מכשיר (הספק/כמות/ימים/שעות) ומחשב סטטיסטיקה בעצמו. <span class="warn">לא ניתן להזין את אותו קובץ JSON לשני הכלים.</span></p>
+</div>
+
+<div class="legend-bar">
+  <span class="lbl">מקרא סטטוס לכל תא:</span>
+  <span class="lg-item"><span class="tag full">קיים – מלא</span></span><span class="lg-item"><span class="tag partial">קיים – חלקי</span></span><span class="lg-item"><span class="tag diff">קיים – גישה שונה</span></span><span class="lg-item"><span class="tag none">לא קיים</span></span><span class="lg-item"><span class="tag na">לא רלוונטי</span></span>
+  <span style="margin-inline-start:auto;color:var(--muted)">עמודת ⭐ &quot;המלצה&quot; מסומנת ברקע חם</span>
+</div>
+
+<section class="sec" id="general">
+  <h2>1. זהות ומבנה כללי של הקובץ</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">כותרת הדף (tag &amp;lt;title&amp;gt;)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">"מחשבון כדאיות, אגירה וניתוח צריכה (CSV)" — זהה מילה במילה לקובץ 4.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">"מחשבון המלצת מערכת — לאיש המכירות" — היחיד עם מיתוג תפקיד (איש מכירות) בכותרת עצמה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">"מערכת ניתוח תעו"ז ואגירה סולארית" </div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">"מחשבון כדאיות, אגירה וניתוח צריכה (CSV)" — זהה מילה במילה לקובץ 1.</div></td><td class="rec"><div class="ct">לקבוע שם-מוצר אחיד אחד (למשל "מחשבון כדאיות סולארי — [שם החברה]") ולהשתמש בו הן ב-title והן בכותרת ה-H1 בעמוד, כדי שלא ייווצר בלבול בין קבצים שנראים "אותו דבר" בכרטיסיית הדפדפן.</div></td></tr>
+<tr><td class="item">מיצוב / מטרת-על מוצהרת</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כלי all-in-one: ניתוח צריכה ← הנדסה/אגירה ← סימולציה ← תוכנית מערכת סופית (הצעת מחיר) — "עושה הכול".</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מוצהר בפירוש כ"מחשבון 1 מתוך 2" למכירות: נותן המלצת גודל מהירה, ומפנה טקסטואלית ל"מחשבון 2" לדוח מלא. יש גם תרחיש "בלי שום נתון" (GENERIC_PROFILE) לשיחת מכירה ראשונית ממש.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">SPA תלת-שלבי מודולרי: כל שלב הוא כמעט "תת-מחשבון" עצמאי עם שמירה משלו, ומיועד להזין כלי חיצוני בסיום (transferredCalcData).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כלי ניתוח+כדאיות שמיועד לרוץ כפופ-אפ מתוך מסך לקוח חיצוני ("טופס הראשי") ולסגור את עצמו בסיום, אחרי שהעביר תוצאה חזרה.</div></td><td class="rec"><div class="ct">להחליט על זהות אחת ברורה: האם הקובץ המושלם הוא כלי "עצמאי מקצה לקצה" (כמו 1) או "מנוע חישוב" שמוזן לתוך כלי CRM/הצעות-מחיר חיצוני (כמו 3/4)? זו ההחלטה הארכיטקטונית הכי משמעותית — היא קובעת אם לשמור פונקציית transferDataToQuote/localStorage או להשליך אותה. הקובץ המאוחד (1) הוא הבסיס הכי סביר להתחלה כי הוא היחיד שסוגר מעגל מלא בעצמו.</div></td></tr>
+<tr><td class="item">פרדיגמת ניווט בעמוד</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">עמוד גלילה אחת ארוכה, 5 חלקים ממוספרים (1–5) עם כותרות ברורות, ללא טאבים.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">עמוד גלילה אחת, 2 בלוקים עיקריים (קלט מהיר + תוצאה), עם תת-סימולציה שנפתחת בהמשך אותו עמוד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">SPA אמיתי: 3 "כפתורי pill" עליונים שמחליפים תוכן (showSection) — רק שלב אחד גלוי בכל רגע, עם ניווט "הבא/הקודם" מובנה בלוגיקה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">עמוד גלילה אחת, 4 חלקים ממוספרים, ללא טאבים; אין שלב "דוח סופי" בסוף.</div></td><td class="rec"><div class="ct">מודל ה-SPA (קובץ 3) עדיף לחוויית עבודה יומיומית (פחות גלילה, פוקוס לפי שלב), אבל גלילה רציפה (קבצים 1/4) עדיפה בהחלט להדפסה/PDF ולשקיפות מלאה מול לקוח. הפתרון הטוב ביותר: לבנות כ"עמוד רציף אחד" (כמו 1), אבל להוסיף תפריט ניווט דביק (sticky) בצד שקופץ לכל סעיף — כך מקבלים גם ניווט מהיר וגם תמיכת הדפסה/ייצוא מלאה בלי דואליות מבנה.</div></td></tr>
+<tr><td class="item">תפריט/הגדרות בראש העמוד</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כפתור "⚙️ הגדרות תעריפי תעו"ז" בפינה, פותח מודל.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כפתור "⚙️" דומה, פותח מודל "חוקי המשחק (קבועים)" — המקיף מכולם.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כפתור הגדרות + באנר "טעינת קבועים מסונכרנים" (loadSyncedConstants) שמציג באנר אם ההגדרות נטענו מ-localStorage.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כפתור הגדרות דומה לקובץ 1/3.</div></td><td class="rec"><div class="ct">לאמץ את הרעיון של קובץ 3 (באנר שמראה בבירור "אתה משתמש בהגדרות מותאמות-אישית שנשמרו, לא בברירת המחדל") — זה מונע טעויות תמחור שקטות כשאיש מכירות שוכח שהוא שינה קבוע לפני חודש.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="input">
+  <h2>2. קלט נתוני צריכה — העלאת קובץ ואפשרויות חלופיות</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">פורמטים נתמכים בהעלאת קובץ צריכה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">CSV, XLSX/XLS, וגם JSON (מ"טופס איסוף נתונים") — הכי גמיש. שדה קלט אחד מאוחד לשלושתם, זיהוי לפי סיומת קובץ.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">CSV בלבד בהעלאת קובץ — אך יש עוד 4 דרכי-קלט חלופיות באותו מסך (ראו שורה הבאה) שאין בשום קובץ אחר.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">CSV בלבד (PapaParse).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">CSV בלבד (PapaParse), אך עם תמיכת פרסור עשירה יותר למספר סוגי מונים (ראו בהמשך).</div></td><td class="rec"><div class="ct">לאמץ את מנגנון הריבוי של קובץ 1 (CSV+XLSX+JSON באותו שדה עם ניתוב לפי סיומת) כבסיס. ה-JSON חייב להתאחד לסכימה אחת (ראו הערה קריטית בסקשן "בעיות ואי-התאמות").</div></td></tr>
+<tr><td class="item">דרכי-קלט חלופיות כשאין קובץ צריכה בכלל</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין נתיב "בלי נתונים" — אם לא מעלים קובץ, אין ניתוח צריכה כלל (רק תפוקה גנרית).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">5 מצבי-קלט נבחרים מ-select: CSV, ייבוא-JSON מטופס, קלט מפורט (12 שדות עונה/סוג-יום), סה"כ שנתי ידני בלבד, וגם "ללא נתונים" (רק המלצת PV, בלי אגירה) — כיסוי המקרים הכי רחב מכולם, בדיוק כלי-שטח למכירות.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין.</div></td><td class="rec"><div class="ct">תכונה קריטית לאמץ מקובץ 2 כמעט 1:1 — היא היחידה שהופכת את הכלי לשמיש בפגישת מכירה ראשונה בלי חשבון חשמל ביד. יש לשלב את 5 המצבים (במיוחד "קלט מפורט" ו"ללא נתונים") לתוך הקובץ המושלם כאלטרנטיבה להעלאת CSV.</div></td></tr>
+<tr><td class="item">זיהוי כותרת/מבנה קובץ חח"י הרשמי</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מחפש "קוד ומספר מונה"; אם לא נמצא — נופל בחזרה ל-detectGenericColumns() שמחפש עמודות "תאריך"+"שעה/צריכה" גנריות (תומך בקבצי Excel מעובדים בפורמט שונה).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מחפש כותרת קבועה בלבד, ללא נפילה-לאחור לזיהוי גנרי.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מחפש כותרת קבועה בלבד, ללא נפילה-לאחור.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מחפש כותרת קבועה בלבד, ללא נפילה-לאחור.</div></td><td class="rec"><div class="ct">לאמץ את detectGenericColumns מקובץ 1 — זו רשת ביטחון חשובה שמונעת "שגיאה סתומה" כשלקוח מעלה קובץ Excel שעבר עיבוד ידני (מקרה נפוץ בפועל).</div></td></tr>
+<tr><td class="item">תמיכה במונה דו-כיווני / ייצור (ללקוח עם סולארי קיים)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא מטופל — מניח שהקובץ הוא צריכה רגילה בלבד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מטופל: מזהה סוג מונה (דו-כיווני/ייצור/צריכה) ומחשב actualKwh = ייצור−הזרמה+יבוא, עם התראה בסטטוס "זוהה מונה סולארי קיים בקובץ".</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא מטופל.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מטופל באופן דומה לקובץ 2, כולל תמיכה במספר מונים לאותו חוזה (מאוחדים בתצוגה בפסיק/פלוס).</div></td><td class="rec"><div class="ct">חובה לאמץ (מקובץ 2 או 4 — הלוגיקה כמעט זהה) עבור פלח לקוחות עם מערכת קיימת שרוצים להגדיל/להוסיף אגירה — בלעדיו הכלי פשוט מחשב מספר שגוי לגמרי ללקוחות כאלה.</div></td></tr>
+<tr><td class="item">שליפת מטא-דאטה של לקוח מהקובץ (שם/כתובת/חוזה/מונה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן — 6 שדות מוצגים בפס עליון.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן — אותה לוגיקה, 6 שדות.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן — applyCustomerMeta, זהה בעיקרון.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן — זהה.</div></td><td class="rec"><div class="ct">זהה כמעט לגמרי בין הקבצים — להעתיק כמות שהוא, אין נקודת מחלוקת. כדאי להוסיף גם מילוי אוטומטי של שם/כתובת לטופס הדוח הסופי (קיים בקובץ 1 בלבד, ראו סקשן "דוח סופי").</div></td></tr>
+<tr><td class="item">זיהוי רזולוציית נתונים (שעתי מול רבע-שעתי)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">detectStepHours() — מזהה אוטומטית את המרווח השכיח בין שורות (60 דק'/15 דק') ומתאים את סימולציית הדיספאץ' אליו.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">מניח שעתי קבוע.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">מניח שעתי קבוע.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">מניח שעתי קבוע.</div></td><td class="rec"><div class="ct">לאמץ מקובץ 1 — חברת החשמל בישראל מייצאת גם ברזולוציית 15 דק' לחלק מהלקוחות (מונים חכמים חדשים); בלי הזיהוי הזה הסימולציה השעתית תיתן תוצאה שגויה פי 4 לקבצים כאלה.</div></td></tr>
+<tr><td class="item">טיפול בקובץ רב-שנתי / נרמול לחלון נגרר של 365 יום</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">getTrailingYearWindow — ממלא אוטומטית טווח ניתוח של 12 החודשים האחרונים הזמינים, עם הודעה אם יש פחות משנה מלאה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">נרמול דומה (cutoffDate = maxDate−365) חל על הסטטיסטיקה המוזנת להמלצה; הטבלאות הגולמיות ממשיכות להציג הכול.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא מזוהה נרמול — נראה שמניח שהקובץ הוא כבר טווח רלוונטי אחד.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">יש cutoffDate/maxDate לצורך סימולציית הסוללה, אך לא לכל שאר הדוחות.</div></td><td class="rec"><div class="ct">לאמץ עקרון "365 הימים האחרונים כבסיס לסטטיסטיקה/המלצה, אך הצגת כל הקובץ בטבלאות הגולמיות" מקובצים 1+2 — חשוב במיוחד ללקוחות שמעלים 2–3 שנים של היסטוריה.</div></td></tr>
+<tr><td class="item">טיפול בשגיאות פרסור / קובץ לא תקין</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הודעת שגיאה ממוקדת (fileParseError) + עדיין מאפשר להמשיך למילוי ידני למטה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">הודעת שגיאה כללית יחסית.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">alert() גנרי.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">alert() גנרי.</div></td><td class="rec"><div class="ct">לאמץ את גישת קובץ 1: הודעת שגיאה מוטמעת בעמוד (לא alert חוסם) + מסלול נסיגה למילוי ידני, כדי שכשל בפרסור לא "יתקע" את השיחה עם הלקוח.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="tou">
+  <h2>3. סיווג תעו&amp;quot;ז, חגים ולוח שנה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">חוקי סיווג עונה (חורף/קיץ/מעבר)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דצמבר–פברואר=חורף, יוני–ספטמבר=קיץ, השאר=מעבר — עקבי עם שאר הקבצים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">אין מחלוקת — עקבי לחלוטין בין 4 הקבצים. להעתיק כמות שהוא.</div></td></tr>
+<tr><td class="item">חוקי שעות פסגה לפי עונה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">חורף 17–22 כל יום (כולל שישי/שבת/חג); קיץ 17–23 חול בלבד; מעבר 17–22 חול בלבד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה, עם תיעוד מפורש בקוד שזו "אנומיית חורף" מכוונת (הפסגה חלה גם בשבת/חג בחורף).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">עקבי לחלוטין בין כל 4 הקבצים ומאומת מול המקור לפי ההערות בקוד — זה "החוזה" הכי יציב במערכת. להעתיק כלשונו ולא לגעת בלי אישור מפורש מרשות החשמל על שינוי תעריפים.</div></td></tr>
+<tr><td class="item">רשימת חגי ישראל לצורך סיווג יום-חג כשפל</td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מערך תאריכים קשיח 2020–2030 (ידני), עם הערת קוד מפורשת שמומלץ לשלב עתידית API כמו Hebcal לכיסוי מלא.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מערך קשיח מצומצם יותר (רק 2024–2026), ממוקד סביב חגי תשרי בעיקר.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מערך קשיח 2020–2030, זהה בעיקרו לקובץ 1.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מנוע לוח-עברי מלא (אלגוריתם אפוכי, ראו שורה הבאה) שיכול לחשב חג לכל שנה — אך בפועל, סיווג שעות-הפסגה עדיין משתמש ברשימה הקשיחה ולא במנוע העברי (חוסר-ניצול תשתית קיימת).</div></td><td class="rec"><div class="ct">זו הבעיה המתועדת בעצמם: כל הקבצים (כולל 4, שיש בו את התשתית!) מסווגים חגים מרשימה קשיחה שפגה תוקף אחרי 2030. יש לחבר את מנוע הלוח העברי (קיים כבר בקבצים 2/4) לפונקציית הסיווג עצמה, כדי שהחגים יחושבו דינמית לכל שנה עתידית ולא ידרשו עדכון ידני כל כמה שנים.</div></td></tr>
+<tr><td class="item">מנוע לוח עברי (גרגוריאני⇄עברי, מבוסס אפוכים)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים בקובץ זה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מנוע מלא (hc_g2j/hc_j2h/hc_isLeap וכו'), מתועד כ"מאומת מול 4 נקודות ייחוס בלתי-תלויות" ומקושר לחישוב "זמן ישיבתי" (חורף/קיץ/אלול) ותצוגת חופשת-לימודים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">אותו מנוע בדיוק (קוד כמעט זהה תווית-תווית ל-2), משמש שם רק לצורך קיבוץ בייצוא האקסל המתקדם (לא לסיווג פסגה).</div></td><td class="rec"><div class="ct">לשמר מנוע אחד בלבד (הקוד בקבצים 2/4 זהה כמעט לגמרי) ולהשתמש בו לשלוש מטרות בבת אחת: (א) סיווג חגים דינמי לסיווג פסגה, (ב) הצגת תאריך עברי/חופשות בדוחות, (ג) קיבוץ בייצוא אקסל — כרגע כל קובץ מנצל רק חלק מהיכולת של אותו מנוע.</div></td></tr>
+<tr><td class="item">חישוב שקיעה / כניסת-יציאת שבת משוערת (אלגוריתם NOAA)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">קיים (hc_noaa/hc_sunEvent), מוצג כטקסט "כניסה ~HH:MM"/"יציאה ~HH:MM" צמוד לכל שורת יום-שישי/שבת בטבלה היומית, עם התאמת שעון-קיץ ישראלי (hc_israelDst).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">אותו מנוע בדיוק, אך לא מוצג בממשק — משמש רק לחישוב פנימי בייצוא.</div></td><td class="rec"><div class="ct">תכונה נחמדה ורלוונטית לקהל שומר-מצוות אך היא לתצוגה בלבד (לא משפיעה על סיווג פסגה/שפל, כפי שהערת הקוד עצמה מבהירה) — לשלב כ"nice to have" בטבלת הצריכה היומית, לא כתלות קריטית.</div></td></tr>
+<tr><td class="item">חישוב "זמן" הלכתי-עונתי (חורף/קיץ/אלול) + חופשת לימודים</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">getZmanInfo — מסמן כל יום בטבלה בצבע לפי "זמן" (על בסיס לוח עברי: א' חשוון–אדר / א' אייר–ט' באב / א' אלול–י' תשרי) + סימון "חופשת מוסדות חינוך כלליים" (יולי-אוגוסט).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (אף שיש לו את מנוע הלוח העברי הדרוש).</div></td><td class="rec"><div class="ct">תכונה ייחודית לקובץ 2, כנראה רלוונטית לחיזוי דפוסי-צריכה של קהל ספציפי (בתי-ספר/ישיבות/משפחות עם חופשות). שווה לשמר כתגית-צבע עדינה בטבלה היומית, אך לא לבנות עליה לוגיקת חישוב — זה בעיקר מידע הקשרי ללקוח, לא קלט לנוסחה.</div></td></tr>
+<tr><td class="item">נרמול נתוני שבת/חג חסרים (עקב שימוש בגנרטור בעבר)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים — אין אבחנה בין "אין נתונים כי היה גנרטור" לבין "אין נתונים כי אין פסגה".</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הכי מתוחכם: checkbox "התעלם מנתוני שבת (גנרטור)" מחריג ימים חשודים מהחורף, ואופציונלית "מנרמל" (מטפל בערך חסר) לפי אחוז מהחציון של ימי-החול, עם הודעת שקיפות מלאה כמה ימים נוספו ובאיזה ערך.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה ייחודית וחשובה לקובץ 2 — רלוונטית מאוד לקהל שומר-שבת שמפעיל גנרטור בשבת (ולכן חח"י "רואה" צריכה אפסית שגויה). מומלץ לאמץ במלואה; זו בדיוק סוג ההערה ש"קופצת" רק כשמנתחים קובץ אמיתי של הלקוח היעד.</div></td></tr>
+<tr><td class="item">חישוב מספר ימי-פסגה בפועל לעונה (לצורך תעריפים)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">computeSeasonalPeakDayCounts — סופר בפועל מלוח שנה מלא לשנה נתונה, במקום קבוע ידני. התוצאה (חורף≈90, קיץ≈84, מעבר≈98 בקירוב) יכולה להשתנות משנה לשנה (שנה מעוברת/יום שישי בחג וכו').</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">קבועים ידניים בהגדרות (winter.days=90, summer.days=84, transition.days=98) — ניתנים לעריכה ידנית, אך לא מחושבים אוטומטית.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">קבועים ידניים דומים.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">קבועים ידניים דומים.</div></td><td class="rec"><div class="ct">לאמץ את computeSeasonalPeakDayCounts מקובץ 1 כברירת-מחדל מחושבת, אך להשאיר את שדות ההגדרות הידניים (כמו ביתר הקבצים) כדריסה אופציונלית למקרה שרשות החשמל תשנה את כללי הפסגה/השפל ידנית. כך מקבלים גם דיוק אוטומטי וגם גמישות תפעולית.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="stats">
+  <h2>4. סטטיסטיקה ותצוגת דוחות צריכה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">מדדים סטטיסטיים מחושבים על ימי-פסגה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">חציון, ממוצע-מקוצץ 15%, ממוצע 15% גבוהים, ממוצע 15% נמוכים — לצריכה ולעלות כאחד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק (אותם 6 מדדים).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק.</div></td><td class="rec"><div class="ct">זהה לחלוטין בין כל 4 הקבצים — פונקציות הסטטיסטיקה (median/trimmedMean/top15/bottom15) כמעט זהות תו-בתו. להעתיק כמות שהן, ללא שינוי.</div></td></tr>
+<tr><td class="item">פילוח סטטיסטיקה ל-3 שורות (כללי / חורף / קיץ)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">3 "פסי מטא-דאטה" צבעוניים (כחול/סגול/כתום) עם 6 מדדים כל אחד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">עיצוב וזהה בין הקבצים — יש לשמר, אולי להוסיף פס רביעי ל"מעבר" (חסר כרגע בכל הקבצים בתצוגה הזו, אף שהנתון עצמו מחושב פנימית בקבצים 2 ו-4).</div></td></tr>
+<tr><td class="item">טבלת דוח שעתי גולמי</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">טבלה עם גלילה פנימית, כותרת דביקה (sticky).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">זהה בין כולם — להעתיק.</div></td></tr>
+<tr><td class="item">טבלת דוח יומי מאוחד (שפל/פסגה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כולל צביעת peak/offpeak.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">בנוסף לצביעה: תגי "זמן" הלכתי + חופשה + כניסת/יציאת שבת משוערת (ראו סקשן קודם).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לבסיס של קובץ 1.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לבסיס של קובץ 1.</div></td><td class="rec"><div class="ct">הבסיס זהה; שכבת ה"תוספות ההלכתיות" של קובץ 2 היא תוספת אופציונלית מעליו (למקד את הגרסה הבסיסית קודם, ולהוסיף את השכבה הזו כ-toggle).</div></td></tr>
+<tr><td class="item">טבלת ימי-פסגה בלבד + עלות</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="rec"><div class="ct">זהה — להעתיק.</div></td></tr>
+<tr><td class="item">התראה על זיהוי מונה סולארי קיים בקובץ</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי (אין תמיכה במונה דו-כיווני כלל).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן, בשורת הסטטוס.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן, מוטמע בלוגיקת הפרסור.</div></td><td class="rec"><div class="ct">לשלב יחד עם תמיכת המונה הדו-כיווני (סקשן 2) בקובץ המושלם.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="engineering">
+  <h2>5. קלט הנדסי — הספק, גג, כיוון והצללה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">אופן קביעת הספק המערכת (kWp)</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">קלט ישיר: "הספק מבוקש (קוו"ט)" — המשתמש מקליד הספק, ושטח הגג הנדרש מוצג כתוצאה (7.5 מ"ר/קוט"ט), מתעדכן live בזמן הקלדה.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">קלט הפוך: שטח גג פנוי ו/או הספק חיבור מקסימלי ו/או תקציב — המערכת מריצה אופטימיזציה ובוחרת את ההספק הטוב ביותר בעצמה (אין קלט הספק ישיר כלל).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">קלט שטח גג + כיוון/הצללה → derives הספק (pDc) ולאחר מכן הספק AC לפי יחס DC/AC ניתן לעריכה.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה לקובץ 3 (שטח גג → הספק).</div></td><td class="rec"><div class="ct">אלו שני פרדיגמות UX שונות באמת: "אני יודע כמה קוו"ט אני רוצה" (קובץ 1) מול "תגיד לי כמה קוו"ט הכי משתלם" (קובץ 2). הקובץ המושלם צריך את שתיהן כ-2 טאבים/מצבים באותו שדה: ברירת מחדל = מצב "המלצה" (כמו קובץ 2, לשיחת מכירה), עם אופציה למצב "קלט ידני" (כמו קובץ 1, לשלב התכנון הסופי אחרי שגודל המערכת כבר סוכם).</div></td></tr>
+<tr><td class="item">יחס שטח-גג להספק (מ"ר לקוו"ט)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">7.5 מ"ר/קוט"ט, ניתן לעריכה בהגדרות (cfg_m2 — רק בהגדרות המתקדמות, לא מוצג בטופס הראשי).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: CFG.panel.m2PerKwp=7.5, ניתן לעריכה בהגדרות.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">יחס AC/DC נפרד לחישוב שטח, לא זהה 1:1 למבנה של 1/2 אך אותה כוונה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה ל-3.</div></td><td class="rec"><div class="ct">לאחד לקבוע יחיד ניתן-לעריכה (7.5 מ"ר/קוט"ט כברירת מחדל, כמו 1/2), ולהציג אותו כתצוגה חיה ("שטח גג נדרש: X מ"ר") לצד שדה ההספק בכל מצבי הקלט.</div></td></tr>
+<tr><td class="item">כיוון (אזימוט) והצללה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select לכיוון (דרום/דרום-מזרח-מערב/מזרח-מערב) + שדה מספרי הצללה 0.5–1.0.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק, ומיושם כעת גם בתוך מנוע ההמלצה עצמו (לא רק בסימולציית התצוגה) — effectiveYieldPerKwp.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">זהה כמעט לחלוטין בין כולם — להעתיק. לוודא (כמו בתיקון שנעשה בקובץ 2) שהצללה/אזימוט משפיעים על כל החישובים במורד הזרימה, לא רק על תצוגת יבול נפרדת.</div></td></tr>
+<tr><td class="item">הספק מערכת קיימת P0 (ללקוח עם סולארי כבר מותקן)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">שדה p0 לחישוב מדרגת תעריף שולית.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה, ומשפיע גם על טווח האופטימיזציה (maxKwp מוגבל גם ע"י p0).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">זהה — להעתיק.</div></td></tr>
+<tr><td class="item">מגבלת הזרמה לרשת (Zero Export)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select כן/לא, מאפס את הכנסת המכירה לרשת אם מסומן.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים כשדה — מנוע ההמלצה מניח תמיד יכולת הזרמה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">קיים בשלב 3 (תנאי חיבור).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים בקובץ זה.</div></td><td class="rec"><div class="ct">חשוב להוסיף לקובץ המושלם (קיים כבר ב-1/3) — בלי זה, לקוחות עם תנאי-חיבור "צריכה עצמית בלבד" יקבלו תחזית הכנסה מנופחת ולא-רלוונטית.</div></td></tr>
+<tr><td class="item">פרמיית "יישוב אורבני" (יישובים מעל סף אוכלוסין)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select זכאי/לא זכאי, +6 אג' לקוט"ש בשנים 1–17.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">checkbox זהה, עם הצגת "urbanStatusNote" מפורשת בתוצאה (✅/⛔).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">toggleUrbanRelevance, זהה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא כשדה נפרד בקובץ זה.</div></td><td class="rec"><div class="ct">לאמץ מקובץ 1/2/3 — זהה כמעט לגמרי ביניהם, כולל אותו ערך (6 אג', 17 שנה).</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="battery-sim">
+  <h2>6. סימולציית תפוקה ודיספאץ&amp;#39; אגירה שעתי</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">סימולציית תפוקה סולארית משוערת (יבול, ללא תלות בצריכה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן: טווח תאריכים → יבול יומי/שעתי לפי מקדמי-חודש + פרופיל-שעות פעמוני, מציג 2 טבלאות (יומי/שעתי).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה כמעט תו-בתו (אותם מקדמי חודש, אותו פרופיל שעתי), עם תוספת טבלה חודשית מסוכמת.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בעיקרון (runEngineeringCalc), חלק מ"שלב 2".</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים כתצוגה נפרדת בקובץ זה (אך יש נתון יבול שנתי בסיסי בתוך מנוע ה-25 שנה).</div></td><td class="rec"><div class="ct">הליבה (מקדמי-חודש + פרופיל-שעות) זהה כמעט מילה-במילה בין 1/2/3 — קל להעתיק. כדאי לאחד לפונקציה משותפת אחת שמשמשת גם את תצוגת ה"הדגמה" וגם את מנוע ה-25 שנה (כרגע יש כפילות קוד בין 2 המטרות בכל קובץ).</div></td></tr>
+<tr><td class="item">מקדמי-יבול חודשיים (עונתיות)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">[0.66,0.77,0.96,1.10,1.19,1.29,1.29,1.24,1.10,0.96,0.77,0.67] (ינו–דצמ).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק לקובץ 1.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא מיושם כמערך נפרד.</div></td><td class="rec"><div class="ct">ערכים זהים ב-3 מתוך 4 קבצים — קבוע יציב, להעתיק כלשונו.</div></td></tr>
+<tr><td class="item">סימולציית דיספאץ' סוללה שעתית אמיתית (מבוססת נתוני CSV בפועל)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הכי מלא: SOC (מצב טעינה) מתעדכן שעה-אחר-שעה על התקופה שנבחרה, כולל הפסד טעינה/פריקה נפרד, מגבלת קצב ממיר (maxRateKw), ותצוגת "יום לדוגמה" נבחר.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דיספאץ' "יומי" (לא שעתי-רציף עם SOC) שמבוסס על ריצה אמיתית על כל יום בקובץ, עם הפסדים, מכויל לגודל הסולארי שנבחר בהמלצה — 20 "קוביות" גדלים + גרף רגישות שולית (1 קוט"ש בכל פעם).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (יש רק נוסחת יום-טיפוסי, ראו סקשן הבא).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (יש רק נוסחת יום-טיפוסי + "קוביות" מבוססות-נוסחה, לא דיספאץ' אמיתי).</div></td><td class="rec"><div class="ct">זו אחת התכונות המשמעותיות ביותר להבדיל בין הקבצים. קובץ 1 הוא היחיד עם דיספאץ' שעתי-רציף אמיתי עם SOC (מדויק ביותר לגודל אגירה בודד שנבחר מראש); קובץ 2 הוא היחיד שמריץ דיספאץ' אמיתי על פני *טווח שלם* של 20 גדלים לצורך בחירה. הקובץ המושלם צריך לשלב את שניהם: את מנגנון ה-SOC/שעתי המדויק של קובץ 1, מורץ בלולאה על טווח גדלים כמו קובץ 2, כדי לקבל גם עקומת-בחירה מדויקת וגם גרף SOC-ליום לגודל שנבחר בסוף.</div></td></tr>
+<tr><td class="item">תצוגת "יום לדוגמה" (גרף צריכה/ייצור/SOC לאורך יום בודד)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">SVG מותאם-אישית: עקומת צריכה, מצב טעינה, הדגשת שעות פסגה, עם בורר יום (כולל "⭐" ליום עם שיא-הצריכה הגבוה ביותר).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים כתרשים בודד; יש רק "קוביות" מסכמות.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה ייחודית וחזותית מאוד לקובץ 1 — מומלץ לאמץ, זה בדיוק סוג הוויזואליזציה שעוזרת ללקוח "להבין" למה הסוללה שווה את הכסף (רואים ממש את הסוללה נטענת בזול ומתרוקנת ביקר).</div></td></tr>
+<tr><td class="item">גרף חודשי (צריכה מול פריקה מהסוללה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">SVG מותאם-אישית (renderMonthlyBarChart), ללא תלות בספריית תרשימים חיצונית.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים בפורמט הזה (יש גרף אחר — קומבו חיסכון/שוליות, ראו סקשן גרפים).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">גרף Chart.js דומה במטרתו (renderBatterySimulation).</div></td><td class="rec"><div class="ct">לשלב כחלק מתוצאות סימולציית הדיספאץ' של הקובץ המושלם (סעיף לעיל).</div></td></tr>
+<tr><td class="item">החלת תוצאות הסימולציה בחזרה על המחשבון הפיננסי</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">applySimResultsToCalculator — לוחץ אוטומטית על "הרץ סימולציה", ומנוע ה-25 שנה בודק אם קיימת תוצאת-דיספאץ' תואמת לגודל הסוללה הנוכחי ומשתמש בה במקום בנוסחה הגנרית (עם בדיקת "האם זה עדיין עדכני" simIsStale אם המשתמש שינה גודל אחרי הריצה).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה: runBatteryDispatchSimulation תלוי בכך ש"חשב המלצה" כבר רץ (כדי לדעת את הגודל הסולארי לתעריף), אך אינו מזין את התוצאה בחזרה אוטומטית להמלצה עצמה — היא נשארת נתון "לצד" ההמלצה, להצגה בלבד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">המנגנון של קובץ 1 (זיהוי אוטומטי אם הסימולציה "תואמת" את הגודל הנוכחי, עם נפילה-לאחור שקופה לנוסחה כשלא) הוא התבנית הכי בטוחה מבחינת נכונות נתונים — לאמץ אותה כמנגנון האב, ולוודא שגם בקובץ 2 תוצאת הדיספאץ' בסוף "מוזנת" חזרה ולא רק מוצגת בנפרד.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="battery-input">
+  <h2>7. קלט ותכנון אגירה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">קלט גודל אגירה</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">קלט ידני ישיר (קוט"ש שמיש), עם כפתור "הצע גודל" שממלא הצעה לפי ייעוד שבת/חג.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">הספק אגירה הוא *תוצר* של מנוע האופטימיזציה (בוחר לבד את הגודל בעל ה-IRR הכי גבוה) — אין שדה קלט ידני להספק אגירה כלל.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">קלט ידני (actualBatteryKwh) בשלב 2, ללא כפתור הצעה אוטומטית.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין קלט/תכנון אגירה נפרד — הסימולציה בקובץ זה עוסקת רק בניתוח-כדאיות של טווח גדלים, לא בבחירת גודל יעד לתכנון.</div></td><td class="rec"><div class="ct">גם כאן — שני מצבים לגיטימיים: "תגיד לי כמה" (2) מול "אני כבר יודע כמה" (1/3). לשלב את מנגנון "הצע גודל" של קובץ 1 כברירת מחדל בכל מצב, עם אפשרות דריסה ידנית.</div></td></tr>
+<tr><td class="item">הצעת גודל סוללה אוטומטית לפי ייעוד שבת/חג</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">applySuggestedBattery: לפי checkbox שבת (×1.2) או שבת+חג (×2.2) על הצריכה המשוערת לשבת, חלקי DOD.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מנגנון שקוף ומתוחכם יותר: "רצפת" קיבולת מחושבת (shabbatBackupKwh = עומס×25.5 שעות) *משולבת בתוך לולאת האופטימיזציה עצמה* כאילוץ מינימום, לא רק כהצעה חד-פעמית — וגם מפחית את ימי-הארביטראז' האפקטיביים בחורף (כי הקיבולת "תפוסה" בגיבוי בסופ"ש).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין הצעה אוטומטית; יש רק checkbox-ים לייעוד שבת/חג שמשפיעים איכשהו על הצגה, ללא נוסחת-גודל ברורה שראיתי.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי (אין תכנון גודל בקובץ זה).</div></td><td class="rec"><div class="ct">קובץ 2 הוא המתקדם ביותר כאן — הוא היחיד שמבין ש"קיבולת ששמורה לגיבוי שבת" גם *גורעת* מהיכולת לעשות ארביטראז' יומיומי בשאר השבוע, לא רק מוסיפה עלות. לאמץ את המודל של קובץ 2 במלואו.</div></td></tr>
+<tr><td class="item">הספק ממיר / קצב טעינה-פריקה (C-rate)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">שדה ישיר + כפתור "חשב לפי 0.2C", עם הסבר צמוד (0.2C ≈ טעינה מלאה תוך 5 שעות).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא מטופל כשדה נפרד; קצב הטעינה/פריקה לא מגביל את הדיספאץ' היומי (המודל שם עובד ברמת "יום" לא "שעה").</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא כשדה נפרד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי.</div></td><td class="rec"><div class="ct">שדה חשוב שקיים רק בקובץ 1 — קריטי לדיוק סימולציית הדיספאץ' השעתי (בלעדיו הסימולציה יכולה "להניח" קצב טעינה בלתי-ריאלי). לשלב יחד עם אימוץ מנגנון הדיספאץ' השעתי (סקשן 6).</div></td></tr>
+<tr><td class="item">ייעוד אגירה לגיבוי שבת בלבד / שבת+חג</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">2 checkbox-ים נפרדים (useStorageShabbat / useStorageHoliday).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">checkbox אחד (shabbatBackupNeeded) שפותח בלוק קלט לעומס גיבוי.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">2 checkbox-ים, דומה ל-1.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">לא רלוונטי לקובץ זה.</div></td><td class="rec"><div class="ct">לאחד לממשק אחד (מומלץ מבנה קובץ 1: 2 checkbox-ים נפרדים, ברור יותר ללקוח מה בדיוק הוא מקבל).</div></td></tr>
+<tr><td class="item">התעלמות מנתוני צריכה בשבתות היסטוריות (עקב גנרטור)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">checkbox נפרד (ignoreMissingShabbat/generatorUsedShabbat) — ראו גם סקשן 3 (נרמול).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">לאמץ מקובץ 2 (חופף לסקשן 3).</div></td></tr>
+<tr><td class="item">עלות סוללה — מבנה תמחור</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">מבנה מפוצל: ₪510/קוט"ש (תא) + ₪52,330 קבוע (ממיר היברידי+התקנה).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה לקובץ 1: capexPerKwh=510 + inverterCost=52330 קבוע.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">מבנה שטוח יחיד: ₪3,500/קוט"ש הכול-כלול, ללא רכיב קבוע נפרד.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה לקובץ 3: ₪3,500/קוט"ש שטוח.</div></td><td class="rec"><div class="ct">⚠️ אי-התאמה מספרית ממשית בין 2 "משפחות" הקבצים — לא רק ניסוח שונה אלא סכום סופי שונה (בבדיקה ל-10 קוט"ש: מודל מפוצל≈₪57,430 מול מודל שטוח=₪35,000). יש להחליט ידנית מול הספק/עלויות אמיתיות איזה מבנה נכון, ולא "לבחור באמצע". ראו הרחבה בסקשן הקבועים הכלכליים ובסקשן הבעיות.</div></td></tr>
+<tr><td class="item">יעילות טעינה/פריקה (round-trip)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">chargeLoss=7%, dischargeLoss=6% נפרדים (סה"כ ≈13% הפסד מחזור).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: chargeLoss:.07, dischargeLoss:.06.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">effCharge=93%, effDischarge=94% (ניסוח כ"יעילות" ולא כ"הפסד" — מתמטית שקול בערך, אך לא זהה: 0.93×0.94=0.874 מול (1-.07)*(1-.06)=0.874 — למעשה זהה בפועל!).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה לקובץ 3 (93%/94%).</div></td><td class="rec"><div class="ct">הערכים בפועל *מתכנסים לאותה תוצאה* (0.874 יעילות-מחזור כוללת) למרות ניסוח שונה (הפסד מול יעילות) — זו לא בעיה אמיתית, רק לאחד את הניסוח בקוד ל"יעילות" (ברור יותר להבנה) בקובץ המושלם.</div></td></tr>
+<tr><td class="item">DOD (עומק פריקה מותר)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">0.95</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">0.95</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">0.95</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">0.95</div></td><td class="rec"><div class="ct">עקבי לחלוטין — להעתיק.</div></td></tr>
+<tr><td class="item">בלאי שנתי בערך האגירה</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא קבוע בלאי-שנתי נפרד לאגירה (רק לפאנלים).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">degradationPerYear:.022 (2.2%/שנה) — מיושם על ערך-הארביטראז' השנתי בתזרים, לא רק על התפוקה הפיזית.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא.</div></td><td class="rec"><div class="ct">שקול לאימוץ מקובץ 2 — סוללות אכן מאבדות קיבולת עם הזמן (בניגוד לפאנלים שמאבדים בעיקר תפוקה, לא "כושר אגירה"), אז מודל בלאי נפרד לאגירה מדויק יותר ריאלית ממה שיש בשאר הקבצים.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="tariff-engine">
+  <h2>8. מנוע תעריפי הזרמה ושווי אגירה (הליבה הכלכלית)</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">מבנה מדרגות תעריף הזרמה (staircase / הסדרה תעריפית)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">4 מדרגות: 0–15 / 15–100 / 100–300 / 300–630 קוו"ט, עם "מקדם דיסקאונט" (disc) נפרד למדרגה העליונה — calcStaircaseTariff עם נוסחה מפורשת לכל שילוב טווחי P0/P1, כולל בדיקת-אימות מתועדת בהערת קוד (מספרים קונקרטיים שנבדקו מול המקור).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה מבנית (4 מדרגות עד 630), עם תוספת: מדרגת 15–100 מפוצלת לשני ערכים שונים — עם/בלי אגירה (t100_noBat / t100_bat) — הנחה של 5% על המדרגה הזו כשיש אגירה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">רק 3 מדרגות (0–15 / 15–100 / 100–300), ללא מדרגת 300–630 קוו"ט כלל.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">זהה ל-3: 3 מדרגות בלבד.</div></td><td class="rec"><div class="ct">לאמץ את המבנה של קובץ 1/2 (4 מדרגות עד 630 קוו"ט + התאמה מתועדת-ומאומתת) כבסיס, ולשלב את התובנה הייחודית של קובץ 2: הנחת 5% על מדרגת 15–100 כשיש אגירה (storageT100Factor) — זו נראית עובדה תעריפית אמיתית שקבצים 1/3/4 פשוט לא מיישמים כלל, ועלולה לגרום לחישוב-חסר של תעריף ההזרמה בכל תרחיש עם אגירה בטווח ההספק הזה.</div></td></tr>
+<tr><td class="item">שווי אגירה/ארביטראז' — מקור תעריף הפסגה המשמש בנוסחה</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">משתמש בתעריפי התעו"ז *הרשמיים* (אותם תעריפים ששימשו לחישוב הפסגה בצריכה) ישירות בנוסחת הארביטראז'.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">⚠️ שונה מהותית: משתמש בטבלת "תעריף משלים" *נפרדת לגמרי* מהתעו"ז הרשמי, תלוית-גודל-מערכת (עד/מעל 300 קוו"ט), עם אפשרות "בלנד" (%) מול התעריף הרשמי+מע"מ. מתועד בקוד כ"נוסחת המקור המדויקת, לא פישוט" — כלומר זו לא טעות, זו כוונה מפורשת שמבוססת ככל הנראה על מסמך-מקור אחר.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">דומה לקובץ 1 — תעריפי תעו"ז רשמיים ישירות.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">דומה לקובץ 1.</div></td><td class="rec"><div class="ct">⚠️ זו ככל הנראה אי-ההתאמה המהותית הכי גדולה בכל ההשוואה — קובץ 2 מניח מודל תמחור-ארביטראז' *עקרונית שונה* (לא רק ערכים שונים) משאר 3 הקבצים. יש להבהיר מול מקור-האמת העסקי (הקובץ/גורם שהזין את קובץ 2) האם ה"תעריף המשלים" הזה אכן רלוונטי (למשל תעריף רכישה-חזרה של חברת החשמל שאינו זהה לתעו"ז הצרכני), ורק אז להחליט אילו קבצים "טועים" ואילו "צודקים". אסור לאחד את שתי הגישות בלי להבין קודם מאיפה הגיע כל אחד מהם.</div></td></tr>
+<tr><td class="item">נוסחת ערך-אגירה שנתי — פירוט לפי עונה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">calcBatteryArbitrageRevenue: לכל עונה, spread = peak−(low/יעילות-מחזור), מוכפל בימי-הפסגה בעונה, מסוכם.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">batteryValuePerKwh: מורכב יותר — כולל את "התעריף המשלים", בלנד, ופיצול נפרד בין הפסד-טעינה (בתעריף שפל) להפסד-פריקה (בתעריף פסגה) לכל עונה בנפרד (לא הפסד-מחזור אחיד).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה לקובץ 1.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה לקובץ 1.</div></td><td class="rec"><div class="ct">ברמת המבנה המתמטי (לא מקור-התעריף שהוזכר לעיל) — הפיצול של קובץ 2 בין הפסד-טעינה/הפסד-פריקה בתעריפים נפרדים מדויק יותר ממודל "יעילות-מחזור אחידה" של 1/3/4. לאמץ את רמת-הפירוט המתמטית של קובץ 2, בשילוב עם החלטה נפרדת איזה מקור-תעריף (רשמי מול משלים) להשתמש בו.</div></td></tr>
+<tr><td class="item">עונת המעבר בחישוב הארביטראז'</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">נכללת רגילה כמו שאר העונות (אם כי הפרש התעריפים בעונת מעבר קטן/אפסי ברוב הקבצים ממילא).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן, אך עם toggle מפורש "כלול ארביטראז' עונת-מעבר" (ברירת מחדל: כבוי) — עם הערת קוד שמסבירה שברוב המקרים ההפרש שם, אחרי הפסדים, נוטה להיות *הפסד* ולא רווח.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">נכללת.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">נכללת.</div></td><td class="rec"><div class="ct">לאמץ את ה-toggle המפורש של קובץ 2 — יש כאן תובנה עסקית אמיתית (עונת-מעבר יכולה להזיק לכדאיות אם לא זהירים), עדיף לתת שליטה מפורשת ולא "לקבור" את זה בקבוע קשיח כמו ב-1/3/4.</div></td></tr>
+<tr><td class="item">מגבלת הזרמה מינימלית ("רצפה רגולטורית" לגודל אגירה)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">minInjectionPerKwp / directInjectionPerKwp — פער בין הזרמה מינימלית נדרשת לתרומה ישירה מהפאנלים הופך ל"רצפת" גודל-אגירה מינימלי (עם מקדם המרה משוער "115" המתועד כ"מקור המקור").</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה רגולטורית ספציפית וחשובה שקיימת רק בקובץ 2. לוודא מול גורם רגולטורי/הנדסי שהמקדם 115 (שהמתעד בעצמו מכנה "משוער") מדויק, ואז לאמץ כאילוץ-רצפה בקובץ המושלם — בלי זה יש סיכון להמליץ על מערכת שלא תעמוד בתנאי חיבור לרשת.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="financial">
+  <h2>9. מנוע פיננסי 25 שנה — מיסוי, פחת, תחלופה ותשואות</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">אבחנת מיסוי אדם-פרטי מול עסק/חברה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select taxStatus, עם VAT מלא (18%, ניתן לעריכה) שנוסף לעלות אדם-פרטי, ומקוזז לעסק.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">⚠️ לא קיים כלל — מנוע ה-buildCashflow של קובץ 2 מדלג לגמרי על מיסוי, מע"מ ופחת (עקבי עם היותו "מחשבון המלצה מהיר", לא דוח סופי — ראו הערת-מיצוב בתחילת המסמך).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select taxStatus, capex/=1.17 לעסק (ראו הערת אי-התאמה בסקשן הקבועים).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לקובץ 3.</div></td><td class="rec"><div class="ct">האבחנה הזו קריטית לדוח פיננסי סופי (משפיעה על עשרות אחוזים בתשואה נטו). קובץ 2 מדלג עליה *בכוונה* כי הוא "מחשבון מהיר לגודל", לא דוח סופי — זו החלטת-מוצר לגיטימית כל עוד "מחשבון 2" (החסר) אכן משלים אותה. בקובץ המושלם: אם משלבים את שני התפקידים (המלצה + דוח סופי) לקובץ אחד, יש לוודא שהמעבר מ"שלב המלצה" ל"שלב דוח" מפעיל את מנוע המיסוי המלא — לא להישאר עם ברירת-המחדל הפשוטה של קובץ 2 בדוח שיוצא ללקוח.</div></td></tr>
+<tr><td class="item">שיעור מע&amp;quot;מ</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">שדה עריכה, ברירת מחדל 18%.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (ראו שורה קודמת).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">מקודד קשיח כ-1.17 בנוסחה (לא כשדה 18% מפורש).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">זהה ל-3 — 1.17 קשיח.</div></td><td class="rec"><div class="ct">⚠️ ראו סקשן קבועים כלכליים — יש חוסר-עקביות מספרי אמיתי בין 17%/18% שכדאי לפתור.</div></td></tr>
+<tr><td class="item">פחת מואץ לעסק/חברה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">25% לשנה, 4 שנים ראשונות בלבד, מקטין הכנסה חייבת.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: 25%/שנה, 4 שנים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">עקבי בין 1/3/4 — להעתיק. (חסר בקובץ 2 מהסיבה שהוסברה לעיל.)</div></td></tr>
+<tr><td class="item">פטור/מס לאדם פרטי</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">סף פטור ₪27,900, מס 10% מעל הסף.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">סף פטור ₪25,000, מס 10% מעל הסף.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לקובץ 3: ₪25,000.</div></td><td class="rec"><div class="ct">⚠️ אי-התאמה מספרית: ₪27,900 (קובץ 1) מול ₪25,000 (קבצים 3/4). זה כנראה הבדל אמיתי בין נקודות-זמן שונות של עדכון-תקרה על ידי רשות המסים (התקרה מתעדכנת שנתית) — קובץ 1 כנראה החדש/מעודכן יותר. יש לוודא מול התקרה הרשמית הנוכחית (רשות המסים) ולעדכן קבוע יחיד.</div></td></tr>
+<tr><td class="item">עלות תחלופת ציוד (ממיר בשנה 14, סוללה בשנה 15)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">inverterYear:14 (15% מעלות הפאנלים), batteryYear:15 (60% מעלות תאי הסוללה) — מנוכה מתזרים המזומנים באותה שנה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים בתזרים (buildCashflow לא כולל שורת "תחלופה").</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לקובץ 1: שנה 14/15, 15%/60%.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">עקבי בין 1/3/4 (כולל אותם ערכים בדיוק) — להעתיק. חסר בקובץ 2 מאותה סיבת-מיצוב שהוסברה. עלות תחלופה משמעותית לתחזית 25-שנה ולא כדאי לוותר עליה בדוח סופי ללקוח.</div></td></tr>
+<tr><td class="item">שני סוגי IRR: תשואת-פרויקט מול תשואת-הון</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">irrProject (על כל ה-CAPEX, בלי מימון) + irrEquity (רק הון עצמי, אחרי תשלומי הלוואה) — 2 שורות נפרדות בתוצאה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: irrProject/irrEquity, עם שיטת פחת-הלוואה מדויקת (PPMT/IPMT אמיתיים, לא תשלום-שנתי-שטוח) — הכי מדויק פיננסית מבין 4 הקבצים בנקודה הזו.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">irr יחיד בלבד (רק אחרי מימון, מקביל ל-irrEquity) — אין חישוב תשואת-פרויקט נפרד.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">זהה ל-3 — irr יחיד.</div></td><td class="rec"><div class="ct">לאמץ את שני סוגי ה-IRR (מקובץ 1/2) — חשוב מאוד להראות ללקוח: "כמה המערכת עצמה מרוויחה" מול "כמה *אתה* מרוויחה על ההון שהזרמת בפועל" הם 2 מספרים שונים מאוד ושניהם רלוונטיים לשיחת מכירה. בנוסף, לאמץ את שיטת PPMT/IPMT המדויקת של קובץ 2 להחזרי הלוואה (עדיפה על תשלום-שנתי-שטוח).</div></td></tr>
+<tr><td class="item">NPV ושיעור היוון</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">discountRate=3.5%, ניתן לעריכה בהגדרות.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: discountRate:.035, ניתן לעריכה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">5% קשיח בקוד (npv(0.05, cf)) — לא ניתן לעריכה בממשק.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">זהה ל-3: 5% קשיח, לא ניתן לעריכה.</div></td><td class="rec"><div class="ct">⚠️ אי-התאמה: 3.5% (1/2, ניתן לעריכה) מול 5% קשיח (3/4). שיעור היוון משפיע ישירות על ה-NPV המוצג — יש להחליט על ריבית-היוון הנכונה עסקית (בד"כ נגזרת מעלות ההון האלטרנטיבית של החברה) ולהפוך אותה לשדה ניתן-לעריכה בכל מקרה, כמו בקבצים 1/2.</div></td></tr>
+<tr><td class="item">עלות תפעול ותחזוקה שנתית (OPEX)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">שני קבועים נפרדים: 80 ₪/קוט"ט (סולארי בלבד) מול 250 ₪/קוט"ט (עם אגירה — "שירות מלא").</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה בדיוק: opexPerKwp=80, opexPerKwpWithBattery=250.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">נראה קבוע יחיד בלבד ללא אבחנה סולארי/אגירה (לא מצאתי הפרדה מפורשת).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה ל-3.</div></td><td class="rec"><div class="ct">לאמץ את ההפרדה של 1/2 (80 מול 250) — הגיוני עסקית שאגירה דורשת שירות יקר יותר, וההפרש (פי 3) משמעותי לתחזית הרווחיות ל-25 שנה.</div></td></tr>
+<tr><td class="item">בלאי שנתי בתפוקת הפאנלים</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">0.25%/שנה, לינארי (לא מצטבר).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: 0.0025 לינארי.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">0.35%/שנה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">זהה ל-3: 0.35%/שנה.</div></td><td class="rec"><div class="ct">⚠️ אי-התאמה: 0.25% (1/2) מול 0.35% (3/4) — הבדל של פי-1.4, משמעותי על פני 25 שנה (בשנה 25: הפרש של כ-2.5% תפוקה בין המודלים). מומלץ לבדוק מול spec היצרן בפועל של הפאנלים הנמכרים ולקבוע ערך אחד מדויק — זהו קבוע שמשפיע ישירות על ה-IRR/NPV הסופי המוצג ללקוח ולכן שווה בירור.</div></td></tr>
+<tr><td class="item">חסימת חריגה ממדרגת התעריף העליונה (630 קוו"ט)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">alert חוסם אם P0+הספק חורג מ-630 קוו"ט, מכוון לפנות ליועץ / לפצל מתקן.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">console.warn (לא alert למשתמש) + חיתוך הערך ל-630 בשקט.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נבדק במפורש.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נבדק במפורש.</div></td><td class="rec"><div class="ct">לאמץ את ההתראה החוסמת-ומפורשת של קובץ 1 — עדיף שגיאת-משתמש ברורה על פני נתון-שקט שחתוך בשקט (כמו קובץ 2) או לא נבדק כלל (3/4), כדי לא "להמליץ" בטעות על מערכת מעבר-לגודל שהתעריף המוצג עבורה כבר לא תקף.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="recommendation">
+  <h2>10. מנוע אופטימיזציה/המלצה (ייחודי לקובץ 2)</h2>
+  <p class="intro">סקשן זה מתעד יכולת שקיימת כמעט אך ורק בקובץ 2 — "מחשבון ההמלצה". הוא מובא בנפרד כי הוא בעל ערך גבוה במיוחד לשלב המכירה, ומומלץ לשקול ברצינות לשלב אותו כ"מצב עבודה" בקובץ המושלם, לצד יכולות החישוב המדויק של שאר הקבצים.</p>
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">לולאת אופטימיזציה לבחירת הספק PV מיטבי</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים — הספק הוא קלט ידני של המשתמש.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן: סריקת גדלים בקפיצות 1 קוט"ט מ-3 ק ועד המגבלה המחמירה מבין (שטח גג / הספק חיבור / תקציב), בחירת ה-IRR הגבוה ביותר — לכל גודל מורץ תזרים 25-שנה מלא "מתחת למכסה המנוע".</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה ייחודית ומשמעותית לקובץ 2 — מנוע-אופטימיזציה אמיתי (grid search על IRR), לא רק מחשבון. שווה לאמץ כ"מצב המלצה" בקובץ המושלם (ראו גם סקשן 5), במיוחד לשלב המכירה הראשוני.</div></td></tr>
+<tr><td class="item">לולאת אופטימיזציה לבחירת גודל אגירה מיטבי</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים — גודל אגירה קלט ידני.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן: סריקת גדלים מ"רצפה" (מקס' בין דרישת-הזרמה-מינימלית לדרישת-גיבוי-שבת) עד "תקרה" (1.2×הרצפה או 1.5×הצריכה הטיפוסית הגבוהה, הגדול מביניהם), עם הגבלת-תועלת לפי עונה (capping) כדי לא "לממש" יותר חיסכון מכפי שיש צריכה לכסות.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">כנ"ל — לאמץ כחלק ממנוע ההמלצה. מנגנון ה-capping (לא לתת ערך לקיבולת שאין לה צריכה-יעד לכסות) הוא בדיוק סוג הפרט ה"קטן" שמונע המלצת-יתר על גודל סוללה.</div></td></tr>
+<tr><td class="item">רמת-ביטחון (confidence) בהמלצה, לפי איכות מקור הנתונים</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (אין דירוג כזה — הקובץ עובד רק עם קלט אחד קונקרטי בכל רגע).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">4 רמות: גבוהה (CSV בפועל) / טובה (קלט מפורט) / בינונית-טובה (טופס-ייבוא) / בינונית (הערכה שנתית) / "סולארי בלבד" אם אין נתוני צריכה כלל — מוצג כתג-צבע בולט בראש התוצאה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה חשובה מאוד לתקשורת-לקוח נכונה — מומלץ מאוד לאמץ. מונעת מצג-שווא של ודאות כשההמלצה בפועל מבוססת ניחוש-השכלתי ולא מדידה בפועל.</div></td></tr>
+<tr><td class="item">פאנל "שקיפות מלאה" — הסבר צעד-אחר-צעד איך התקבל המספר</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים בפורמט הזה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הכי מתקדם: details/summary נפתח עם ~8 "שלבים" ממוספרים (תעריף→מגבלות-גודל→בחירת-PV→מקור-נתוני-צריכה→שווי-אגירה→טווח-גדלים→גיבוי-שבת→תזרים-סופי), כל שורה מתויגת "נתון לקוח" מול "חוק קבוע", עם נוסחאות מוצגות במפורש.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונה ייחודית, מרשימה ובעלת ערך-אמון גבוה מול לקוח/מנהל — ממליץ בחום לאמץ במלואה. זו בדיוק סוג התכונה שהופכת "מחשבון קופסה-שחורה" ל"כלי שאפשר לסמוך עליו ולהסביר ללקוח סקפטי". יש לוודא שהיא מתעדכנת אוטומטית אם משנים קבועים בהגדרות (בקובץ 2 היא כן תלויה בחישוב החי, לא בטקסט קשיח).</div></td></tr>
+<tr><td class="item">פרופיל-גיבוי גנרי כשאין שום נתון צריכה (home/business)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">GENERIC_PROFILE עם 2 ארכיטיפים (מגורים/עסק), חלוקת-עונה ואחוז-פסגה מוערכים מראש — מאפשר "המלצת סולארי גסה" תוך שניות בלי שום קלט צריכה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">שימושי לשלב-מכירה מוקדם מאוד (טלפון ראשון). לאמץ, אך להציג בבירור כ"רמת ביטחון נמוכה" (מנגנון הקיים ממילא בקובץ 2, ראו למעלה).</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="ux-helpers">
+  <h2>11. שקיפות, טולטיפים ועזרי-הבנה למשתמש</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">טולטיפים (ⓘ) הסברי-נוסחה צמודים לשדות קלט</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מנגנון initTooltips מבוסס event-delegation (עובד גם על תוכן שנוצר דינמית), עם פופ-אובר שמראה כותרת, טקסט, נוסחה (בפורמט monospace), ומקור-הנתונים — על עשרות שדות בכל הטופס.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים כרכיב UI (יש את פאנל "שקיפות מלאה" שממלא תפקיד דומה אך אחרי החישוב, לא ליד השדה מראש).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תכונת UX ייחודית וחשובה לקובץ 1 — מאוד מומלצת: מורידה דרמטית את תלות המשתמש (איש מכירות) בהבנת כל נוסחה בעל-פה. לאמץ את מנגנון ה-event-delegation (יעיל וגמיש) ולהחיל טולטיפים גם על השדות הייחודיים שנכנסים מקבצים אחרים (כמו שדות מנוע ההמלצה של קובץ 2).</div></td></tr>
+<tr><td class="item">הודעות "מילוי אוטומטי" שקופות (banner) כשהמערכת ממלאה שדה לבד</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">periodAutoFillNote, shabbatAutoFillNote — טקסט ירוק מסביר בדיוק מה מולא אוטומטית ולמה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">יש התראות דומות בתוך שורת-הסטטוס של ניתוח ה-CSV (shabbatNormalizeNote וכו'), אך פחות עקביות כרכיב UI נפרד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא בולט.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא בולט.</div></td><td class="rec"><div class="ct">לאמץ את התבנית העקבית של קובץ 1 (רכיב "note" ירוק סטנדרטי) לכל מקרה שבו הכלי ממלא/משנה נתון לבד — שקיפות UX בסיסית שמונעת "קסם שחור" בעיני המשתמש.</div></td></tr>
+<tr><td class="item">התאמת שדות-ברירת-מחדל אוטומטית מנתוני CSV (טווח תאריכים, עומס שבת)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">updateAnalysisPeriodFromData ממלא אוטומטית טווח-ניתוח מתאים; אין מילוי-שבת אוטומטי שראיתי.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">shabbatBackupLoad מוצע אוטומטית מהקלט-המפורט אם קיים (onShabbatBackupToggle).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא בולט.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא בולט.</div></td><td class="rec"><div class="ct">לשלב את שני המנגנונים (טווח-תאריכים מ-1 + עומס-שבת מ-2) — שניהם מפחיתים הקלדה ידנית מיותרת.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="charts">
+  <h2>12. גרפים וויזואליזציה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">ספריית תרשימים</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">ללא ספרייה חיצונית — כל התרשימים (חודשי, יומי, תזרים-מצטבר) הם SVG נבנה-ידנית (strings), ללא תלות ב-CDN נוסף.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">Chart.js (CDN jsdelivr).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין תרשימים גרפיים כלל בקובץ זה (רק טבלאות).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">Chart.js (CDN, גרסה לא-מוצמדת "latest").</div></td><td class="rec"><div class="ct">שתי גישות לגיטימיות: SVG-ידני (קובץ 1) לא תלוי-רשת ומהיר, אך יותר קוד-תחזוקה; Chart.js (2/4) מהיר-לפתח ועשיר-פיצ'רים (טולטיפים, אנימציה) אך תלוי-CDN וגרסה לא-מוצמדת (סיכון-שבירה עתידי). המלצה: להצמיד גרסת Chart.js קונקרטית (למשל chart.js@4.4.0, לא "latest") ולהשתמש בו כספרייה המרכזית — לרכז את כל הגרפים (כולל אלו שב-SVG-ידני בקובץ 1) לספרייה אחת מפחית משטח-קוד לתחזוקה, בתנאי שנטישת ה"אין-תלות-ברשת" של קובץ 1 מקובלת על הארגון.</div></td></tr>
+<tr><td class="item">גרף תזרים מזומנים מצטבר ל-25 שנה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">SVG: 2 עקומות (סולארי-בלבד מול סולארי+אגירה), קו אפס מודגש, גריד רקע.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים כתרשים (יש רק מספרים בטבלה/בפאנל-שקיפות).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תרשים חשוב מאוד להצגה ללקוח (רואים חזותית "מתי אני יוצא לפלוס") — לאמץ מקובץ 1, ולשקול המרה ל-Chart.js אם מאמצים אותו כספריית-על.</div></td></tr>
+<tr><td class="item">גרף קומבו (קו חיסכון מצטבר + עמודות תוספת שולית)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">renderComboChart — ציר Y כפול (חיסכון מצטבר מימין, תוספת שולית משמאל), interaction mode='index' לתצוגת-hover נוחה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">renderComboChart דומה מאוד (אותו רעיון, קוד כמעט זהה לקובץ 2).</div></td><td class="rec"><div class="ct">תרשים מצוין להראות "תשואה פוחתת" (diminishing returns) בגודל אגירה — בדיוק הכלי הנכון לשכנע לקוח למה "יותר גדול לא תמיד יותר טוב". לאמץ (הקוד כבר כמעט זהה בין 2 ל-4, מיזוג קל).</div></td></tr>
+<tr><td class="item">גרף יחס-רווח מול גודל מינימלי</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">renderRatioChart — ייחודי לקובץ זה: מנרמל את כל עקומת-החיסכון ביחס לגודל הכי-קטן שנבדק, ל"קריאה" מהירה של האפקטיביות היחסית.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">תוספת נחמדה אך לא קריטית — אפשר לשלב כתרשים משני/מתקפל, בעדיפות נמוכה יותר מהקומבו-צ'ארט.</div></td></tr>
+<tr><td class="item">עיצוב תרשימים בתמיכת-הדפסה (רקע לבן קשיח)</td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">לא רלוונטי (SVG כבר "שקוף"/מוגדר ידנית).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצא plugin ייעודי.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין תרשימים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">plugin מותאם-אישית ל-Chart.js שכופה רקע-לבן (נחוץ כדי שתמונת-PNG של הגרף שמוטמעת בייצוא-האקסל לא תצא עם רקע שקוף/שחור).</div></td><td class="rec"><div class="ct">פרט טכני קטן אך מציל-מבוכה מקובץ 4 — לאמץ אם משלבים הטמעת-גרפים כתמונה בייצוא אקסל/PDF.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="final-report">
+  <h2>13. דוח סופי / הצעת מחיר ללקוח (ייחודי לקובץ 1)</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">בניית "דוח סופי" / הצעת מחיר מוכנה ללקוח</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">היחיד שיש בו: buildFinalReport/renderFinalReport — טופס פרטי-לקוח (שם/כתובת/תאריך), בחירת-תרחיש (סולארי-בלבד/עם-אגירה), ומסמך מפורמט: מפרט טכני, תקציר כלכלי, טבלת השוואת-תרחישים, פסקת הנחות-יסוד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין — עקבי עם היות הקובץ "שלב 1 מתוך 2" בלבד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין מסמך-דוח מפורמט (יש רק את מסך-התוצאה הרגיל).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין (מסתיים ב-transferDataToQuote במקום).</div></td><td class="rec"><div class="ct">תכונה ייחודית וחשובה מאוד לקובץ 1 — זה בדיוק המרכיב שהופך מחשבון-פנימי למסמך-שיווקי שאפשר לשלוח/להדפיס ללקוח. לאמץ במלואו כ"שלב אחרון" בקובץ המושלם, ולוודא (כפי שצוין בסקשן 9) שהוא מפעיל את מנוע-המיסוי המלא.</div></td></tr>
+<tr><td class="item">הדפסה/שמירה כ-PDF</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כפתור "🖨️ הדפס/שמור כ-PDF" שקורא ל-window.print() (מסתמך על "הדפס לPDF" של הדפדפן).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="rec"><div class="ct">פתרון פשוט ואפקטיבי (לא דורש ספריית PDF כבדה). לאמץ, אך מומלץ להוסיף גם @media print CSS ייעודי (הסתרת כפתורים/ניווט בהדפסה) — לא ברור מהקוד שנבדק שזה קיים כרגע במלואו.</div></td></tr>
+<tr><td class="item">בחירת תרחיש להצגה בדוח (סולארי-בלבד / עם-אגירה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">select ייעודי (report_scenario) שמזין את כל מסמך הדוח הסופי.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי.</div></td><td class="rec"><div class="ct">לאמץ מקובץ 1 — פרט UX חשוב, כי אנשי-מכירות לעיתים רוצים להראות ללקוח שתי גרסאות בלי להריץ הכול פעמיים.</div></td></tr>
+<tr><td class="item">ציון-מקור לנתון "ערך שנתי מהאגירה" בדוח (סימולציה אמיתית מול הערכה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">batterySourceNote מפורש: "מבוסס סימולציית אגירה שעתית על נתוני צריכה בפועל (תאריכים)" מול "מבוסס הערכה גנרית (...קיבולת שונתה לאחר ריצת הסימולציה)" — שקיפות מלאה גם במסמך הסופי, לא רק במסך-העבודה.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי (אך יש עקרון-שקיפות מקביל בפאנל ה-Transparency).</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין דוח סופי.</div></td><td class="rec"><div class="ct">עיקרון מצוין לאמץ בכל מסמך שיוצא ללקוח — לעולם לא להציג מספר-מפתח בלי לציין אם הוא מבוסס מדידה אמיתית או הערכה.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="export">
+  <h2>14. ייצוא לאקסל</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">ספריית ייצוא Excel</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">SheetJS/xlsx.full.min.js (client-side, פשוטה, ותיקה ויציבה).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה: SheetJS.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה: SheetJS.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">ExcelJS + FileSaver.js — ספרייה עשירה משמעותית יותר (תומכת מיזוג-תאים, צביעה, הטמעת-תמונות), אך גם כבדה וסבוכה יותר לתחזוקה.</div></td><td class="rec"><div class="ct">3 מתוך 4 קבצים כבר על SheetJS — עדיף לאחד סביבה כברירת-מחדל (עקביות, קלילות, בשלות). לשמור את ExcelJS כאופציה רק אם ממש רוצים לשמר את יכולת המיזוג/הטמעת-התמונה המתקדמת של קובץ 4 (סקשן הבא) — ואם כן, לבודד אותה לפונקציית-ייצוא ספציפית אחת ולא להחליף את הספרייה הראשית בכל האתר.</div></td></tr>
+<tr><td class="item">ייצוא דוחות-צריכה גולמיים (שעתי/יומי/פסגה+סטטיסטיקה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">קובץ Excel רב-גיליון (3 טבלאות + גיליון סטטיסטיקה).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נמצאה פונקציית-ייצוא מקבילה לדוחות הגולמיים בקובץ זה (יש רק exportSimulationToExcel לסימולציית-הסוללה).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה לקובץ 1 (exportToExcel1).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הכי מתקדם: גיליון "פירוט שנתי מלא" עם מיזוג-תאים פרופורציונלי לפי היררכיית שנה→עונה→יום-גרגוריאני→יום-עברי→שעה, כולל תאריך עברי לכל יום וצביעת פסגה/שפל.</div></td><td class="rec"><div class="ct">הבסיס (3 טבלאות + סטטיסטיקה) קיים כבר ב-1/3 עם SheetJS — לאמץ כברירת מחדל. גיליון "הפירוט השנתי המלא" עם מיזוג-התאים של קובץ 4 הוא תוספת יוקרתית אך יקרה-תחזוקה (ExcelJS) — לשקול כ"ייצוא מתקדם" אופציונלי בלבד, לא כברירת מחדל, כדי לא לגרור את כל הפרויקט לספרייה הכבדה יותר.</div></td></tr>
+<tr><td class="item">ייצוא תוצאות מחשבון-הכדאיות (25 שנה)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">exportReportToExcel — נפרד מייצוא-הצריכה, כולל גיליון סיכום + גיליון תזרים 25-שנה מלא.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">exportSimulationToExcel — לסימולציית-הדיספאץ' של הגדלים (20 קוביות + רגישות שולית), לא לתזרים הפיננסי המלא של ההמלצה עצמה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">exportToExcel2/3 — לשלבי ההנדסה והחישוב הסופי בהתאמה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">מובנה בתוך אותו ייצוא-מאוחד (ExcelJS) עם שאר הדוחות.</div></td><td class="rec"><div class="ct">לאחד לעיקרון של קובץ 1: ייצוא-צריכה נפרד מייצוא-כדאיות-פיננסית נפרד מייצוא-סימולציית-אגירה (אם רלוונטי) — 2-3 כפתורי-ייצוא ברורים ומתויגים, לא כפתור-ייצוא-אחד-שמייצא-הכול (מבלבל) ולא ייצוא מפוזר-מדי (כמו שילוב 3 הקבצים כרגע).</div></td></tr>
+<tr><td class="item">הטמעת תמונת-גרף (PNG) בתוך קובץ האקסל</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">אין גרפים בקובץ זה כלל.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן — ExcelJS מאפשר toBase64Image() מ-Chart.js ישירות להטמעה בגיליון, עם plugin רקע-לבן (ראו סקשן גרפים).</div></td><td class="rec"><div class="ct">תכונה "וואו" יפה אך יקרה-תחזוקה (תלויה ב-ExcelJS+Chart.js יחד) — לשקול רק אם באמת יש דרישת-לקוח מפורשת לגרפים בתוך קובץ האקסל המיוצא, ולא "כי אפשר".</div></td></tr>
+<tr><td class="item">שם קובץ הייצוא (דינמי לפי שם לקוח)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן, כולל שם-לקוח בשם הקובץ (fallback ל"לקוח_כללי" אם לא זוהה).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן.</div></td><td class="rec"><div class="ct">עקבי בין כולם — להעתיק.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="persistence">
+  <h2>15. שמירת מצב וחיבוריות לכלים חיצוניים</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">שמירת מצב-קלט בין רענוני-דף (localStorage)</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין localStorage בקובץ זה כלל — כל קלט נמחק ברענון.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין localStorage כלל.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">היחיד: כל אחד מ-3 השלבים נשמר בנפרד (solarCalc_step1/2/3Data) עם restore אוטומטי בטעינה, וקישורי "נקה נתונים שמורים" לכל שלב בנפרד.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין localStorage לשמירת-קלט (יש רק כתיבה חד-פעמית של תוצאה, ראו שורה הבאה).</div></td><td class="rec"><div class="ct">שמירת-מצב היא תכונה חשובה לאיש-מכירות שעובד עם כמה לקוחות/הפסקות — קיימת רק בקובץ 3. יש להוסיף לקובץ המושלם, אבל בזהירות: אם הקובץ המושלם משרת כמה לקוחות ברצף (לא רק לקוח אחד), עדיף שם-מפתח כולל מזהה-לקוח (או ניקוי-אוטומטי/פתיחת-session), כדי שלא "יזלוג" מידע של לקוח קודם ללקוח הבא באותו מחשב.</div></td></tr>
+<tr><td class="item">שמירת הגדרות-קבועים מותאמות-אישית (תעריפים וכו')</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">נשמר רק בזיכרון-הריצה (משתנה JS), נמחק ברענון.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">זהה — בזיכרון בלבד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">נשמר ב-localStorage['solarCalc_constants'], עם באנר-טעינה מפורש (loadSyncedConstants) בכל טעינת-דף מחדש.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">בזיכרון בלבד.</div></td><td class="rec"><div class="ct">לאמץ מקובץ 3 — משתמש קבוע (עסק) שמעדכן תעריפים פעם ברבעון לא אמור להקליד אותם מחדש בכל פתיחת-דף. חשוב לשלב עם הבאנר-המפורש (ראו סקשן 1) כדי שלא "יישכח" שהוא לא בברירת-המחדל.</div></td></tr>
+<tr><td class="item">העברת נתונים לכלי חיצוני דרך localStorage בסיום</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (הקובץ סוגר-מעגל בעצמו עם דוח סופי, ראו סקשן 13).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים (מפנה למחשבון-2 טקסטואלית בלבד, לא באופן טכני-אוטומטי).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כותב ל-localStorage['transferredCalcData'] בסיום שלב 3.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כותב לאותו מפתח בדיוק (transferredCalcData) דרך transferDataToQuote(), ואז סוגר את החלון (window.close()) — מיועד לרוץ כפופ-אפ.</div></td><td class="rec"><div class="ct">⚠️ ראו הרחבה בסקשן "בעיות ואי-התאמות" — קבצים 3 ו-4 כותבים לאותו מפתח localStorage בדיוק, אך אין "צרכן" (הטופס-הראשי שאמור לקרוא את המפתח הזה) בין 4 הקבצים שסופקו. יש לברר האם קיים קובץ חמישי ("טופס לקוח ראשי") שמצפה למפתח הזה, ואם המבנה (schema) של הנתונים הנכתבים ע"י 3 ו-4 אכן זהה ביניהם — אחרת אחד מהם (או שניהם) "מדבר לריק".</div></td></tr>
+<tr><td class="item">סגירה-עצמית של החלון (window.close) לאחר פעולה</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא קיים.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כן, ב-transferDataToQuote() — מרמז בבירור שקובץ זה מתוכנן לרוץ כחלון-פופ-אפ שנפתח ע"י כלי אחר, לא כעמוד-יעד עצמאי.</div></td><td class="rec"><div class="ct">אם הקובץ המושלם נבנה כ"כלי עצמאי מקצה-לקצה" (המלצה המרכזית של מסמך זה) — יש להסיר את תבנית ה-popup+window.close לגמרי; היא רלוונטית רק אם נשמרת ארכיטקטורת "מחשבון-משנה שנפתח מ-CRM חיצוני".</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="settings">
+  <h2>16. הגדרות ניתנות לעריכה</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">היקף הפרמטרים הניתנים לעריכה בהגדרות</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">תעריפי תעו"ז (6), מדרגות-הזרמה (4), + "הנחות כלכליות" (היוון/בלאי/פרמיה-אורבנית/תפוקה-בסיסית) = 14 שדות.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הכי רחב: תעריפים+מדרגות+אורבני (כמו 1) בתוספת כל פרמטרי-האגירה (יעילות/DOD/עלות/רצפת-הזרמה/בלאי), טבלת "תעריף משלים" מלאה (6 ערכים), אחוז-בלנד, מצב-עונת-מעבר, ופרמטרי-מימון/מיקום — כ-35+ שדות.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">תעריפי תעו"ז בלבד (saveTariffSettings) — היקף מצומצם יחסית.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">תעריפי תעו"ז בלבד, דומה ל-3.</div></td><td class="rec"><div class="ct">היקף-ההגדרות הרחב של קובץ 2 הוא כפול-חרב: גמישות תפעולית מרבית, אך גם משטח-שגיאה גדול (35+ שדות שמישהו יכול לשנות בטעות). לקובץ המושלם: לארגן את ההגדרות בכרטיסיות/קטגוריות מתקופלות (תעריפים / אגירה / מימון / מיקום), עם ערכי-ברירת-מחדל בולטים וכפתור "אפס לברירת מחדל" לכל קטגוריה בנפרד — כדי לשמר את הגמישות של קובץ 2 בלי להציף משתמש חדש.</div></td></tr>
+<tr><td class="item">מיקום גאוגרפי (קו רוחב/אורך) לחישוב שקיעה</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי (אין מנוע שקיעה בקובץ זה).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">שדות lat/lon ניתנים לעריכה בהגדרות, ברירת מחדל תל אביב (32.0853, 34.7818) — "לתצוגה בלבד", לא משפיע על סיווג פסגה/שפל.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא רלוונטי.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">קיים מנוע-שקיעה אך קואורדינטות לא נמצאו כשדה-הגדרות עורך (כנראה קשיח בקוד).</div></td><td class="rec"><div class="ct">שדה נחמד-לתצוגה בלבד לקובץ 2 — עדיפות נמוכה, לשלב רק אם מאמצים את כל שכבת "כניסת/יציאת שבת" (סקשן 3).</div></td></tr>
+<tr><td class="item">אימות/תיעוד קבועים מול מקור-אמת (הערות בקוד)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הערות מפורשות: "מאומת מול תחשיב_כלכלי...xlsx (25/02/2026)" + דוגמאות-בדיקה קונקרטיות (P0=0,P1=39 → תוצאה מדויקת) ישירות בקוד.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הערות מפורטות דומות ("כל הערכים מבוססים על ניתוח קבצי ה-Excel המקוריים"), כולל תיעוד מפורש שהתעריף-המשלים "אינו פישוט" אלא נוסחת-מקור מכוונת.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">פחות תיעוד-מקור מפורש בהערות הקוד.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה ל-3.</div></td><td class="rec"><div class="ct">חשוב לשמר את משמעת-התיעוד של 1/2 בקובץ המושלם — כל קבוע כלכלי (תעריף, יחס, אחוז) צריך הערת-מקור (תאריך + שם-מסמך שממנו נלקח) צמודה בקוד, כדי שעדכון-תעריפים עתידי (על ידי מישהו אחר) יידע במה לגעת ולמה.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="uiux">
+  <h2>17. עיצוב, נגישות וחוויית משתמש</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">פלטת צבעים / זהות חזותית</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">כחול (#3498db) + כתום/ענבר (#f39c12) על רקע לבן/אפור-בהיר — עקבי לאורך הקובץ.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה: כחול/ענבר, עם תוספת סגול (#8e44ad) לאלמנטים ייחודיים (כפתור סימולציית-דיספאץ').</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה ל-1 בעיקרון (כחול/כתום).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה, עם סגול נוסף לכפתורים ייחודיים (כמו 2).</div></td><td class="rec"><div class="ct">פלטה עקבית וסבירה בין כל הקבצים — אין צורך "לעצב מחדש", רק לאחד לקובץ CSS-משתנים (custom properties) יחיד כדי שעדכון-מיתוג עתידי (למשל לפי מיתוג החברה) ייעשה במקום אחד.</div></td></tr>
+<tr><td class="item">responsive / תמיכת מובייל</td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">grid-template-columns עם auto-fit/minmax — מסתגל ברוחב, אך לא נבדק במפורש עבור מסכים צרים מאוד.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה, עם ה-pills העליונים שעלולים להיות צפופים במובייל.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">דומה.</div></td><td class="rec"><div class="ct">כל הקבצים משתמשים ב-CSS Grid רספונסיבי בסיסי אך אף אחד לא נראה שנבדק/עוצב ספציפית למובייל (כלי כזה כנראה משמש בעיקר על לפטופ/טאבלט בפגישת-מכירה). אם יש כוונה לשימוש בטלפון, כדאי מעבר-בדיקה ייעודי לרוחב-צר לפני שילוב סופי.</div></td></tr>
+<tr><td class="item">נגישות מקלדת / focus states</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">לא נבדק תיעוד מפורש ל-focus-visible מותאם.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">זהה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">זהה.</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">אף קובץ לא נראה עם תשומת-לב מפורשת לנגישות-מקלדת. להוסיף מצבי focus ברורים (מתאים במיוחד לכלי-עבודה פנים-ארגוני שיכול להיות בשימוש יומיומי ואינטנסיבי).</div></td></tr>
+<tr><td class="item">מודל הגדרות (modal) — מבנה ועיצוב</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">overlay עם backdrop-blur, קיבוץ ב-"season-group" לפי נושא.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה, עם עוד יותר קבוצות (cfg-group) בשל היקף-ההגדרות הרחב.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה ל-1.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">דומה ל-1.</div></td><td class="rec"><div class="ct">מבנה עקבי — להעתיק, עם הקיפול-לכרטיסיות שהוזכר בסקשן 16 בשביל קובץ 2.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="deps">
+  <h2>18. תלויות טכניות (ספריות חיצוניות)</h2>
+  
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">PapaParse (פרסור CSV)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">v5.3.0, מ-cdnjs.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">v5.3.0, זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">v5.3.0, זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">v5.3.0, זהה.</div></td><td class="rec"><div class="ct">גרסה זהה בכל הקבצים — ללא שינוי, להשתמש כברירת מחדל.</div></td></tr>
+<tr><td class="item">ספריית ייצוא Excel</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">xlsx.full.min.js v0.18.5 (SheetJS, מ-cdnjs).</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה: v0.18.5.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה: v0.18.5.</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">exceljs v4.3.0 + FileSaver.js v2.0.5 (שילוב שונה לחלוטין).</div></td><td class="rec"><div class="ct">ראו החלטה מפורטת בסקשן 14 — SheetJS כברירת מחדל (רוב-קונצנזוס + פשטות), ExcelJS רק כתוסף-ייעודי אם נדרש.</div></td></tr>
+<tr><td class="item">ספריית תרשימים</td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין (SVG ידני).</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">chart.js — CDN jsdelivr, ללא הצמדת-גרסה (@latest, לא בטוח לטווח-ארוך).</div></td><td class="fc none"><span class="tag none">לא קיים</span><div class="ct">אין.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">chart.js — זהה, גם בלי הצמדת-גרסה.</div></td><td class="rec"><div class="ct">אם מאמצים Chart.js (מומלץ, ראו סקשן 12) — יש להצמיד גרסה מפורשת (למשל chart.js@4.4.1) במקום @latest, כדי שהכלי לא "יישבר" אם Chart.js תוציא גרסה חדשה עם breaking changes.</div></td></tr>
+<tr><td class="item">גרסת HTML/meta</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">HTML5, UTF-8, viewport תקין, dir="rtl" lang="he".</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה.</div></td><td class="rec"><div class="ct">עקבי לחלוטין — להעתיק.</div></td></tr>
+<tr><td class="item">תלות ברשת (CDN) מול עבודה אופליין</td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">תלוי ב-2 CDN-ים חיצוניים (PapaParse+SheetJS) — לא יעבוד בלי אינטרנט בפעם הראשונה (עד שנשמר ב-cache של הדפדפן).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">תלוי ב-3 CDN-ים (+ Chart.js).</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">תלוי ב-2 CDN-ים.</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">תלוי ב-4 CDN-ים (הכי הרבה: PapaParse+ExcelJS+FileSaver+Chart.js).</div></td><td class="rec"><div class="ct">אם הכלי צריך לעבוד גם בלי אינטרנט יציב (תרחיש סביר בפגישת-מכירה בשטח) — לשקול הורדת הספריות ל-hosting מקומי/הטמעה ב-bundle יחיד, במקום תלות חיה ב-CDN. ככל שמאמצים פחות ספריות (למשל מוותרים על ExcelJS/FileSaver לטובת SheetJS בלבד) — כך התלות-ברשת קטנה יותר.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<section class="sec" id="constants">
+  <h2>19. קבועים כלכליים מרכזיים — טבלת השוואה מדויקת</h2>
+  <p class="intro">סקשן זה הוא ליבת ה"בדיקת-שפיות" של המסמך: ריכוז כל הערכים המספריים הקריטיים שנבדקו ישירות בקוד (grep), לא רק תוארו. שורות עם ⚠️ בעמודת ההמלצה מסמנות אי-התאמה אמיתית שדורשת החלטה עסקית/בירור מול מקור-אמת חיצוני — לא רק "לבחור אחד מהם" אוטומטית.</p>
+  <div class="twrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="item-h">פריט / תכונה</th>
+        <th class="fc-h c1"><span class="hnum">1</span>הקובץ המאוחד<span class="fname">מחשבון_סולארי.html</span></th><th class="fc-h c2"><span class="hnum">2</span>מחשבון ההמלצה (1 מתוך 2)<span class="fname">מחשבון_המלצת_מערכת_1.html</span></th><th class="fc-h c3"><span class="hnum">3</span>ה-SPA התלת-שלבי<span class="fname">solar-calculator-spa.html</span></th><th class="fc-h c4"><span class="hnum">4</span>מחשבון הפופ-אפ<span class="fname">ai_studio_code__16_.html</span></th>
+        <th class="rec-h">המלצה ליישום בקובץ המושלם</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="item">בלאי שנתי בתפוקת פאנלים</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">0.25% / שנה (לינארי)</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">0.25% / שנה (לינארי)</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">0.35% / שנה</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">0.35% / שנה</div></td><td class="rec"><div class="ct">⚠️ לברר מול spec יצרן הפאנלים בפועל ולקבוע ערך יחיד. הפרש משמעותי על 25 שנה.</div></td></tr>
+<tr><td class="item">שיעור היוון ל-NPV</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">3.5%, ניתן לעריכה</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">3.5%, ניתן לעריכה</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">5%, קשיח בקוד</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">5%, קשיח בקוד</div></td><td class="rec"><div class="ct">⚠️ לקבוע שיעור אחד (לרוב נגזר מעלות ההון של החברה) ולהפוך תמיד לשדה ניתן-לעריכה.</div></td></tr>
+<tr><td class="item">סף פטור-ממס לאדם פרטי</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪27,900</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">לא רלוונטי — אין מיסוי בקובץ זה כלל</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪25,000</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪25,000</div></td><td class="rec"><div class="ct">⚠️ לבדוק מול התקרה הרשמית והעדכנית של רשות המסים (מתעדכנת שנתית) — ייתכן ש-₪27,900 הוא העדכון החדש יותר.</div></td></tr>
+<tr><td class="item">מבנה עלות סוללה</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪510/קוט"ש (תא) + ₪52,330 קבוע (ממיר)</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪510/קוט"ש (תא) + ₪52,330 קבוע (ממיר)</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪3,500/קוט"ש שטוח, הכול-כלול</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">₪3,500/קוט"ש שטוח, הכול-כלול</div></td><td class="rec"><div class="ct">⚠️ ההבדל המספרי המשמעותי ביותר שנמצא. לבדוק עם ספק-הציוד בפועל איזה מבנה-תמחור נכון להיום, ואם יש הבדל אמיתי בין ממיר-נפרד לממיר-כלול במחיר-התא.</div></td></tr>
+<tr><td class="item">מקדם VAT/מע"מ ל"ניכוי" עסקי מ-CAPEX</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">מכפלה מפורשת ב-(1+18%) לפרטי; חלוקה מרומזת לעסק</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">לא רלוונטי — אין VAT בקובץ זה</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">חלוקה קשיחה ב-1.17 לעסק (≈17%, לא 18%)</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">זהה ל-3: חלוקה ב-1.17</div></td><td class="rec"><div class="ct">⚠️ פער קטן אך ממשי בין 17%–18%. מע"מ בישראל נכון למועד כתיבת הקבצים הוא 18% — לתקן את קבצי 3/4 מ-1.17 ל-1.18, או לבדוק אם 1.17 שיקף שיעור-מע"מ קודם (שהיה 17% בעבר) שפשוט לא עודכן.</div></td></tr>
+<tr><td class="item">יעילות מחזור טעינה-פריקה של הסוללה</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">charge 93% × discharge 94% = 87.4% מחזור-כולל</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה: charge 93% × discharge 94%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">הפסד-טעינה 7% + הפסד-פריקה 6% (מתמטית שקול: 87.42%)</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">זהה ל-3</div></td><td class="rec"><div class="ct">בפועל *זהה* בין כל 4 הקבצים (רק ניסוח שונה: "יעילות" מול "הפסד") — לא בעיה אמיתית, רק לאחד ניסוח.</div></td></tr>
+<tr><td class="item">עומק פריקה מותר (DOD)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">95%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">95%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">95%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">95%</div></td><td class="rec"><div class="ct">עקבי לחלוטין בכל 4 הקבצים — קבוע יציב.</div></td></tr>
+<tr><td class="item">עלות התקנה בסיסית לפאנלים (CAPEX PV)</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">₪2,400 / קוו"ט</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">₪2,400 / קוו"ט</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">₪2,400 / קוו"ט</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">₪2,400 / קוו"ט</div></td><td class="rec"><div class="ct">עקבי לחלוטין — קבוע יציב, להעתיק כלשונו.</div></td></tr>
+<tr><td class="item">פרמיית יישוב אורבני</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">6 אג'/קוט"ש, 17 שנים ראשונות</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">6 אג'/קוט"ש, 17 שנים ראשונות</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">6 אג'/קוט"ש, 17 שנים ראשונות</div></td><td class="fc na"><span class="tag na">לא רלוונטי</span><div class="ct">שדה לא זוהה בקובץ זה</div></td><td class="rec"><div class="ct">עקבי בין 3 מתוך 4 — קבוע יציב, להעתיק.</div></td></tr>
+<tr><td class="item">ריבית הלוואה לברירת מחדל</td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">7%</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">7%</div></td><td class="fc diff"><span class="tag diff">קיים – גישה שונה</span><div class="ct">5.5%</div></td><td class="fc partial"><span class="tag partial">קיים – חלקי</span><div class="ct">לא אומת ערך מדויק בבדיקה — כנראה תואם משפחתו (1/3)</div></td><td class="rec"><div class="ct">פער בין 5.5% ל-7% — לוודא מול תנאי המימון הבנקאי הנוכחיים בפועל ולקבוע ערך-ברירת-מחדל אחד עדכני (הריבית משתנה תדיר יחסית, כדאי לתייג קבוע זה כ"לבדיקה תקופתית").</div></td></tr>
+<tr><td class="item">אחוז מימון בנקאי לברירת מחדל</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">80%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">80%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">80%</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">80%</div></td><td class="rec"><div class="ct">עקבי לחלוטין — להעתיק.</div></td></tr>
+<tr><td class="item">יחס שטח-גג להספק</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">7.5 מ"ר / קוו"ט</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">7.5 מ"ר / קוו"ט</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">(נגזר יחסית מ-DC/AC, לא זהה 1:1 אך אותה סביבה)</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">(דומה)</div></td><td class="rec"><div class="ct">עקבי במהותו — 7.5 כברירת מחדל מוצהרת (1/2), להעתיק כקבוע ניתן-לעריכה.</div></td></tr>
+<tr><td class="item">תפוקה שנתית בסיסית</td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">1,600 קוט"ש / קוו"ט / שנה</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">1,600 קוט"ש / קוו"ט / שנה</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">1,600 קוט"ש / קוו"ט / שנה</div></td><td class="fc full"><span class="tag full">קיים – מלא</span><div class="ct">1,600 קוט"ש / קוו"ט / שנה (מרומז מהחישוב)</div></td><td class="rec"><div class="ct">עקבי לחלוטין — קבוע יציב מבוסס-אקלים ישראל, להעתיק.</div></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="sec" id="issues">
+  <h2>20. בעיות ואי-התאמות קריטיות שזוהו בין הקבצים</h2>
+  <p class="intro">אלו הממצאים שדורשים <b>החלטה אנושית</b> לפני מיזוג — לא ניתן "לבחור אוטומטית" ביניהם בלי לדעת איזה קובץ-מקור (Excel/מסמך רגולטורי) מדויק יותר, כי בחלק מהמקרים (למשל שווי-אגירה בקובץ 2) הקוד עצמו מתעד בפירוש שמדובר בכוונה, לא בטעות.</p>
+  <div class="issue">
+      <h4>⚠️ שני מודלים כלכליים שונים לשווי-אגירה, לא רק ערכים שונים</h4>
+      <p>קובץ 2 בונה את נוסחת שווי-האגירה השנתי סביב "טבלת תעריף משלים" נפרדת לגמרי מהתעו"ז הרשמי (תלוית-גודל-מערכת, עד/מעל 300 קוו"ט), בעוד קבצים 1/3/4 משתמשים ישירות בתעריפי התעו"ז הרשמיים. שניהם מתועדים בקוד כ"נוסחת המקור המדויקת" — כלומר זו כנראה לא טעות בשום קובץ, אלא שני מסמכי-מקור שונים שהוזנו לשני "ענפי-פיתוח" נפרדים. השפעה: תוצאת שווי-אגירה יכולה להיות שונה משמעותית בין המשפחות.</p>
+      <div class="files">משפיע: קובץ 2 (שונה) מול קבצים 1, 3, 4 (עקביים ביניהם)</div>
+    </div><div class="issue">
+      <h4>⚠️ מבנה עלות סוללה שונה — פער של עשרות אחוזים בעלות מוצגת</h4>
+      <p>קבצים 1+2: ₪510/קוט"ש (תא) + ₪52,330 קבוע (ממיר). קבצים 3+4: ₪3,500/קוט"ש שטוח, הכול-כלול. לדוגמה בבדיקת 10 קוט"ש: מודל מפוצל ≈ ₪57,430, מודל שטוח = ₪35,000 — פער של יותר מ-60%. יש לברר עם ספק-הציוד בפועל איזה משקף נכון את המחיר הנוכחי.</p>
+      <div class="files">משפיע: קבצים 1,2 (מפוצל) מול 3,4 (שטוח)</div>
+    </div><div class="issue">
+      <h4>⚠️ שיעור בלאי שנתי בתפוקת פאנלים שונה (0.25% מול 0.35%)</h4>
+      <p>פער של פי-1.4. על פני 25 שנה ההבדל בתפוקה המצטברת מגיע לכ-2.5 נקודות אחוז — משפיע ישירות על ה-IRR/NPV/רווח-מצטבר המוצגים בסוף. יש לוודא מול ה-spec הרשמי של יצרן הפאנלים הנמכרים בפועל.</p>
+      <div class="files">משפיע: קבצים 1,2 (0.25%) מול 3,4 (0.35%)</div>
+    </div><div class="issue">
+      <h4>⚠️ שיעור היוון (NPV) שונה, וב-2 קבצים בכלל לא ניתן לעריכה</h4>
+      <p>3.5% (ניתן לעריכה) בקבצים 1,2 מול 5% קשיח בקוד בקבצים 3,4. שיעור-היוון קובע ישירות את ה-NPV המוצג ללקוח, ולכן הוא לא אמור להיות "שרוף" בקוד — גם אם 5% ייבחר כערך הנכון, יש להפוך אותו לשדה-הגדרות.</p>
+      <div class="files">משפיע: קבצים 1,2 (3.5%, גמיש) מול 3,4 (5%, קשיח)</div>
+    </div><div class="issue">
+      <h4>⚠️ מנוע-מיסוי/פחת/עלות-תחלופה חסר לגמרי בקובץ 2</h4>
+      <p>מנוע ה-25-שנה של קובץ 2 (buildCashflow) מדלג לגמרי על אבחנת אדם-פרטי/עסק, מע"מ, פחת מואץ, ועלות תחלופת ציוד בשנים 14/15 — כולם קיימים ומיושמים בקבצים 1/3/4. זה כנראה תואם את מיצוב-הכוונה של קובץ 2 כ"המלצת-גודל מהירה" (לא דוח סופי), אבל אם המספרים שלו (IRR/רווח) מוצגים ללקוח כפי-שהם בלי המשך ל"מחשבון 2" — הם מטעים כלפי מעלה (חסר בהם עלויות אמיתיות).</p>
+      <div class="files">משפיע: קובץ 2 בלבד, מול 1,3,4</div>
+    </div><div class="issue">
+      <h4>⚠️ מקדם המרת מע"מ שונה מעט (17% מול 18%) בין קבצים 3/4 לבין 1</h4>
+      <p>קבצים 3,4 מחלקים CAPEX ב-1.17 (≈17% מע"מ) עבור עסק; קובץ 1 עובד עם שדה vatRate מפורש בברירת-מחדל 18%. מע"מ בישראל נכון למועד כתיבת הקבצים הוא 18% — סביר שזו שארית משיעור-מע"מ קודם (17%, שהיה בתוקף עד 2024) שלא עודכנה בקבצים 3/4.</p>
+      <div class="files">משפיע: קבצים 3,4 (17%) מול קובץ 1 (18%, ניתן לעריכה)</div>
+    </div><div class="issue">
+      <h4>⚠️ שני קבצים כותבים לאותו מפתח localStorage, ללא צרכן משותף מסופק</h4>
+      <p>ראו הרחבה בתיבת "מפת הקבצים" בראש המסמך — קבצים 3 ו-4 שניהם כותבים ל-localStorage['transferredCalcData'], ומיועדים להזין כלי חיצוני (טופס-הצעה/CRM) שלא סופק כחלק מ-4 הקבצים. יש לוודא שהמבנה (schema) של הנתונים שכל אחד מהם כותב אכן זהה, לפני שמניחים ששניהם "מתחברים לאותו מקום".</p>
+      <div class="files">משפיע: קבצים 3,4</div>
+    </div><div class="issue">
+      <h4>חוסר-ניצול תשתית לוח-עברי לחישוב חגים דינמי</h4>
+      <p>קובץ 4 כולל מנוע לוח-עברי מלא ומאומת (משותף עם קובץ 2), אך סיווג שעות-הפסגה בכל 4 הקבצים עדיין מבוסס רשימת-תאריכים קשיחה (2020–2030 או פחות) שתפוג תוקף. יש כבר את הכלים לפתור את זה — רק לא מחוברים ללוגיקת הסיווג עצמה.</p>
+      <div class="files">משפיע: כל 4 הקבצים (החגים); הפתרון קיים חלקית בקבצים 2,4</div>
+    </div>
+</section>
+
+<div class="arch" id="architecture">
+  <h2>21. סיכום: הארכיטקטורה המומלצת לקובץ המושלם</h2>
+  <p>בהתבסס על כל ההשוואה למעלה, זו תבנית-עבודה מוצעת לבניית הקובץ המאוחד — לא בהכרח "להעתיק קובץ אחד ולהוסיף טלאים", אלא שילוב מכוון של החוזקות הספציפיות שכל קובץ הביא.</p>
+
+  <h3>הבסיס המבני</h3>
+  <p><span class="step-num">1</span>להתחיל מ<b>קובץ 1 (הקובץ המאוחד)</b> כשלד: הוא היחיד שסוגר מעגל שלם עצמאי מקצה לקצה (קלט ← ניתוח ← המלצה ← דוח סופי להדפסה/ייצוא), עם התשתית הכי "מוצרית" (טולטיפים, זיהוי-קבצים גמיש, נרמול טווח-תאריכים).</p>
+
+  <h3>שכבות לשלב פנימה מקבצים אחרים</h3>
+  <ol>
+    <li><b>ממנוע ההמלצה (קובץ 2):</b> את כל לולאת-האופטימיזציה (בחירת הספק PV וגודל אגירה לפי IRR מקסימלי), את 5 מצבי-הקלט-החלופיים (במיוחד "קלט מפורט" ו"ללא נתונים כלל"), את מנגנון רמת-הביטחון (confidence badge), ואת פאנל "השקיפות המלאה" — כמצב-עבודה חדש בשם משהו כמו "המלצה מהירה", שמופעל <i>לפני</i> שלב הקלט-הידני המפורט של קובץ 1.</li>
+    <li><b>מה-SPA (קובץ 3):</b> את מנגנון שמירת-המצב ב-localStorage (עם שם-מפתח כולל מזהה-לקוח/session כדי לא לערבב לקוחות), ואת עקרון "באנר שקוף כשנטענות הגדרות שמורות".</li>
+    <li><b>מהפופ-אפ (קובץ 4):</b> את תמיכת המונה הדו-כיווני/ייצור (ללקוח עם סולארי קיים) ואת מנגנון זיהוי-מספר-מונים; לשקול את גיליון-האקסל המתקדם (מיזוג-תאים + תאריך עברי) <i>רק</i> כתוסף אופציונלי נפרד, לא כברירת מחדל (בגלל התלות הכבדה ב-ExcelJS).</li>
+  </ol>
+
+  <h3>החלטות שדורשות בירור אנושי לפני קידוד (לא טכניות)</h3>
+  <ol>
+    <li>מהו מבנה-העלות הנכון לסוללה כיום: מפוצל (תא+ממיר קבוע) או שטוח? <i>(סקשן 19/20)</i></li>
+    <li>האם "טבלת התעריף המשלים" של קובץ 2 היא באמת התעריף הרלוונטי לשווי-אגירה, או שהתעו"ז הרשמי (1/3/4) נכון יותר? <i>(סקשן 8/20)</i></li>
+    <li>מהו קובץ ה"מחשבון 2" / "טופס הלקוח הראשי" החיצוני שקבצים 2, 3 ו-4 כולם מרמזים לקיומו (טקסטואלית או דרך localStorage)? האם הוא צריך להתמזג פנימה, או שהקובץ המושלם מחליף אותו לגמרי?</li>
+    <li>מהו שיעור-הבלאי הנכון של הפאנלים (0.25% מול 0.35%) ושיעור-ההיוון הנכון (3.5% מול 5%) — כדאי לאמת מול ה-Excel/ספק המצוינים בהערות הקוד עצמן.</li>
+  </ol>
+
+  <h3>סדר-עבודה מוצע</h3>
+  <p><span class="step-num">א</span>לפתור את 4 ההחלטות העסקיות שלמעלה קודם (הן משפיעות על כל שאר הקוד).<br>
+  <span class="step-num">ב</span>למזג את מנוע-הליבה (TOU + סטטיסטיקה + פרסור-CSV) — הכי עקבי בין הקבצים, סיכון-מיזוג נמוך.<br>
+  <span class="step-num">ג</span>למזג את מנוע ה-25-שנה (עם ההחלטות מסעיף א' כבר מוטמעות).<br>
+  <span class="step-num">ד</span>להוסיף את שכבת מנוע-ההמלצה/אופטימיזציה של קובץ 2 כ"מצב עבודה" נפרד.<br>
+  <span class="step-num">ה</span>לבנות מחדש את סימולציית-הדיספאץ' המשולבת (SOC-שעתי של קובץ 1 + לולאת-טווח-גדלים של קובץ 2).<br>
+  <span class="step-num">ו</span>לבסוף — דוח סופי, ייצוא, והגדרות/UI.</p>
+</div>
+
+<footer>מסמך זה הופק מקריאה מלאה של כל שורות הקוד בארבעת הקבצים (לא רק סריקת פונקציות) — כולל אימות ישיר (grep) של קבועים מספריים קריטיים. נכון למועד ההפקה בלבד; אם קבצי המקור עודכנו מאז, יש להריץ השוואה מחדש.</footer>
+</body>
+</html>

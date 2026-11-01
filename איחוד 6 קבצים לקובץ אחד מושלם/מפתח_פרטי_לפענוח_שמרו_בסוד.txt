@@ -1,0 +1,68 @@
+═══════════════════════════════════════════════════════════════
+   מפתח פרטי להצפנת/פענוח נתוני צריכת חשמל - בראשית סולאר
+═══════════════════════════════════════════════════════════════
+
+⚠️  קובץ זה רגיש ביותר - הוא ה"מפתח" היחיד שיכול לפענח את כל
+    קבצי ה-.json.enc שיישלחו מטופס הלקוח. יש לשמור אותו במקום
+    מאובטח (לא בדרייב משותף פתוח, לא בצ'אט/מייל לא מוצפן) ולתת
+    גישה אליו רק למי שבאמת צריך לפענח קבצים.
+
+    אם המפתח דולף - כל מי שמחזיק בו יכול לקרוא את נתוני הצריכה
+    של הלקוחות שנשלחו. אם זה קורה, יש להנפיק זוג מפתחות חדש
+    ולעדכן את המפתח הציבורי בטופס הלקוח (ראו הערה בתחתית).
+
+───────────────────────────────────────────────────────────────
+כיצד להשתמש:
+───────────────────────────────────────────────────────────────
+1. פתחו את "כלי_פענוח_פנימי_בראשית_סולאר.html" בדפדפן.
+2. הדביקו את התוכן של private_pkcs8_b64.txt (שורה אחת ארוכה,
+   בהמשך קובץ זה) לתוך שדה "מפתח פרטי" ולחצו "טעינת מפתח".
+3. גררו לכלי כל קובץ .json.enc שהתקבל מלקוח - הוא יפוענח באופן
+   מקומי בדפדפן שלכם בלבד (שום דבר לא נשלח לאינטרנט).
+
+───────────────────────────────────────────────────────────────
+המפתח (Base64 / PKCS8) - להדבקה בכלי הפענוח:
+───────────────────────────────────────────────────────────────
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCt1gFBKYqlZDT6GKfDMgWeGnS6oKxPOjhjrn48aPP997QJQWMnJbVmT8/96Gd0zWa8VMx1HW9lbUZT+PonBnwBUmRPzSJlVVy1u7JNZi0IXTdTZOEEwnOD4F/8bm04kw2sTbHQG+gzyTPxJmtPH31A0nhwdkUIvWSUuqQnhzJt0GKWTcAmJp0X/DSB6s4vPDvPoc7SLSl7kEVDDqALb9DK5xHqu+05Wj7+qjPXQj1chiQpSsSvh8LvS6dQ/s+b0eJb9geIwQLMGj9lMdgQAY3fdwHMHinQjMSjkjQcz/Ttvj00UAKIMIr9WwXJZxbDBgcmYrlBTmGrBENB8fx4I9r7AgMBAAECggEAFMuIIeNAy9vgFIJKNf5auq4/2YAqrLLybPDs9qK4JrZGNLc8OmzMivKFl0JWd0ayVq7ZjdxZZ5Y6DAXkPYfijLFDq7eGjlMMVfcf829YzWqCmaN0jEJgrt1yo2VoWRS1ADAufbk2PqpVNYYFiepilum2m6l3mlM3Ctha68REuEBmGSvTUSwJLdlUzFb9q5vzuML+etDNAKWyLibNdY1al7JhW9TCnRJwXdT18c33HtpE8VRHuewqNOzl2QL+gUurz5M7Fr6MhUsOswrzJbCJPwif+4SqL67Fbq1/hk0v3NEslqn8HZ+5Y8oL9f2+T3+d6G7Z7U7nBU67OQBjGVSyEQKBgQDVbeQBEMJ8nDUbZIMwjGmWxUepVFimN78MvNRGnxEi16Qo0ntVpkI2NlRqcWwcEl79xv414U0lHvSwOTzK9+/wjNLdMeK70kl/VzH8phPQdsLhXqX2khBK5KwfWfwgnpRaiUOFxKBXbrZ1WowFDqF/bRPrEpKmHktw8k9rxMrxkQKBgQDQgmdj6hNFKbJdFWD50HadmAY36hnPWZBJ+5Sk6wjPzLWEmIzsC2CyRLrTIX69eoAa/thCeeunzCgXu7Ie4mMTaEFBg2+nbIJarurvp5FJzpZpRgIS8CxLw/OTql+vecUm08gtbZXysKjDTmyD9StS55/JLQZKy3wxgszEVdr9ywKBgCwQu0GJD06hBcn5D6kHZImPg8MvOfpfih98ISvPjb8u3KLdCj/dys/cmcM8VcDZ/ijRXA0Nzlq6sHRt7OJPHIgC20p2EUUMHsae3yA1veONkaDsZMGq2JhN7Eew0YB+nUywCHPm6+ABaMSEBGLK6Ycgozsmo4aOvK6+KK2sfOYxAoGAN6U1lnKXpfOUyEa2VLUPkstJjY6KSM3sNfJQHxsihOJq5vIXWb9HlQvGmCXuPv78RTgR2tvSyjsvz/WleZyNOFawY52CJLpOp4ja5g5gNcROW9X1I7y49Zdb3+KuGpRyywPl/kmqpNQElerOBwFdCIkMGZJMhZV8lXIE17jZ8rUCgYAt33bEapSzMyw14YHbt6hREMf5QLJJDF6PoWhXlDMOcdVDuinp0hTISSMaqj5JypfTAjFEwMZ7Byvqqxf55k6nkD8QrgftHPsTu7bqbl8UFU49NGK95gp+ayl92e4/95QvufSAeBhJPSCnGbo1ARdoH6F7aqVKXAtD7xCKv5q0tg==
+
+───────────────────────────────────────────────────────────────
+אותו מפתח בפורמט PEM (לגיבוי/פורטביליות, אינו נדרש לשימוש רגיל):
+───────────────────────────────────────────────────────────────
+-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCt1gFBKYqlZDT6
+GKfDMgWeGnS6oKxPOjhjrn48aPP997QJQWMnJbVmT8/96Gd0zWa8VMx1HW9lbUZT
++PonBnwBUmRPzSJlVVy1u7JNZi0IXTdTZOEEwnOD4F/8bm04kw2sTbHQG+gzyTPx
+JmtPH31A0nhwdkUIvWSUuqQnhzJt0GKWTcAmJp0X/DSB6s4vPDvPoc7SLSl7kEVD
+DqALb9DK5xHqu+05Wj7+qjPXQj1chiQpSsSvh8LvS6dQ/s+b0eJb9geIwQLMGj9l
+MdgQAY3fdwHMHinQjMSjkjQcz/Ttvj00UAKIMIr9WwXJZxbDBgcmYrlBTmGrBENB
+8fx4I9r7AgMBAAECggEAFMuIIeNAy9vgFIJKNf5auq4/2YAqrLLybPDs9qK4JrZG
+NLc8OmzMivKFl0JWd0ayVq7ZjdxZZ5Y6DAXkPYfijLFDq7eGjlMMVfcf829YzWqC
+maN0jEJgrt1yo2VoWRS1ADAufbk2PqpVNYYFiepilum2m6l3mlM3Ctha68REuEBm
+GSvTUSwJLdlUzFb9q5vzuML+etDNAKWyLibNdY1al7JhW9TCnRJwXdT18c33HtpE
+8VRHuewqNOzl2QL+gUurz5M7Fr6MhUsOswrzJbCJPwif+4SqL67Fbq1/hk0v3NEs
+lqn8HZ+5Y8oL9f2+T3+d6G7Z7U7nBU67OQBjGVSyEQKBgQDVbeQBEMJ8nDUbZIMw
+jGmWxUepVFimN78MvNRGnxEi16Qo0ntVpkI2NlRqcWwcEl79xv414U0lHvSwOTzK
+9+/wjNLdMeK70kl/VzH8phPQdsLhXqX2khBK5KwfWfwgnpRaiUOFxKBXbrZ1WowF
+DqF/bRPrEpKmHktw8k9rxMrxkQKBgQDQgmdj6hNFKbJdFWD50HadmAY36hnPWZBJ
++5Sk6wjPzLWEmIzsC2CyRLrTIX69eoAa/thCeeunzCgXu7Ie4mMTaEFBg2+nbIJa
+rurvp5FJzpZpRgIS8CxLw/OTql+vecUm08gtbZXysKjDTmyD9StS55/JLQZKy3wx
+gszEVdr9ywKBgCwQu0GJD06hBcn5D6kHZImPg8MvOfpfih98ISvPjb8u3KLdCj/d
+ys/cmcM8VcDZ/ijRXA0Nzlq6sHRt7OJPHIgC20p2EUUMHsae3yA1veONkaDsZMGq
+2JhN7Eew0YB+nUywCHPm6+ABaMSEBGLK6Ycgozsmo4aOvK6+KK2sfOYxAoGAN6U1
+lnKXpfOUyEa2VLUPkstJjY6KSM3sNfJQHxsihOJq5vIXWb9HlQvGmCXuPv78RTgR
+2tvSyjsvz/WleZyNOFawY52CJLpOp4ja5g5gNcROW9X1I7y49Zdb3+KuGpRyywPl
+/kmqpNQElerOBwFdCIkMGZJMhZV8lXIE17jZ8rUCgYAt33bEapSzMyw14YHbt6hR
+EMf5QLJJDF6PoWhXlDMOcdVDuinp0hTISSMaqj5JypfTAjFEwMZ7Byvqqxf55k6n
+kD8QrgftHPsTu7bqbl8UFU49NGK95gp+ayl92e4/95QvufSAeBhJPSCnGbo1ARdo
+H6F7aqVKXAtD7xCKv5q0tg==
+-----END PRIVATE KEY-----
+
+───────────────────────────────────────────────────────────────
+הערה טכנית חשובה:
+───────────────────────────────────────────────────────────────
+זוג המפתחות (ציבורי+פרטי) נוצר כעת עבורכם כדי שהמערכת תעבוד
+מיידית מקצה-לקצה. מומלץ, כתרגול אבטחה תקין, לשקול הנפקת זוג
+מפתחות חדש משלכם בסביבה מאובטחת שבשליטתכם המלאה (לדוגמה במחשב
+לא מחובר לרשת), ואז להחליף את הקבוע RSA_PUBLIC_KEY_B64 בקובץ
+הטופס בהתאם. זו אינה חובה כדי שהמערכת תעבוד - היא עובדת כרגע
+במלואה - אלא שיקול היגיינת אבטחה לטווח ארוך.

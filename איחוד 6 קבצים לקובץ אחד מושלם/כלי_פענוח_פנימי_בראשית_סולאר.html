@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>כלי פענוח פנימי — בראשית סולאר (לשימוש צוות בלבד)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#12283F; --navy-2:#1A3A5F; --navy-3:#2454A0;
+  --orange:#F39C12; --orange-2:#D9820A;
+  --green:#1E8449; --green-bg:#E9F7EF;
+  --red:#C0392B; --red-bg:#FBEAE8;
+  --paper:#F0F3F8; --card:#FFFFFF;
+  --ink:#1B2430; --ink-soft:#5B6472;
+  --line:#DFE4EC; --line-strong:#C7CFDB;
+  --radius:16px; --radius-sm:10px;
+  --font:'Heebo','Assistant',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow-sm:0 1px 3px rgba(18,40,63,.08);
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--paper); color:var(--ink); direction:rtl; font-family:var(--font); font-size:15.5px; line-height:1.55;}
+.wrap{max-width:820px; margin:0 auto; padding:26px 18px 60px;}
+h1,h2,h3{margin:0;}
+button{cursor:pointer; font-family:inherit;}
+textarea,input{font-family:inherit; font-size:inherit;}
+
+.warnbar{
+  background:linear-gradient(135deg,#7A241C,#992D22); color:#fff; padding:12px 0; font-size:13.5px; font-weight:700;
+  text-align:center;
+}
+header.top{padding:22px 0 8px;}
+.brand{display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; color:var(--navy);}
+h1.page-title{font-size:21px; font-weight:800; color:var(--navy); margin-top:12px;}
+p.sub{color:var(--ink-soft); font-size:13.5px; margin-top:6px; max-width:64ch;}
+
+.panel{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm); margin-top:18px; overflow:hidden;}
+.panel-head{padding:15px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+.panel-head h2{font-size:15px; font-weight:800; color:var(--navy); display:flex; align-items:center; gap:8px;}
+.panel-body{padding:18px 20px;}
+
+textarea#privKeyInput{
+  width:100%; min-height:110px; border:1.5px solid var(--line-strong); border-radius:var(--radius-sm);
+  padding:10px 12px; font-family:var(--font-mono); font-size:12px; resize:vertical; direction:ltr; text-align:left;
+}
+textarea#privKeyInput:focus{outline:none; border-color:var(--navy-3); box-shadow:0 0 0 3px rgba(36,84,160,.12);}
+.key-row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center;}
+.key-status{font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:999px;}
+.key-status.ok{background:var(--green-bg); color:var(--green);}
+.key-status.bad{background:var(--red-bg); color:var(--red);}
+.key-status.none{background:#EEF0F3; color:var(--ink-soft);}
+
+.btn{
+  display:inline-flex; align-items:center; gap:7px; padding:9px 16px; border-radius:999px;
+  border:1.5px solid var(--line-strong); background:#fff; font-weight:700; font-size:13px; color:var(--ink);
+}
+.btn:hover{border-color:var(--navy-3); color:var(--navy-3);}
+.btn.primary{background:var(--navy-2); border-color:var(--navy-2); color:#fff;}
+.btn.primary:hover{background:var(--navy);}
+.btn.ghost{background:transparent; border-color:transparent; color:var(--ink-soft); padding:6px 10px;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+label.chk{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft); cursor:pointer;}
+
+.dropzone{
+  border:2px dashed var(--line-strong); border-radius:var(--radius-sm); padding:26px 16px; text-align:center;
+  color:var(--ink-soft); font-size:13.5px; cursor:pointer; transition:.15s;
+}
+.dropzone:hover, .dropzone.drag{border-color:var(--orange); background:#FFF8EC; color:var(--orange-2);}
+input#fileInput{display:none;}
+
+.result-card{border:1px solid var(--line); border-radius:var(--radius-sm); margin-top:14px; overflow:hidden;}
+.result-head{
+  padding:13px 16px; background:#F7F9FC; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+}
+.result-head .fname{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft); word-break:break-all;}
+.result-head .cname{font-weight:800; color:var(--navy); font-size:14.5px;}
+.result-body{padding:14px 16px; display:none;}
+.result-card.open .result-body{display:block;}
+.result-card.error .result-head{background:var(--red-bg);}
+.result-card.error .cname{color:var(--red);}
+
+.kv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin-bottom:14px;}
+.kv{background:#FAFBFD; border:1px solid var(--line); border-radius:9px; padding:9px 12px;}
+.kv .k{font-size:11px; color:var(--ink-soft); font-weight:700;}
+.kv .v{font-size:13.5px; font-weight:700; color:var(--ink); margin-top:2px;}
+@media (max-width:560px){.kv-grid{grid-template-columns:1fr;}}
+
+table.devtable{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px;}
+table.devtable th{background:var(--navy); color:#fff; padding:8px 10px; text-align:right; font-size:11.5px;}
+table.devtable td{padding:7px 10px; border-bottom:1px solid var(--line);}
+table.devtable tr:nth-child(even) td{background:#FAFBFD;}
+.result-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+
+#toastWrap{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center;}
+.toast{background:var(--navy); color:#fff; padding:10px 18px; border-radius:999px; font-size:13px; font-weight:700; box-shadow:0 8px 22px rgba(18,40,63,.25); animation:tIn .2s ease, tOut .2s ease 2.6s forwards;}
+.toast.err{background:var(--red);}
+@keyframes tIn{from{opacity:0; transform:translateY(8px);} to{opacity:1;}}
+@keyframes tOut{to{opacity:0; transform:translateY(-6px);}}
+
+footer{padding:24px 18px; text-align:center; color:var(--ink-soft); font-size:11.5px;}
+</style>
+</head>
+<body>
+
+<div class="warnbar">🔒 כלי פנימי לצוות בראשית סולאר בלבד — אינו מיועד ללקוחות. אין לשתף קובץ זה או את המפתח הפרטי.</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">☀️ בראשית סולאר</div>
+    <h1 class="page-title">🔓 כלי פענוח נתוני צריכה מוצפנים</h1>
+    <p class="sub">מדביקים את המפתח הפרטי פעם אחת, ואז ניתן לגרור לכאן קבצי <span dir="ltr" style="font-family:var(--font-mono)">.json.enc</span> שהתקבלו מטופס הלקוח כדי לפענח ולצפות בנתונים, או להוריד אותם כ-JSON גלוי לעיבוד נוסף.</p>
+  </header>
+
+  <div class="panel">
+    <div class="panel-head"><h2>🔑 מפתח פרטי (RSA, פורמט PKCS8 Base64)</h2><span class="key-status none" id="keyStatus">לא הוזן מפתח</span></div>
+    <div class="panel-body">
+      <textarea id="privKeyInput" placeholder="הדביקו כאן את המחרוזת הארוכה של המפתח הפרטי (ניתנה לכם בנפרד ובאופן מאובטח)..."></textarea>
+      <div class="key-row">
+        <button class="btn primary" id="btnLoadKey">טעינת מפתח</button>
+        <button class="btn ghost" id="btnClearKey">נקה מפתח</button>
+        <label class="chk"><input type="checkbox" id="rememberKey"> זכור עבור הכרטיסייה הנוכחית בלבד (נמחק בסגירתה)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>📥 קבצים מוצפנים לפענוח</h2></div>
+    <div class="panel-body">
+      <div class="dropzone" id="dropzone">
+        📎 גררו לכאן קובץ/י <span dir="ltr" style="font-family:var(--font-mono)">.json.enc</span>, או לחצו לבחירה
+        <input type="file" id="fileInput" accept=".json,.enc,application/json" multiple>
+      </div>
+      <div id="resultsContainer"></div>
+    </div>
+  </div>
+
+  <footer>
+    כלי זה פועל כולו בדפדפן שלכם — קבצים ומפתחות אינם נשלחים לשום שרת. בראשית סולאר · גרסה 1.0
+  </footer>
+</div>
+
+<div id="toastWrap"></div>
+
+<script>
+
+function toast(msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind?' '+kind:'');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 2900);
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function b64ToBuf(b64){
+  const clean = b64.replace(/-----BEGIN[^-]+-----/g,'').replace(/-----END[^-]+-----/g,'').replace(/\s+/g,'');
+  const bin = atob(clean);
+  const buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+let _privateKey = null;
+
+async function loadPrivateKey(){
+  const raw = document.getElementById('privKeyInput').value.trim();
+  const statusEl = document.getElementById('keyStatus');
+  if(!raw){ toast('נא להדביק מפתח פרטי תחילה', 'err'); return; }
+  try{
+    _privateKey = await crypto.subtle.importKey('pkcs8', b64ToBuf(raw), {name:'RSA-OAEP', hash:'SHA-256'}, false, ['decrypt']);
+    statusEl.textContent = 'מפתח נטען בהצלחה ✓';
+    statusEl.className = 'key-status ok';
+    toast('המפתח הפרטי נטען ✓ ניתן כעת לפענח קבצים');
+    if(document.getElementById('rememberKey').checked){
+      try{ sessionStorage.setItem('bs_priv_key_tmp', raw); }catch(e){}
+    }
+  }catch(err){
+    _privateKey = null;
+    statusEl.textContent = 'מפתח לא תקין';
+    statusEl.className = 'key-status bad';
+    toast('לא ניתן לטעון את המפתח - ודאו שהודבק במלואו וללא שינויים', 'err');
+    console.error(err);
+  }
+}
+document.getElementById('btnLoadKey').addEventListener('click', loadPrivateKey);
+document.getElementById('btnClearKey').addEventListener('click', ()=>{
+  _privateKey = null;
+  document.getElementById('privKeyInput').value = '';
+  document.getElementById('keyStatus').textContent = 'לא הוזן מפתח';
+  document.getElementById('keyStatus').className = 'key-status none';
+  try{ sessionStorage.removeItem('bs_priv_key_tmp'); }catch(e){}
+  toast('המפתח נמחק מהזיכרון');
+});
+window.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    const remembered = sessionStorage.getItem('bs_priv_key_tmp');
+    if(remembered){
+      document.getElementById('privKeyInput').value = remembered;
+      document.getElementById('rememberKey').checked = true;
+      loadPrivateKey();
+    }
+  }catch(e){}
+});
+
+async function decryptFile(encObj){
+  if(!_privateKey) throw new Error('לא נטען מפתח פרטי');
+  if(encObj.fileType !== 'bereshit-solar-encrypted-v1') throw new Error('פורמט קובץ לא מוכר (fileType)');
+  const wrappedKey = b64ToBuf(encObj.encryptedKey);
+  const rawAesKey = await crypto.subtle.decrypt({name:'RSA-OAEP'}, _privateKey, wrappedKey);
+  const aesKey = await crypto.subtle.importKey('raw', rawAesKey, {name:'AES-GCM'}, false, ['decrypt']);
+  const iv = new Uint8Array(b64ToBuf(encObj.iv));
+  const ciphertext = b64ToBuf(encObj.ciphertext);
+  const decrypted = await crypto.subtle.decrypt({name:'AES-GCM', iv}, aesKey, ciphertext);
+  const text = new TextDecoder().decode(decrypted);
+  return JSON.parse(text);
+}
+
+function fmtKwh(n){ return Math.round(n||0).toLocaleString('he-IL'); }
+const CLIENT_TYPE_LABELS = {private:'פרטי', synagogue:'בית כנסת', business:'עסק', school:'בית ספר / ישיבה', agriculture:'חקלאות'};
+const PROPERTY_TYPE_LABELS = {apartment:'דירה', private_house:'בית פרטי / צמוד קרקע', duplex:'דו-משפחתי', penthouse:'פנטהאוז', commercial:'מבנה מסחרי', industrial:'מבנה תעשייתי', agricultural:'מבנה חקלאי', other:'אחר'};
+const METER_TYPE_LABELS = {regular:'רגיל', toz:'תעו"ז (תעריף עונתי-זמני)'};
+const MONTH_HE_NAMES = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+function renderResultCard(fileName, payload, errorMsg){
+  const card = document.createElement('div');
+  card.className = 'result-card' + (errorMsg ? ' error' : ' open');
+  if(errorMsg){
+    card.innerHTML = `
+      <div class="result-head">
+        <span class="cname">⚠️ שגיאת פענוח</span>
+        <span class="fname">${esc(fileName)}</span>
+      </div>
+      <div class="result-body" style="display:block;"><p style="color:var(--red); font-size:13px;">${esc(errorMsg)}</p></div>`;
+    return card;
+  }
+  const c = payload.client||{};
+  const b = payload.billing||{};
+  const devRows = (payload.rawConsumers||[]).map(d=>`
+    <tr>
+      <td>${esc(d.locationName)}</td><td>${esc(d.categoryName)}</td><td>${esc(d.name)}</td>
+      <td>${d.watt}W × ${d.qty}</td><td>${fmtKwh(d.annualKwh)}</td>
+    </tr>`).join('');
+
+  const hasAnnualBilling = b.annualKwh!=null || b.annualNis!=null;
+  const filledMonths = (b.monthly||[]).filter(m=>m.kwh!=null || m.nis!=null);
+  const varianceKwh = (b.annualKwh!=null && payload.annualTotal) ? Math.round((payload.annualTotal - b.annualKwh)/b.annualKwh*100) : null;
+
+  let billingHtml = '';
+  if(hasAnnualBilling || filledMonths.length){
+    billingHtml += `<div class="kv-grid" style="margin-top:2px;">`;
+    if(b.annualKwh!=null) billingHtml += `<div class="kv"><div class="k">צריכה שנתית בפועל (מהחשבון)</div><div class="v">${fmtKwh(b.annualKwh)} קוט"ש</div></div>`;
+    if(b.annualNis!=null) billingHtml += `<div class="kv"><div class="k">תשלום שנתי בפועל</div><div class="v">${fmtKwh(b.annualNis)} ₪</div></div>`;
+    if(varianceKwh!=null) billingHtml += `<div class="kv"><div class="k">סטייה: מחושב מול בפועל</div><div class="v" style="color:${Math.abs(varianceKwh)>15?'var(--red)':'var(--green)'}">${varianceKwh>0?'+':''}${varianceKwh}%</div></div>`;
+    billingHtml += `</div>`;
+    if(filledMonths.length){
+      billingHtml += `<table class="devtable" style="margin-top:10px;"><thead><tr><th>חודש</th><th>קוט"ש בפועל</th><th>תשלום בפועל</th></tr></thead><tbody>`;
+      (b.monthly||[]).forEach(m=>{
+        if(m.kwh==null && m.nis==null) return;
+        billingHtml += `<tr><td>${MONTH_HE_NAMES[m.month-1]}</td><td>${m.kwh!=null?fmtKwh(m.kwh):'—'}</td><td>${m.nis!=null?fmtKwh(m.nis):'—'}</td></tr>`;
+      });
+      billingHtml += `</tbody></table>`;
+    }
+  }
+
+  card.innerHTML = `
+    <div class="result-head" data-toggle="1">
+      <span class="cname">✓ ${esc(c.name||'(ללא שם)')}</span>
+      <span class="fname">${esc(fileName)}</span>
+    </div>
+    <div class="result-body">
+      <div class="kv-grid">
+        <div class="kv"><div class="k">טלפון</div><div class="v">${esc(c.phone||'—')}</div></div>
+        <div class="kv"><div class="k">כתובת</div><div class="v">${esc(c.address||'—')}</div></div>
+        <div class="kv"><div class="k">סוג צרכן</div><div class="v">${esc(CLIENT_TYPE_LABELS[c.clientType]||c.clientType||'—')}</div></div>
+        <div class="kv"><div class="k">סוג נכס</div><div class="v">${esc(PROPERTY_TYPE_LABELS[c.propertyType]||c.propertyType||'—')}</div></div>
+        <div class="kv"><div class="k">סוג מונה</div><div class="v">${esc(METER_TYPE_LABELS[c.meterType]||c.meterType||'—')}</div></div>
+        <div class="kv"><div class="k">ממלא הטופס</div><div class="v">${esc(c.filledBy||'—')}</div></div>
+        <div class="kv"><div class="k">מס' חוזה/מונה</div><div class="v">${esc(c.contract||'—')}</div></div>
+        <div class="kv"><div class="k">סה"כ קוט"ש/שנה (מחושב מהמכשירים)</div><div class="v" style="color:var(--orange-2)">${fmtKwh(payload.annualTotal)}</div></div>
+      </div>
+      ${c.notes ? `<div class="kv" style="margin-bottom:14px;"><div class="k">הערות</div><div class="v" style="font-weight:400;">${esc(c.notes)}</div></div>` : ''}
+      ${billingHtml ? `<h3 style="font-size:12.5px;color:var(--navy);margin:14px 0 6px;">📊 נתוני צריכה בפועל מהחשבון</h3>${billingHtml}` : ''}
+      <h3 style="font-size:12.5px;color:var(--navy);margin:14px 0 6px;">🔌 פירוט מכשירים</h3>
+      <table class="devtable">
+        <thead><tr><th>מיקום</th><th>קטגוריה</th><th>מכשיר</th><th>הספק×כמות</th><th>קוט"ש/שנה</th></tr></thead>
+        <tbody>${devRows || '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);">אין מכשירים</td></tr>'}</tbody>
+      </table>
+      <div class="result-actions">
+        <button class="btn primary" data-dl-json="1">⬇️ הורדת JSON גלוי</button>
+      </div>
+    </div>`;
+  card.querySelector('[data-toggle]').addEventListener('click', ()=>card.classList.toggle('open'));
+  card.querySelector('[data-dl-json]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName.replace(/\.enc$/i,'').replace(/\.json$/i,'') + '_מפוענח.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  });
+  return card;
+}
+
+async function handleFiles(fileList){
+  if(!_privateKey){ toast('נא לטעון מפתח פרטי לפני פענוח קבצים', 'err'); return; }
+  const container = document.getElementById('resultsContainer');
+  for(const file of fileList){
+    try{
+      const text = await file.text();
+      const encObj = JSON.parse(text);
+      const payload = await decryptFile(encObj);
+      container.prepend(renderResultCard(file.name, payload, null));
+      toast('פוענח בהצלחה: '+file.name);
+    }catch(err){
+      container.prepend(renderResultCard(file.name, null, err.message || 'שגיאה לא ידועה בפענוח הקובץ'));
+      toast('שגיאה בפענוח '+file.name, 'err');
+      console.error(err);
+    }
+  }
+}
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', ()=>fileInput.click());
+fileInput.addEventListener('change', e=>{ handleFiles(e.target.files); e.target.value=''; });
+['dragover','dragenter'].forEach(ev=>dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.remove('drag'); }));
+dropzone.addEventListener('drop', e=>{ if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+
+</script>
+</body>
+</html>

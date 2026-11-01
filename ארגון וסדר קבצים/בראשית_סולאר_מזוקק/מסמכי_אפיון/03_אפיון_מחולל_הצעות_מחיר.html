@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחולל הצעות מחיר (PrintQuote) — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 03 מתוך 6 · בראשית סולאר</div>
+    <h1>מחולל הצעות מחיר (PrintQuote)</h1>
+    <p class="lede">פני השטח החיצוניים של בראשית סולאר: הרכיב שהופך תוצאות חישוב לגלוית מחיר שנשלחת בפועל ללקוח. כולל תוכן שיווקי אמיתי שאותר בגרסאות ישנות ולא עבר לגרסה הנוכחית.</p>
+    <div class="hero-meta"><div><b>3</b>קבצים שנשמרו</div><div><b>4</b>דורות שמופו</div><div><b>3+</b>נכסי תוכן שאותרו</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip current" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תפקיד ותפוקה</a></li><li><a href="#p2">2 · שלושה קבצים שנשמרו — ולמה</a></li><li><a href="#p3">3 · ארבעה דורות: מתצוגה סטטית למנוע פיננסי חי</a></li><li><a href="#p4">4 · השוואת פונקציות מלאה V1–V4</a></li><li><a href="#p5">5 · תוכן שיווקי שאותר בגרסאות ישנות — לשימור</a></li><li><a href="#p6">6 · קטלוג מחירים ותוספות שזוהו</a></li><li><a href="#p7">7 · פער אינטגרציה: לא קורא את תוצאות המחשבון</a></li><li><a href="#p8">8 · תלות Chart.js ודרישת אופליין</a></li><li><a href="#p9">9 · פעולות נדרשות למיזוג</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תפקיד ותפוקה</h2></div>
+  
+  
+<p>הרכיב שהופך את תוצאות החישוב למסמך שיווקי מודפס/PDF שנשלח בפועל ללקוח. בשונה משני המחשבונים (מסמכים 01–02) שהם כלי-עבודה פנימיים לאיש המכירות, מסמך זה הוא <strong>פני השטח החיצוניים</strong> של בראשית סולאר — מה שהלקוח בפועל רואה, חותם עליו, ולעיתים מראה למשפחה/וועד/רו״ח.</p>
+<p>הניתוח מתבסס על דוח ביקורת קוד ייעודי שהשווה 4 דורות היסטוריים של הקובץ פונקציה-אחר-פונקציה (חלק 4 להלן), בשילוב סריקת תוכן שחשפה נכסי שיווק ותמחור ישנים שלא עברו לגרסה הנוכחית (חלק 5–6).</p>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>שלושה קבצים שנשמרו — ולמה</h2></div>
+  <p class="part-sub">אחד כבסיס קוד, שניים כמקור תוכן שיווקי/תמחור שאבד בדרך.</p>
+  <ul class="filelist"><li><span class="ftag badge success">הגרסה המתקדמת ביותר — הבסיס לקוד</span>
+  <div><div class="fname">שיחה קלוד 3 - PrintQuote.html</div><div class="fnote">139KB. אומת ב-diff ישיר מול המועמד השני בגודלו (יצירת_הצעת_מחיר.html, 133KB): מוסיף שדות אגירה/סוללה, הגבלת פרמיה אורבנית ל-17 שנה, וחיבור בפועל לשדות תוצאה מהמחשבון (IRR, NPV, קיבולת אגירה). שתי גרסאות ביניים (PrintQuote.html הבסיסי ו-יצירת_הצעת_מחיר.html) נבדקו ונמצאו חסרות-תוכן-ייחודי לחלוטין מול קובץ זה — לכן לא נשמרו.</div></div>
+</li><li><span class="ftag badge decision">מקור תוכן — הגרסה הסטטית הראשונה (V1)</span>
+  <div><div class="fname">bereshit_quote.html</div><div class="fnote">64KB. הקוד ההנדסי שלה נחות (חישוב פרימיטיבי, תמונות סטטיות) ולכן איננה בסיס לפיתוח — אך נמצא בה תוכן שיווקי מילולי (תיאור חברה, המלצת לקוח) שאינו קיים בגרסה המתקדמת. נשמרה אך ורק לצורך חילוץ תוכן.</div></div>
+</li><li><span class="ftag badge decision">מקור תוכן — דור עריכה דינמית (V2/V3)</span>
+  <div><div class="fname">bereshit_quote_template (2).html</div><div class="fnote">113KB. גרסת-הביניים שמוסיפה עריכה דינמית (initDynamicEditors) על גבי bereshit_quote(2).html (שהוסר — נמצא תת-קבוצה מלאה, כולל תקלת מזהי-checkbox כפולים). נשמרה כי היא מכילה סעיפי קטלוג מחירים ומפרטי סוללה שלא עברו לגרסה הסופית.</div></div>
+</li></ul>
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>ארבעה דורות: מתצוגה סטטית למנוע פיננסי חי</h2></div>
+  
+  
+<p>דוח הביקורת המקורי מיפה במפורש ארבעה דורות התפתחות, המתאימים לשלושת הקבצים שנשמרו כך:</p>
+<table>
+<tr><th>דור</th><th>מאפיין מרכזי</th><th>קובץ מייצג שנשמר</th></tr>
+<tr><td><strong>V1</strong></td><td>תצוגה סטטית בלבד — תמונות (<code class="inline">fin_summary.jpg</code>), חישוב פרימיטיבי (<code class="inline">size*1650*0.44</code>)</td><td>bereshit_quote.html</td></tr>
+<tr><td><strong>V2 / V3</strong></td><td>נוספה עריכה דינמית של שדות (<code class="inline">initDynamicEditors</code>), עדיין תמונות סטטיות לגרפים</td><td>bereshit_quote_template (2).html</td></tr>
+<tr><td><strong>V4</strong></td><td>מנוע פיננסי מלא: <code class="inline">npv()</code>/<code class="inline">irr()</code>, טבלאות DOM דינמיות, גרפי Chart.js אמיתיים</td><td>שיחה קלוד 3 - PrintQuote.html</td></tr>
+</table>
+<div class="card decision">
+  <div class="card-head"><div><span class="card-title">מסקנת דוח הביקורת המקורי</span></div><span class="badge decision">הוחלט</span></div>
+  <p>V4 נקבע כ-Single Source of Truth ללוגיקה העסקית של מחולל ההצעות. ההחלטה אושרה כאן מחדש לאחר diff עצמאי בין שלוש הגרסאות המובילות במשפחה.</p>
+</div>
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>השוואת פונקציות מלאה V1–V4</h2></div>
+  <p class="part-sub">מבוסס דוח ביקורת קוד ייעודי לרכיב זה.</p>
+  
+<table>
+<tr><th>פונקציה / רכיב</th><th>V1</th><th>V2–V3</th><th>V4</th></tr>
+<tr><td><code class="inline">updateCalculations()</code></td><td><span class="badge danger">פרימיטיבי</span></td><td><span class="badge warning">מורחב חלקית</span></td><td><span class="badge success">שכתוב מלא</span></td></tr>
+<tr><td><code class="inline">npv()</code> / <code class="inline">irr()</code></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge success">קיים, חיפוש בינארי</span></td></tr>
+<tr><td><code class="inline">initDynamicEditors()</code></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge success">קיים</span></td><td><span class="badge success">קיים ומורחב</span></td></tr>
+<tr><td><code class="inline">renderInteractiveCharts()</code></td><td><span class="badge danger">לא קיים (תמונה סטטית)</span></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge success">Chart.js אמיתי</span></td></tr>
+<tr><td><code class="inline">handleRegTypeChange()</code></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge danger">לא קיים</span></td><td><span class="badge success">חדש — מנהל סוג תעריף/הסדר</span></td></tr>
+<tr><td>מבנה <code class="inline">#page-finance</code></td><td>תמונות סטטיות בלבד</td><td>תמונות + עריכה</td><td>טבלאות HTML אמיתיות + canvas</td></tr>
+<tr><td>טעינת נתונים מ-localStorage</td><td>בסיסי</td><td>בסיסי</td><td>מורחב, כולל חישוב-הפוך</td></tr>
+<tr><td><code class="inline">injectLogo()</code></td><td>פרימיטיבי</td><td>פרימיטיבי</td><td>פותר קונפליקטים ע"י regex על מזהים</td></tr>
+</table>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>תוכן שיווקי שאותר בגרסאות ישנות</h2></div>
+  <p class="part-sub">לא הכל שנשכח שווה לשחזור — אך זה כן.</p>
+  
+<p>סריקת תוכן ייעודית (חיפוש קטעי טקסט עבריים משמעותיים שאינם קיימים מילולית בגרסת V4) העלתה נכסי תוכן אמיתיים ששוו לצוות המכירות עבודה, ולא כדאי לאבד רק כי הקוד שסביבם הוחלף:</p>
+<div class="card success">
+  <div class="card-head"><div><span class="card-title">תיאור חברה ומשפט ייעוד</span></div><span class="badge success">אותר ב-V1, קיים גם ב-V4</span></div>
+  <p>פסקת "בראשית סולאר מביאה את בשורת הקיימות..." ומשפט השליחות הסביבתי אותרו וקיימים גם בגרסה הסופית — לא אבדו.</p>
+</div>
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">המלצת לקוח שנייה — אבדה</span></div><span class="badge danger">אותרה ב-V1 בלבד, לא ב-V4</span></div>
+  <p>ציטוט לקוח מוסדי ("מאז הקמת המערכת חסכנו למעלה מ-70% בעלויות החשמל...") קיים <strong>רק</strong> בקובץ bereshit_quote.html (V1) ולא נמצא בגרסה הסופית. זהו נכס שיווקי אמיתי (עדות חברתית ממוקדת-מוסדות) ששווה לשחזר בגרסה המאוחדת.</p>
+</div>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">ארבעה משפטי "למה לבחור בנו"</span></div><span class="badge warning">אותרו ב-V2/V3 בלבד</span></div>
+  <p>רשימת ארבעה בולטים (תכנון קפדני, התקנה ע"י בעלי מקצוע מוסמכים, ליווי אישי לאורך כל התהליך, ועוד) אותרה בגרסת הביניים ולא בגרסה הסופית — מועמדת טבעית לסעיף "אודות" בעמוד ההצעה המאוחד.</p>
+</div>
+
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>קטלוג מחירים ותוספות שזוהו</h2></div>
+  
+  
+<p>מתוך גרסת הביניים (V2/V3) אותרו שורות קטלוג מחירים ומפרט טכני שאינן מופיעות בגרסה הסופית ששרדה — כדאי לוודא שאלה נכללים (או נדחו במודע) בקטלוג המאוחד:</p>
+<table class="compact">
+<tr><th>פריט</th><th>מקור</th></tr>
+<tr><td>שדרוג ממיר היברידי + אגירה 128 קוט"ש</td><td>bereshit_quote_template (2).html — סעיף 11 בקטלוג</td></tr>
+<tr><td>שדרוג ממיר היברידי + אגירה 256 קוט"ש</td><td>bereshit_quote_template (2).html — סעיף 12 בקטלוג</td></tr>
+<tr><td>מפרט סוללת LiFePO4, קיבולת 1,000 קוט"ש עם BMS</td><td>bereshit_quote_template (2).html — טקסט מפרט טכני</td></tr>
+<tr><td>תוספת אופציונלית: אופטימייזרים TIGO</td><td>bereshit_quote_template (2).html — טקסט תוספות</td></tr>
+</table>
+
+</section><section class="part" id="p7">
+  <div class="part-head"><span class="part-num">07</span><h2>פער אינטגרציה: לא קורא את תוצאות המחשבון</h2></div>
+  <p class="part-sub">הפער החמור ביותר שנותר גם בגרסה המתקדמת ביותר.</p>
+  
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">הפער החמור ביותר ברכיב הזה</span></div><span class="badge danger">עדיין קיים גם בגרסה המתקדמת</span></div>
+  <p>גם V4 — הגרסה המתקדמת ביותר — <strong>עדיין לא קוראת בפועל</strong> את שדות סיכום התוצאה מהמחשבון (IRR, NPV, חיסכון שנתי, קיבולת אגירה). לפי המסמך הכולל (מסמך 00), אלה אמורים להגיע מהאובייקט <code class="inline">rawCalculatorData</code> שנשמר בבסיס הנתונים, אך מחולל ההצעה כרגע מסתמך על טקסט חופשי שאיש המכירות מזין/מדביק ידנית.</p>
+</div>
+<div class="callout-strip">משמעות מעשית: <b>איש המכירות עלול להעתיק ידנית מספר שגוי</b> מהמחשבון להצעה — כל טעות העתקה הופכת ישירות למסמך משפטי-מסחרי שנשלח ללקוח. זו משימת החיווט הראשונה ברשימת הפעולות הנדרשות (חלק 9).</div>
+
+</section><section class="part" id="p8">
+  <div class="part-head"><span class="part-num">08</span><h2>תלות Chart.js ודרישת אופליין</h2></div>
+  
+  
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">תלות ב-CDN חיצוני סותרת דרישת עצמאות אופליין</span></div><span class="badge warning">דורש החלטה טכנית</span></div>
+  <p>ספריית Chart.js (V4) נטענת דרך CDN חיצוני. מערכת המבוססת Google Apps Script אמורה לפעול באופן עצמאי; תלות ברשת חיצונית עלולה לשבור את יצירת ההצעה אם החיבור לא זמין (למשל אצל לקוח באזור עם קליטה חלשה, בזמן פגישת מכירה בשטח). <strong>אפשרויות פתרון:</strong> הטמעת הספרייה כקובץ מקומי בתוך הפרויקט, או מעבר לגרפי SVG ידניים ללא תלות חיצונית.</p>
+</div>
+</section><section class="part" id="p9">
+  <div class="part-head"><span class="part-num">09</span><h2>פעולות נדרשות למיזוג</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge danger">עדיפות עליונה</span>
+  <div><div class="fname">חיווט קריאת תוצאות המחשבון</div><div class="fnote">לחבר את V4 לאובייקט rawCalculatorData בפועל (IRR, NPV, חיסכון, קיבולת אגירה) במקום טקסט חופשי.</div></div>
+</li>
+<li><span class="ftag badge warning">תוכן</span>
+  <div><div class="fname">שחזור עדות הלקוח שאבדה</div><div class="fnote">להחזיר את ציטוט ה-70% חיסכון (V1) לגרסה המאוחדת, במיוחד לפניות למגזר המוסדי/דתי.</div></div>
+</li>
+<li><span class="ftag badge warning">תוכן</span>
+  <div><div class="fname">החלטה על קטלוג המחירים המלא</div><div class="fnote">לוודא שפריטי שדרוג 128/256 קוט"ש ומפרט LiFePO4/TIGO מ-V2/V3 נכללים במודע בקטלוג הסופי, או שהושמטו בכוונה.</div></div>
+</li>
+<li><span class="ftag badge warning">טכני</span>
+  <div><div class="fname">פתרון תלות Chart.js לעבודה אופליין</div><div class="fnote">הטמעה מקומית של הספרייה או מעבר ל-SVG ידני.</div></div>
+</li>
+</ul>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>

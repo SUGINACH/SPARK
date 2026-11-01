@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טופס איסוף נתוני צריכת חשמל — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 04 מתוך 6 · בראשית סולאר</div>
+    <h1>טופס איסוף נתוני צריכת חשמל</h1>
+    <p class="lede">הדרך שבה לקוח מזין את דפוס הצריכה שלו בלי קובץ CSV גולמי. חמישה קבצים מקבילים, אף אחד מהם אינו הגרסה 'הרשמית' המתועדת — ופער תיעוד-מול-קוד משמעותי שדורש בירור.</p>
+    <div class="hero-meta"><div><b>5</b>קבצים שנשמרו</div><div><b>2</b>גישות מקבילות</div><div><b>4</b>פיצ'רים מתועדים שלא נמצאו בקוד</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip current" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תפקיד ותפוקה</a></li><li><a href="#p2">2 · חמישה קבצים שנשמרו — חמש גישות מקבילות</a></li><li><a href="#p3">3 · פער קריטי: גרסת v3.0 המתועדת אינה קיימת בקוד</a></li><li><a href="#p4">4 · ארבע חלופות קליטת נתונים במערכת הכוללת</a></li><li><a href="#p5">5 · מה קיים היום לעומת מה שתועד כנדרש</a></li><li><a href="#p6">6 · המלצות לאיחוד</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תפקיד ותפוקה</h2></div>
+  
+  
+<p>הטופס שדרכו לקוח (או איש מכירות מטעמו) מזין את דפוס צריכת החשמל של הנכס — בלי להזדקק בהכרח לקובץ CSV גולמי מחברת החשמל. הפלט שלו מוזן ישירות לשני המחשבונים (מסמכים 01–02) כאחת מארבע חלופות הקלט האפשריות.</p>
+<div class="callout-strip">זהו הרכיב שבו נמצא <strong>הפער התיעודי-מול-קוד הגדול ביותר</strong> בכל הפרויקט: המסמך המאוחד (מסמך 00) מתאר גרסה מתקדמת (v3.0) שאינה קיימת בפועל באף אחד מקבצי הקוד שהועלו.</div>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>חמישה קבצים שנשמרו — חמש גישות מקבילות</h2></div>
+  <p class="part-sub">משפחה יוצאת דופן: אין כאן שרשרת עדכון אחת, אלא נסיונות מקבילים.</p>
+  
+<p>בשונה משאר משפחות הקוד בפרויקט (שם כמעט תמיד יש שרשרת עדכון ברורה מהקטן לגדול), משפחה זו מורכבת מ<strong>חמש גישות מקבילות</strong> שאף אחת מהן אינה תת-קבוצה נקייה של האחרת. קובץ שישי (<code class="inline">טופס_לאיסוף_נתוני_חשמל.html</code>) הוסר בוודאות — הוכח בהשוואת קוד כתת-קבוצה כמעט מלאה של שני קבצים אחרים גם יחד.</p>
+<ul class="filelist"><li><span class="ftag badge decision">גישה עצמאית — רשימת מכשירים שטוחה</span>
+  <div><div class="fname">1_טופס_נתוני_צריכה.html</div><div class="fnote">42KB. שונה משמעותית מכל שאר הקבצים במשפחה (בהשוואת קוד: 680+ שורות ייחודיות מול כל אחד מהאחרים). מבוסס רשימת מכשירים (6 אזכורים) עם שעות הפעלה, ייצוא JSON.</div></div>
+</li><li><span class="ftag badge decision">גישה היררכית — מיקום ← קטגוריה (מוקדמת)</span>
+  <div><div class="fname">ai_studio_code (7).html</div><div class="fnote">16KB. הראשון משתי גרסאות "ai_studio" המיישמות מבנה היררכי: "הוסף מיקום חדש" ← קטגוריות בתוך כל מיקום. תוכן טקסטואלי כמעט ולא קיים כטקסט סטטי — הכל נבנה דינמית ב-JS.</div></div>
+</li><li><span class="ftag badge decision">גישה היררכית — גרסה שנייה, לא תחליף מלא</span>
+  <div><div class="fname">ai_studio_code (8).html</div><div class="fnote">16KB. קרוב ל-(7) בגודל אך בהשוואת קוד נמצאו כ-190–220 שורות שונות בכל כיוון — כלומר מימוש עצמאי, לא עדכון ליניארי. שתי הגרסאות (7)/(8) נשמרו במקביל כי אף אחת אינה תת-קבוצה של האחרת.</div></div>
+</li><li><span class="ftag badge success">הרחבה משמעותית</span>
+  <div><div class="fname">שיחה קלוד 2 - טופס_איסוף_נתוני_חשמל.html</div><div class="fnote">36KB. מרחיב באופן ניכר (186 שורות ייחודיות) על פני טופס_לאיסוף_נתוני_חשמל.html שהוסר (שנמצא תת-קבוצה כמעט מלאה של קובץ זה וגם של הבא).</div></div>
+</li><li><span class="ftag badge success">גרסת שיחה 3 — לא יורשת ישירה של שיחה 2</span>
+  <div><div class="fname">שיחה קלוד 3 - טופס_לאיסוף_נתוני_חשמל.html</div><div class="fnote">26KB. משמעותית שונה (168 שורות רק בשיחה 2, 65 שורות רק כאן) מגרסת שיחה 2 — לא ליניארית. שתיהן נשמרות כי כל אחת מציעה זווית שלמה שהשנייה חסרה.</div></div>
+</li></ul>
+<div class="card warning">
+  <div class="card-head"><div><span class="card-title">אין "גרסה מנצחת" ברורה ברכיב הזה — החלטה נדרשת מבן-אדם</span></div><span class="badge warning">לתשומת לב מיוחדת</span></div>
+  <p>בניגוד לרכיבים האחרים במערכת, כאן לא ניתן להצביע אוטומטית על קובץ יחיד כ"הבסיס להמשך פיתוח" — יש לבחור ידנית איזו גישה (רשימה שטוחה מול היררכיית מיקום/קטגוריה) הכי מתאימה לזרימת העבודה בשטח, ואז לשלב לתוכה את האלמנטים הטובים מהגישות האחרות.</p>
+</div>
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>פער קריטי: גרסת v3.0 המתועדת אינה קיימת בקוד</h2></div>
+  
+  
+<div class="card danger">
+  <div class="card-head"><div><span class="card-title">המפרט המתועד: טופס v3.0 עם הצפנה, clientId, והיררכיה מלאה</span></div><span class="badge danger">לא נמצא בקוד בפועל</span></div>
+  <p>המסמך המאוחד (מסמך 00, מבוסס על 9 מסמכי מקור שאוחדו בשיחה 6) מתאר בפירוט טופס בשם <code class="inline">Form.html</code> גרסה 3.0, עם המאפיינים הבאים:</p>
+<ul>
+<li>קליטה דרך <code class="inline">?page=form&amp;clientId=...</code> — מזהה לקוח מגיע מה-CRM (מסמך 05)</li>
+<li>מבנה צרכנים היררכי מלא: מיקום ← קטגוריה ← מכשיר</li>
+<li>טווחי תאריכים לפי <strong>לוח עברי</strong> (לא רק לועזי) לתיעוד תקופות שימוש</li>
+<li>ייצוא כקובץ <code class="inline">.json.enc</code> מוצפן בשיטת <strong>AES-GCM</strong>, עם מפתח קשיח <code class="inline">FORM_ENCRYPTION_KEY = "BereshitSolarSecureKey1234567890"</code></li>
+</ul>
+<p><strong>נבדקו כל חמשת הקבצים שנשמרו (וגם השישי שהוסר) — אף אחד מהם לא מכיל <code class="inline">clientId</code>, לא מכיל הצפנת AES/crypto, ואף אחד לא כולל טווחי תאריכים לפי לוח עברי.</strong> שני הקבצים ההיררכיים (ai_studio_code 7/8) מיישמים את שכבת ה"מיקום←קטגוריה" בלבד — ללא ההצפנה, וללא ה-clientId.</p>
+</div>
+<div class="callout-strip">משמעות: או שקובץ הקוד של גרסה 3.0 נכתב בשיחה שלא הועלתה לפרויקט זה, או שהמפרט תואר אך מעולם לא מומש במלואו. <strong>יש לברר זאת</strong> לפני שמשקיעים זמן בכתיבת מודול <code class="inline">crypto.subtle.decrypt</code> בצד המחשבון (הצורך בו מתועד במסמך 00) — ייתכן שהוא נדרש למודול שטרם נכתב כלל.</div>
+
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>ארבע חלופות קליטת נתונים במערכת הכוללת</h2></div>
+  
+  
+<p>ללא קשר לשאלת ה-v3.0, המערכת הכוללת (ראו גם מסמך 01, חלק 3) תומכת בארבע רמות איכות קלט מהטופס ולמעלה, מהמדויקת לגסה ביותר:</p>
+<table class="compact">
+<tr><th>#</th><th>שיטה</th><th>מנגנון</th></tr>
+<tr><td>1</td><td>קובץ CSV/XLSX מחברת החשמל</td><td>הכי מדויק — עוקף את הטופס לגמרי</td></tr>
+<tr><td>2</td><td>ייבוא JSON מהטופס (רשימת מכשירים/מיקומים)</td><td>המרה לפרופיל שעתי לפי שעות הפעלה שהוזנו</td></tr>
+<tr><td>3</td><td>מטריצה ידנית (עונה × סוג יום × שעה)</td><td>ראו אזהרת "עומס שטוח" במסמך 01</td></tr>
+<tr><td>4</td><td>סה"כ שנתי + סוג נכס</td><td>סינתזה באלגוריתם IPF (מסמך 01, חלק 3)</td></tr>
+</table>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>מה קיים היום לעומת מה שתועד כנדרש</h2></div>
+  <p class="part-sub">טבלת השוואה בין חמשת הקבצים לבין מפרט ה-v3.0.</p>
+  
+<table>
+<tr><th>יכולת</th><th>ai_studio (7/8)</th><th>1_טופס_נתוני_צריכה</th><th>קלוד 2 / קלוד 3</th><th>מתועד כנדרש (v3.0)</th></tr>
+<tr><td>היררכיית מיקום/קטגוריה</td><td><span class="badge success">חלקי</span></td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge decision">כן</span></td></tr>
+<tr><td>רשימת מכשירים + שעות הפעלה</td><td><span class="badge warning">לא ברור מטקסט סטטי</span></td><td><span class="badge success">כן</span></td><td><span class="badge success">כן</span></td><td><span class="badge decision">כן</span></td></tr>
+<tr><td>ייצוא JSON</td><td><span class="badge warning">לא אומת</span></td><td><span class="badge success">כן</span></td><td><span class="badge success">כן</span></td><td><span class="badge decision">כן (מוצפן)</span></td></tr>
+<tr><td>הצפנת AES-GCM</td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge decision">כן</span></td></tr>
+<tr><td>clientId מה-CRM</td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge decision">כן</span></td></tr>
+<tr><td>טווחי תאריכים בלוח עברי</td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge danger">לא</span></td><td><span class="badge decision">כן</span></td></tr>
+</table>
+
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>המלצות לאיחוד</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge decision">החלטת מוצר נדרשת</span>
+  <div><div class="fname">להכריע: רשימה שטוחה או היררכיה?</div><div class="fnote">לבחור בין הפשטות של 1_טופס_נתוני_צריכה.html לבין הדיוק ההיררכי של ai_studio_code(7/8), או לשלב: היררכיה ברמת "מיקום" בלבד (לא קטגוריה מלאה) לאיזון מהירות-מילוי מול דיוק.</div></div>
+</li>
+<li><span class="ftag badge danger">לפני המשך פיתוח</span>
+  <div><div class="fname">לברר את מקור מפרט ה-v3.0</div><div class="fnote">לוודא עם מי שכתב את מסמכי המקור (שיחה 6) האם קובץ קוד ל-v3.0 אכן נכתב אי-פעם, ואם כן — לאתר ולצרף אותו.</div></div>
+</li>
+<li><span class="ftag badge warning">שיקול אבטחה</span>
+  <div><div class="fname">להחליט אם ההצפנה חיונית</div><div class="fnote">אם הטופס עובר ב-HTTPS דרך Google Apps Script ונשמר ב-Sheets עם הרשאות מוגבלות, ייתכן שהצפנת AES בצד הלקוח מיותרת ומייקרת פיתוח ותחזוקה ללא תועלת אבטחה משמעותית — שווה לשקול מחדש מול הצורך שהוביל להחלטה המקורית.</div></div>
+</li>
+</ul>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>

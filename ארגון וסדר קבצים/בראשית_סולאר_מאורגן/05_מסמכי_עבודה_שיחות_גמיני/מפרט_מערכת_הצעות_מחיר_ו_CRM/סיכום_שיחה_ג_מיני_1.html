@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>העברת מקל טכנולוגית - מערכת הצעות המחיר בראשית סולאר</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --blue: #0082b2;
+    --blue-dark: #005a82;
+    --blue-light: #f0f6fa;
+    --teal: #2a9d8f;
+    --border: #cbd5e1;
+    --text: #1e293b;
+    --text-light: #475569;
+    --white: #ffffff;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  body {
+    font-family: 'Assistant', sans-serif;
+    color: var(--text);
+    background: #f8fafc;
+    line-height: 1.6;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 30px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    border-bottom: 3px solid var(--blue);
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+  }
+  .header h1 {
+    font-size: 22pt;
+    color: var(--blue-dark);
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 11pt;
+    color: var(--text-light);
+    font-weight: 600;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 20px;
+  }
+  .section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .section-title {
+    font-size: 14pt;
+    font-weight: 800;
+    color: var(--blue-dark);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: "■";
+    color: var(--blue);
+    font-size: 16pt;
+  }
+
+  /* ── LISTS & TEXT ── */
+  p {
+    font-size: 11pt;
+    margin-bottom: 12px;
+    text-align: justify;
+  }
+  ul, ol {
+    padding-right: 20px;
+    margin-bottom: 15px;
+  }
+  li {
+    font-size: 10.5pt;
+    margin-bottom: 6px;
+  }
+  strong {
+    color: var(--blue-dark);
+  }
+
+  /* ── CODE BOXES ── */
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 9.5pt;
+    color: #c7254e;
+  }
+
+  /* ── DIAGRAMS (FLOW & RELATIONSHIPS) ── */
+  .diagram-container {
+    background: var(--blue-light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  .diagram-title {
+    font-weight: 700;
+    font-size: 10pt;
+    color: var(--blue-dark);
+    text-align: center;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    background: var(--white);
+    border: 2px solid var(--blue);
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: var(--shadow);
+    min-width: 150px;
+  }
+  .flow-node.highlight {
+    border-color: var(--teal);
+    background: #f0fdf4;
+  }
+  .flow-arrow {
+    font-size: 18pt;
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  /* ── CRITICAL HIGHLIGHT BOX ── */
+  .highlight-box {
+    background: #fffbeb;
+    border-right: 4px solid #d97706;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <h1>הנחיית העברת מקל (Context Transfer) לפיתוח הצעות המחיר</h1>
+    <p>מסמך זה נועד להטמעה ישירה בצ'אט הבא עם בינה מלאכותית להמשך פיתוח המערכת</p>
+  </div>
+
+  <!-- ── SECTION 1: OVERALL GOAL ── -->
+  <div class="section">
+    <div class="section-title">מטרת העל של הפרויקט</div>
+    <p>
+      המשתמש מפתח מערכת מקצועית ומלאה לניהול והפקת הצעות מחיר עבור חברת <strong>"בראשית סולאר"</strong> (חברה העוסקת בייעוץ, תכנון והקמת מערכות סולאריות, מערכות אגירת חשמל ופתרונות חשמל כשר לשבתות וחגים). המערכת בנויה כולה בתוך סביבת <strong>Google Apps Script (GAS)</strong> המקושרת לגיליון אלקטרוני (Google Sheets) המכיל מחירונים, נתוני לקוחות והגדרות [2].
+    </p>
+    <p>
+      המשימה המרכזית היא לאפשר איסוף נתונים מתוך גיליון ה-Spreadsheet, ניתוח פיננסי והנדסי של כדאיות האגירה (דרך מחשבון פנימי באפליקציה), הצגתם על גבי מסך עורך ראשי, ולאחר מכן מעבר חלק לכרטיסיית הדפסה ייעודית המפיקה קובץ PDF בגודל A4 וקטורי התואם במדויק לעיצוב ולנראות של הצעות המחיר המקוריות של החברה [2].
+    </p>
+  </div>
+
+  <!-- ── DIAGRAM: DATA FLOW ── -->
+  <div class="diagram-container">
+    <div class="diagram-title">ארכיטקטורת זרימת המידע וטעינת המדיה במערכת</div>
+    <div class="flow-row">
+      <div class="flow-node">גוגל שיטס<br><small>(מחירון + לקוחות)</small></div>
+      <div class="flow-arrow">◄──►</div>
+      <div class="flow-node highlight">code.js<br><small>(שרת Apps Script)</small></div>
+      <div class="flow-arrow">◄──►</div>
+      <div class="flow-node">Index.html<br><small>(מערכת ניהול ראשית)</small></div>
+    </div>
+    <div class="flow-row" style="margin-top:10px;">
+      <div class="flow-node" style="min-width: 250px;">שימוש ב-localStorage להעברת נתונים</div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-node highlight" style="min-width: 250px;">PrintQuote.html<br><small>(סביבת עימוד וקטורית בגודל A4)</small></div>
+      <div class="flow-arrow">▼</div>
+      <div class="flow-node">הפקה ישירה ל-PDF של הדפדפן</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: USER PREFERENCES ── -->
+  <div class="section">
+    <div class="section-title">הגדרות והעדפות משתמש קבועות</div>
+    <ul>
+      <li><strong>שפת הפיתוח:</strong> עברית מלאה (יישור לימין RTL בצורה תקנית).</li>
+      <li><strong>מבנה הקבצים בפרויקט:</strong> בדיוק 3 קבצים בלבד:
+        <ol>
+          <li><code>code.js</code> - קוד שרת, תקשורת, שמירה, וניתוב דינמי של ה-doGet.</li>
+          <li><code>Index.html</code> - מערכת הניהול, חיפוש לקוחות ומחשבון האגירה.</li>
+          <li><code>PrintQuote.html</code> - דף העימוד, לוח בקרה שמאלי להדפסה, ותצוגת ה-PDF.</li>
+        </ol>
+        <strong>אין להשתמש בקובץ רביעי (ImagesAsset.html)</strong> - כל התמונות נטענות באופן דינמי ישירות מהשיטס [2]!
+      </li>
+      <li><strong>נראות ודיוק עיצובי:</strong> ה-PDF המופק חייב להיות זהה לחלוטין לעיצוב המקורי של בראשית סולאר. יש להקפיד על שימוש בצבעי המותג (כחול <code>#0082b2</code>), שימוש בפונט <code>Assistant</code>, קווים מעוצבים, שימוש בסימון <code>◄</code> קשיח ליד נתונים, וקיבוע כותרות תחתונות (Footers) לקצה הדף הפיזי [2].</li>
+      <li><strong>סביבת עבודה מפוצלת (Side-by-Side):</strong> בעת פתיחת עמוד ההדפסה, המסך מחולק לשניים: לוח בקרה שמאלי (לסינון, שינוי טקסטים ובחירת תמונות) ותצוגה ימנית המציגה את דפי ה-A4 הפיזיים. לוח הבקרה נעלם אוטומטית בזמן ההדפסה [2].</li>
+    </ul>
+  </div>
+
+  <!-- ── SECTION 3: CRITICAL ADJUSTMENTS ── -->
+  <div class="section">
+    <div class="section-title">כיוונונים, דיוקים ופתרון בעיות (קריטי להמשך)</div>
+    <p>
+      במהלך הפיתוח צצו מספר בעיות קריטיות שנפתרו וחשוב מאוד להכיר אותן כדי למנוע את חזרתן בשיחה החדשה:
+    </p>
+    
+    <div class="highlight-box">
+      <strong>שגיאת טיפוס חמורה <code>item.image.trim is not a function</code>:</strong><br>
+      כאשר משכנו את המחירון מהגיליון באמצעות <code>getValues()</code>, תאים ריקים בעמודת התמונות הוחזרו כערכים ריקים או כערכי מערכת שאינם מחרוזת טקסט. ניסיון להפעיל עליהם <code>.trim()</code> גרם לקריסת קוד ה-JavaScript הכללי וחסם את עדכון התצוגה המקדימה.
+      <br><strong>הפתרון שיושם:</strong> שימוש בבדיקה בטוחה <code>if (item.image && typeof item.image === 'string' && item.image.trim() !== '')</code> המבטיחה הרצה נקייה של הלולאות גם עבור תאים ריקים [2].
+    </div>
+
+    <ul>
+      <li><strong>מיפוי אוטומטי של עמודת התמונה בשיטס:</strong> המשתמש הגדיר עמודה בגיליון "מחירון" בשם "תמונות" להכנסת תמונת הלוגו וגלריית התמונות [2]. כדי למנוע בעיות של שמות עמודות שונים, קוד השרת (<code>code.js</code>) סורק באופן דינמי את השורה הראשונה ומזהה כל עמודה המכילה את המילים "תמונ" או "לוגו". הוא ממפה אותה באופן אוטומטי תחת המפתח האחיד <code>image</code> לפני שליחת המידע לקליינט [2, 7].</li>
+      <li><strong>ניהול תמונות מתוך הגיליון (CellImage):</strong> המשתמש מדביק תמונות רגילות לתוך התאים בגיליון שיטס [2]. מכיוון שדפדפן האינטרנט זקוק ל-Base64 כדי להציג את התמונות, קוד השרת ב-`code.js` מבצע <strong>המרת שרת אוטומטית של אובייקט ה-CellImage הגולמי לקוד Base64</strong> באמצעות פונקציה ייעודית, ובכך חוסך מהמשתמש התעסקות עם קודי Base64 ארוכים ומסורבלים בגיליון שלו [7]!</li>
+      <li><strong>איתור הלוגו כברירת מחדל:</strong> המשתמש הוסיף שורה בגיליון "מחירון" תחת קטגוריית "תמונות" בשם "לוגו" [2]. קוד ה-JavaScript בעמוד הראשי מאתר את השורה הזו באופן אוטומטי, שואב את קוד ה-Base64 של התמונה ומגדיר אותה כלוגו המוגדר כברירת מחדל בשער ובסוף המסמך, אלא אם כן המשתמש בחר להחליף אותו ידנית בדף ההדפסה [2].</li>
+      <li><strong>שליטה פרטנית (Granular Toggles):</strong> לבקשת המשתמש, לוח הבקרה בדף ההדפסה כולל תיבות סימון (Checkboxes) לא רק עבור עמודים שלמים, אלא עבור <strong>כל פריט ופריט במסמך באופן פרטני</strong> (כגון סעיפי הרישוי, סעיפי הליווי, שורות הרכיבים, שורות ההחרגה ותנאי התשלום) [2]. פריט שמסומן כלא פעיל מוסתר מהתצוגה מיד.</li>
+    </ul>
+  </div>
+
+  <!-- ── SECTION 4: CURRENT STATUS ── -->
+  <div class="section">
+    <div class="section-title">סטטוס נוכחי ותוצרים שהושלמו</div>
+    <p>
+      נכון לרגע זה, שלושת הקבצים המרכזיים של האפליקציה כתובים ומוכנים בצורה אינטגרטיבית ומסונכרנת לחלוטין:
+    </p>
+    <ol>
+      <li><strong>קובץ <code>code.js</code> (מעודכן):</strong> מטפל בניתוב ה-Web App, קורא את הגיליונות, ממיר אובייקטי <code>CellImage</code> של גוגל לקוד Base64 דינמי באופן אוטומטי, שומר את נתוני הלקוח ותמונות הלקוח הייחודיות בגיליון "לקוחות ופרוייקטים" (עמודה 25) [2, 7].</li>
+      <li><strong>קובץ <code>Index.html</code> (מעודכן):</strong> מערכת הניהול המרכזית, כוללת את כל הטבלאות, החיפוש, המחשבון הכלכלי וסקשן "תמונות ומדיה" המאפשר לבחור תמונות מתוך הגיליון (מקור 1 ו-2) או להעלות תמונות ייחודיות ללקוח (מקור 3). מעביר את הנתונים והתמונות שנבחרו בצורה חלקה דרך <code>localStorage</code> [2].</li>
+      <li><strong>קובץ <code>PrintQuote.html</code> (מעודכן):</strong> דף העימוד הראשי, מאכלס אוטומטית את נתוני המחשבון, השער, פרטי הלקוח והתמונות שנבחרו, ומציע לוח בקרה שמאלי עשיר לבחירה מתוך המאגרים וסינון פרטני של כל שורה ושורה.</li>
+    </ol>
+  </div>
+
+  <!-- ── SECTION 5: NEXT STEPS ── -->
+  <div class="section" style="border-bottom: none; padding-bottom: 0;">
+    <div class="section-title">נקודת ההמשך והמשימה הבאה</div>
+    <div class="highlight-box" style="background: #f0fdf4; border-right-color: var(--teal); margin-bottom: 0;">
+      <strong>המשימה הבאה של ה-AI:</strong><br>
+      המערכת הבסיסית פועלת ומקושרת כעת בצורה מעולה. המשך הפיתוח יתמקד בהרחבת יכולות המערכת כגון: הוספת תבניות עיצוב נוספות לבחירה, שדרוגים הנדסיים במחשבון האגירה, שיפור חוויית המשתמש בעריכה הדינמית, או הוספת מסמכים נלווים להצעת המחיר. 
+      <br><br>
+      <strong>אנא שאל את המשתמש מהו הצעד הבא שהיה רוצה לבצע, והמשך ישירות מנקודת העבודה הזו תוך שמירה קפדנית על ארכיטקטורת 3 הקבצים הקיימת ועל החוקים הכתובים במסמך זה.</strong>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

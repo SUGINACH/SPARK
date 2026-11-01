@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דוח ביקורת קוד מקיף - ארכיטקטורת מערכת בראשית סולאר</title>
+    <style>
+        /* =========================================
+           CSS Reset & Base Styles
+           ========================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #1e293b;
+            --secondary: #3b82f6;
+            --accent: #0ea5e9;
+            --border: #e2e8f0;
+            
+            /* Status Colors */
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --info-bg: #e0f2fe;
+            --info-text: #075985;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* =========================================
+           Header & Summary Section
+           ========================================= */
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            max-width: 800px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* =========================================
+           Badges & Classifications
+           ========================================= */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge.validated { background: var(--success-bg); color: var(--success-text); }
+        .badge.estimated { background: var(--warning-bg); color: var(--warning-text); }
+        .badge.mock { background: var(--danger-bg); color: var(--danger-text); }
+        .badge.arch-core { background: var(--info-bg); color: var(--info-text); }
+
+        .classification-list {
+            list-style: none;
+        }
+
+        .classification-list li {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .classification-list li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* =========================================
+           SVG Containers
+           ========================================= */
+        .svg-container {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* =========================================
+           Master Matrix Table
+           ========================================= */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            background: white;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            border-left: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th:last-child, td:last-child {
+            border-left: none;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .code-snippet {
+            display: block;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        .status-cell {
+            font-weight: 600;
+        }
+
+        .status-match { color: var(--success-text); }
+        .status-drift { color: var(--warning-text); }
+        .status-conflict { color: var(--danger-text); }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header class="header">
+        <h1>דוח ביקורת קוד והשוואה ארכיטקטורית (Granular Audit)</h1>
+        <p>ניתוח מפלצתי, פירוק לגורמים והשוואת עומק של 4 גרסאות קוד למערכת ייצור הצעות המחיר (בראשית סולאר). הדוח ממפה את כלל הפונקציות, המשתנים והלוגיקה העסקית, מאתר סתירות (Drift Analysis) ומגדיר את מפת הדרכים לאיחוד.</p>
+    </header>
+
+    <!-- Executive Summary & Drift Analysis -->
+    <section class="card">
+        <h2>1. תקציר מנהלים וניתוח סתירות (Drift Analysis)</h2>
+        <p style="margin-bottom: 1rem;">
+            מניתוח מעמיק של ארבעת הקבצים עולה אבולוציה ברורה בארכיטקטורת המערכת: ממערכת תצוגה סטטית (גרסה 1), דרך הוספת יכולות עריכה דינמיות ושמירת מצב (גרסאות 2-3), ועד למעבר למנוע אלגוריתמי-פיננסי מלא המייצר נתונים וגרפים בזמן אמת (גרסה 4).
+        </p>
+        <p style="margin-bottom: 1rem;"><strong>איתור סתירות ופערי גרסאות קריטיים:</strong></p>
+        <ul style="list-style-position: inside; margin-right: 1rem; color: var(--text-muted);">
+            <li><strong>מנוע החישוב (The Calculation Engine):</strong> בגרסאות 1-3, פונקציית <code>updateCalculations</code> מבצעת חישוב בסיסי ושטחי (הספק * 1650 * 0.44). בגרסה 4 הלוגיקה שוכתבה לחלוטין לכדי מנוע פיננסי הכולל חישובי NPV, IRR, שפיצר (הלוואות), ו-LCOE על פני 25 שנה. <strong>מסקנה: גרסה 4 היא ה-Single Source of Truth ללוגיקה עסקית.</strong></li>
+            <li><strong>שכבת התצוגה הפיננסית:</strong> בגרסאות 1-3 המודל הפיננסי מוצג כתמונות סטטיות (<code>fin_summary.jpg</code>, <code>fin_table.jpg</code>). בגרסה 4 התמונות הוסרו לחלוטין והוחלפו ביצירת DOM דינמית (<code>financeTableBody</code>) ובגרפים מבוססי Canvas.</li>
+            <li><strong>תלויות חיצוניות (External Dependencies):</strong> גרסה 4 מכניסה תלות קריטית בספריית <code>Chart.js</code> (דרך CDN). הדבר סותר את דרישת העצמאות של הקובץ (Offline-Ready) ודורש ארכיטקטורה חלופית או הטמעה מקומית של הספרייה.</li>
+            <li><strong>עריכה דינמית:</strong> פונקציית <code>initDynamicEditors</code> קיימת בגרסאות 2, 3 ו-4, אך היא מבצעת מניפולציה ישירה על ה-DOM (הזרקת אלמנטי <code>input</code> ו-<code>textarea</code>) במקום להשתמש ב-State Management מודרני.</li>
+        </ul>
+    </section>
+
+    <!-- Variable Classification -->
+    <section class="card">
+        <h2>2. סיווג משתנים קפדני (Variable Classification)</h2>
+        <div class="grid-2">
+            <div>
+                <ul class="classification-list">
+                    <li>
+                        <strong>נתוני לקוח ופרויקט</strong> <span class="badge validated">מאומת (Validated)</span>
+                        <p>משתנים: <code>projectTitle</code>, <code>clientName</code>, <code>clientAddress</code>, <code>clientContact</code>, <code>quoteDate</code>.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">מקור הנתונים הוא קלט משתמש או טעינה מ-<code>localStorage</code>. הנתונים מוזרקים ישירות ל-DOM באמצעות פונקציית <code>syncText()</code>.</p>
+                    </li>
+                    <li>
+                        <strong>פרמטרים פיננסיים ופיזיקליים</strong> <span class="badge estimated">הערכה (Estimated)</span>
+                        <p>משתנים: <code>yieldVal (1600)</code>, <code>degradation (0.5%)</code>, <code>escalation</code>, <code>discountRate (4.0%)</code>, <code>interestRate (7.9%)</code>, <code>opexPerKwp (100)</code>.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">ערכים אלו מהווים בסיס לחיזוי כלכלי (Forecasting) ל-25 שנה. הם ניתנים לשינוי בגרסה 4 אך משמשים כהערכה סטטיסטית בלבד.</p>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <ul class="classification-list">
+                    <li>
+                        <strong>קלט תמחור וגודל</strong> <span class="badge mock">רנדומלי/פיקטיבי (Mock/Dummy)</span>
+                        <p>משתנים: <code>inp-size (32.0 / 165.41)</code>, <code>inp-cost (121600 / 1360000)</code>, <code>DEFAULT_URLS</code>.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">ערכי Hard-coded ב-HTML שנועדו להציג מצב התחלתי תקין במידה ואין נתונים ב-Local Storage. יש להחליפם במערכת ייצור אמיתית.</p>
+                    </li>
+                    <li>
+                        <strong>נתוני תעו"ז (תעריפים)</strong> <span class="badge validated">מאומת (Validated)</span>
+                        <p>משתנים: טבלת התעריפים (חורף/קיץ/מעבר - פסגה/גבע/שפל).</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">ערכים סטטיים המקודדים ב-HTML (גרסה 4). מבוססים על תעריפי רשות החשמל, אך אינם מחוברים ל-API לעדכון אוטומטי, מה שמהווה חוב טכני.</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architectural SVGs -->
+    <section class="card">
+        <h2>3. תרשימים ארכיטקטוניים (Inline SVGs)</h2>
+        
+        <h3>תרשים א': זרימת נתונים (Data Flow) - מודל אידיאלי</h3>
+        <div class="svg-container">
+            <svg viewBox="0 0 800 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
+                    </marker>
+                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6" />
+                        <stop offset="100%" stop-color="#1e293b" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- State / Storage -->
+                <rect x="50" y="100" width="140" height="80" rx="8" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+                <text x="120" y="135" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#0f172a">Local Storage</text>
+                <text x="120" y="155" font-family="system-ui" font-size="12" text-anchor="middle" fill="#475569">(pendingQuote)</text>
+
+                <!-- Arrow -->
+                <line x1="190" y1="140" x2="260" y2="140" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- Core Engine -->
+                <rect x="270" y="70" width="220" height="140" rx="8" fill="url(#grad1)"/>
+                <text x="380" y="105" font-family="system-ui" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">Financial Engine (JS)</text>
+                <text x="380" y="130" font-family="system-ui" font-size="12" text-anchor="middle" fill="#e2e8f0">updateCalculations()</text>
+                <text x="380" y="150" font-family="system-ui" font-size="12" text-anchor="middle" fill="#e2e8f0">npv() / irr()</text>
+                <text x="380" y="170" font-family="system-ui" font-size="12" text-anchor="middle" fill="#e2e8f0">Cashflow Arrays</text>
+
+                <!-- Arrows Split -->
+                <line x1="490" y1="120" x2="560" y2="80" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+                <line x1="490" y1="160" x2="560" y2="200" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- DOM Output -->
+                <rect x="570" y="40" width="160" height="70" rx="8" fill="#dcfce7" stroke="#166534" stroke-width="2"/>
+                <text x="650" y="70" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#166534">DOM Rendering</text>
+                <text x="650" y="90" font-family="system-ui" font-size="12" text-anchor="middle" fill="#166534">financeTableBody</text>
+
+                <!-- Canvas Output -->
+                <rect x="570" y="170" width="160" height="70" rx="8" fill="#fee2e2" stroke="#991b1b" stroke-width="2"/>
+                <text x="650" y="200" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#991b1b">Canvas Charts</text>
+                <text x="650" y="220" font-family="system-ui" font-size="12" text-anchor="middle" fill="#991b1b">Chart.js Rendering</text>
+            </svg>
+        </div>
+
+        <h3>תרשים ב': מפת דרכים לאיחוד (Migration Pathway)</h3>
+        <div class="svg-container">
+            <svg viewBox="0 0 800 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+                    </marker>
+                </defs>
+
+                <!-- V1 -> V2/V3 -> V4 -> Target -->
+                <circle cx="100" cy="100" r="40" fill="#f1f5f9" stroke="#94a3b8" stroke-width="3"/>
+                <text x="100" y="95" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#475569">V1</text>
+                <text x="100" y="115" font-family="system-ui" font-size="10" text-anchor="middle" fill="#475569">Static UI</text>
+
+                <line x1="145" y1="100" x2="255" y2="100" stroke="#0ea5e9" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
+
+                <circle cx="300" cy="100" r="40" fill="#e0f2fe" stroke="#0284c7" stroke-width="3"/>
+                <text x="300" y="95" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#0369a1">V2 & V3</text>
+                <text x="300" y="115" font-family="system-ui" font-size="10" text-anchor="middle" fill="#0369a1">Dynamic Edits</text>
+
+                <line x1="345" y1="100" x2="455" y2="100" stroke="#0ea5e9" stroke-width="3" stroke-dasharray="5,5" marker-end="url(#arrow2)"/>
+
+                <circle cx="500" cy="100" r="40" fill="#fef3c7" stroke="#d97706" stroke-width="3"/>
+                <text x="500" y="95" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#92400e">V4</text>
+                <text x="500" y="115" font-family="system-ui" font-size="10" text-anchor="middle" fill="#92400e">Fin. Engine</text>
+
+                <line x1="545" y1="100" x2="655" y2="100" stroke="#0ea5e9" stroke-width="3" marker-end="url(#arrow2)"/>
+
+                <circle cx="700" cy="100" r="45" fill="#10b981" stroke="#047857" stroke-width="4"/>
+                <text x="700" y="95" font-family="system-ui" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">Unified</text>
+                <text x="700" y="115" font-family="system-ui" font-size="10" text-anchor="middle" fill="#ffffff">Offline-Ready</text>
+            </svg>
+        </div>
+    </section>
+
+    <!-- The Master Matrix Table -->
+    <section class="card">
+        <h2>4. טבלת השוואה מפלצתית (The Master Matrix)</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">שם הרכיב / פונקציה <br><span style="font-size:0.8rem; font-weight:normal;">סיווג</span></th>
+                        <th style="width: 25%;">תיאור ארכיטקטוני ולוגי</th>
+                        <th style="width: 12%;">גרסה 1 (V1)</th>
+                        <th style="width: 12%;">גרסה 2 (V2)</th>
+                        <th style="width: 12%;">גרסה 3 (V3)</th>
+                        <th style="width: 12%;">גרסה 4 (V4)</th>
+                        <th style="width: 12%;">סטטוס והערכה</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Component 1 -->
+                    <tr>
+                        <td>
+                            <code>updateCalculations()</code>
+                            <br><span class="badge arch-core">לוגיקה / חישוב</span>
+                        </td>
+                        <td>הפונקציה המרכזית לחישוב נתוני המערכת. אחראית על גזירת ההכנסות, הרווח והתשואה מתוך עלות וגודל המערכת.</td>
+                        <td>
+                            קיימת. חישוב פרימיטיבי:
+                            <span class="code-snippet">yield = size * 1650 * 0.44;<br>profit = yield - 4000;<br>cumul = profit * 25;</span>
+                        </td>
+                        <td>זהה ל-V1.</td>
+                        <td>זהה ל-V1.</td>
+                        <td>
+                            <strong>שכתוב מלא למנוע פיננסי.</strong> כוללת משתני Opex, Capex, Degradation, הלוואות (שפיצר), יצירת מערכי תזרים, והזרקת נתונים ל-DOM של טבלת תזרים ל-25 שנה.
+                        </td>
+                        <td class="status-cell status-conflict">
+                            דורש שכתוב מוחלט. יש לאמץ את V4 בלבד.
+                        </td>
+                    </tr>
+
+                    <!-- Component 2 -->
+                    <tr>
+                        <td>
+                            <code>npv(rate, cashflows)</code><br>
+                            <code>irr(cashflows)</code>
+                            <br><span class="badge arch-core">אלגוריתם מתמטי</span>
+                        </td>
+                        <td>פונקציות עזר (Utility) לחישוב מדדים כלכליים מתקדמים: ערך נוכחי נקי (NPV) ושיעור תשואה פנימי (IRR) באמצעות קירוב בינארי.</td>
+                        <td>חסר לחלוטין.</td>
+                        <td>חסר לחלוטין.</td>
+                        <td>חסר לחלוטין.</td>
+                        <td>
+                            קיים ומוטמע.
+                            <span class="code-snippet">irr() uses binary search (-0.999 to 2.0) over 100 iterations.</span>
+                        </td>
+                        <td class="status-cell status-drift">
+                            קוד חדש ב-V4. קריטי למודל הפיננסי.
+                        </td>
+                    </tr>
+
+                    <!-- Component 3 -->
+                    <tr>
+                        <td>
+                            <code>initDynamicEditors()</code>
+                            <br><span class="badge arch-core">UI / תצוגה</span>
+                        </td>
+                        <td>פונקציה המייצרת כפתורי "עריכה" (✎) ליד כל שורה בלוח הבקרה, המאפשרים עריכת טקסט דינמית של ה-DOM (טבלאות, רשימות, וכו').</td>
+                        <td>חסר.</td>
+                        <td>קיים. מזהה אלמנטים לפי סוג (TR, LI, testi-box) ומזריק <code>input</code> או <code>textarea</code>.</td>
+                        <td>קיים. זהה ל-V2.</td>
+                        <td>קיים. זהה ל-V2/V3.</td>
+                        <td class="status-cell status-match">
+                            יציב החל מ-V2. קוד זהה.
+                        </td>
+                    </tr>
+
+                    <!-- Component 4 -->
+                    <tr>
+                        <td>
+                            <code>renderInteractiveCharts()</code>
+                            <br><span class="badge arch-core">UI / תצוגה</span>
+                        </td>
+                        <td>לוגיקת ציור גרפים (תזרים ועוגת התפלגות עלויות) על גבי אלמנטי <code>&lt;canvas&gt;</code>.</td>
+                        <td>חסר (משתמש בתמונות סטטיות).</td>
+                        <td>חסר.</td>
+                        <td>חסר.</td>
+                        <td>
+                            קיים. מסתמך על <code>Chart.js</code>. בונה גרף עמודות/קו משולב וגרף עוגה המשתנה לפי סוג הטכנולוגיה (אגירה משנה את חלוקת העוגה).
+                        </td>
+                        <td class="status-cell status-conflict">
+                            מכיל תלות חיצונית (CDN). דורש פתרון Offline.
+                        </td>
+                    </tr>
+
+                    <!-- Component 5 -->
+                    <tr>
+                        <td>
+                            <code>injectLogo()</code>
+                            <br><span class="badge arch-core">UI / תצוגה</span>
+                        </td>
+                        <td>פותרת בעיית קונפליקט מזהים (IDs) ב-SVG המשוכפל. לוקחת SVG נסתר, משנה מזהים (Regex), ומזריקה אותו ל-DOM.</td>
+                        <td>גרסה פרימיטיבית.</td>
+                        <td>גרסה משופרת. משתמשת ב-Regex להחלפת <code>id</code> ו-<code>url(#id)</code> למניעת עיוותים.</td>
+                        <td>זהה ל-V2.</td>
+                        <td>זהה ל-V2/V3. <strong>אך נוסף מילון <code>DEFAULT_URLS</code>.</strong></td>
+                        <td class="status-cell status-match">
+                            תואם. יש לאמץ את גרסת V4 הכוללת מילון URL.
+                        </td>
+                    </tr>
+
+                    <!-- Component 6 -->
+                    <tr>
+                        <td>
+                            <code>handleRegTypeChange(type)</code>
+                            <br><span class="badge arch-core">לוגיקה עסקית</span>
+                        </td>
+                        <td>מנהלת את שינוי סוג ההסדרה (תעריפית, תחרותית, משולב, מונה נטו) ומעדכנת פרמטרים נלווים (עליית תעריף, דמי רשת).</td>
+                        <td>חסר.</td>
+                        <td>חסר.</td>
+                        <td>חסר.</td>
+                        <td>
+                            קיים. מכיל אובייקט <code>defaultConfigs</code> המגדיר חוקיות עסקית נוקשה.
+                        </td>
+                        <td class="status-cell status-drift">
+                            קוד חדש ב-V4. הכרחי.
+                        </td>
+                    </tr>
+
+                    <!-- Component 7 -->
+                    <tr>
+                        <td>
+                            State Management<br>
+                            <code>localStorage</code>
+                            <br><span class="badge arch-core">אחסון / נתונים</span>
+                        </td>
+                        <td>טעינת נתונים שנשמרו קודם לכן בזיכרון הדפדפן תחת המפתח <code>pendingQuote</code>.</td>
+                        <td>קיים, אך קורא רק משתני שער בסיסיים.</td>
+                        <td>קריאה מורחבת (כולל תמונות).</td>
+                        <td>זהה ל-V2.</td>
+                        <td>קריאה מורחבת + חישוב לאחור של Capex מתוך Cost ו-Size במידה ונטען.</td>
+                        <td class="status-cell status-drift">
+                            אבולוציה לוגית ב-V4.
+                        </td>
+                    </tr>
+
+                    <!-- Component 8 -->
+                    <tr>
+                        <td>
+                            מבנה ה-DOM (עמוד 11-12)<br>
+                            <code>#page-finance</code>
+                            <br><span class="badge arch-core">UI / תצוגה</span>
+                        </td>
+                        <td>העמוד המציג את המודל הפיננסי ללקוח.</td>
+                        <td>2 תמונות סטטיות (<code>fin_summary.jpg</code>, <code>fin_table.jpg</code>).</td>
+                        <td>תמונות סטטיות.</td>
+                        <td>תמונות סטטיות.</td>
+                        <td>
+                            <strong>נכתב מחדש.</strong> טבלאות HTML תקניות (<code>compact-fin-table</code>, <code>taoz-table</code>) וקנבסים לגרפים.
+                        </td>
+                        <td class="status-cell status-conflict">
+                            שוני ארכיטקטוני עצום. חובה לאמץ את V4.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Conclusion -->
+    <section class="card">
+        <h2>5. המלצות אופרטיביות למיזוג (Action Items)</h2>
+        <ul style="list-style-position: inside; margin-right: 1rem; color: var(--text-muted);">
+            <li><strong>אימוץ V4 כבסיס:</strong> קובץ V4 מכיל את המנוע הפיננסי העדכני והמדויק ביותר. יש לזרוק לחלוטין את לוגיקת <code>updateCalculations</code> של V1-V3.</li>
+            <li><strong>טיפול בתלויות:</strong> מכיוון שהדרישה היא לקובץ עצמאי (Offline), יש להמיר את ספריית <code>Chart.js</code> המיובאת מ-CDN לקוד מקומי (Inline JS) בתוך תגית <code>&lt;script&gt;</code>, או לחלופין לכתוב פונקציית ציור SVG נייטיב לגרפים.</li>
+            <li><strong>איחוד UI:</strong> יש לקחת את מנגנון ה-<code>initDynamicEditors()</code> מ-V3/V4 ולהחילו על כלל הטבלאות הדינמיות שנוצרו ב-V4 (טבלת התזרים וטבלת התעו"ז).</li>
+            <li><strong>הסרת משתני Mock:</strong> יש לנקות את משתני ברירת המחדל (כגון 32.0 קילו-וואט) ולהגדיר מנגנון Fallback ברור במידה ו-<code>localStorage</code> ריק.</li>
+        </ul>
+    </section>
+
+</div>
+
+</body>
+</html>

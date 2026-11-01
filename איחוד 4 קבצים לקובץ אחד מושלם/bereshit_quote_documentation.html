@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תיעוד מלא - מחולל הצעות המחיר של בראשית סולאר</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* --- פלטת "מדריך למשתמש" - זהה למותג הצעת המחיר עצמה --- */
+    --u-blue-dark: #005a70;
+    --u-blue: #00798c;
+    --u-brand-blue: #007CAA;
+    --u-blue-light: #f0f6fa;
+    --u-teal: #2a9d8f;
+    --u-border: #d0dde6;
+    --u-text: #2c2c2c;
+    --u-text-light: #5a6b73;
+    --u-bg: #fbfdfe;
+    --u-white: #ffffff;
+
+    /* --- פלטת "תיעוד טכני" - רישום חזותי נפרד ומכוון, מאותת "אזור מפתחים" --- */
+    --t-bg: #14181f;
+    --t-panel: #1c222c;
+    --t-panel-alt: #232a35;
+    --t-border: #313b49;
+    --t-text: #dbe4ee;
+    --t-text-dim: #8b98a9;
+    --t-amber: #e0a339;
+    --t-amber-dim: #a97a2e;
+    --t-code-bg: #0f1319;
+    --t-green: #6fbf8b;
+    --t-blue: #5aa9d6;
+    --t-red: #d9736a;
+
+    --mono: 'JetBrains Mono', 'Consolas', monospace;
+    --sans: 'Assistant', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--sans); background: var(--u-bg); color: var(--u-text); line-height: 1.65; }
+
+  code, .mono { font-family: var(--mono); direction: ltr; unicode-bidi: embed; }
+
+  /* ═══════════════════════ TOP MODE SWITCHER ═══════════════════════ */
+  .mode-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(90deg, var(--u-blue-dark), var(--u-brand-blue));
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .mode-bar .doc-title { color: white; font-weight: 800; font-size: 11.5pt; margin-left: auto; }
+  .mode-bar .doc-title small { display: block; font-weight: 400; font-size: 8pt; opacity: 0.85; }
+  .mode-switch { display: flex; background: rgba(255,255,255,0.12); border-radius: 8px; padding: 3px; gap: 3px; }
+  .mode-switch button {
+    font-family: var(--sans); font-weight: 700; font-size: 9.5pt; padding: 8px 16px;
+    border: none; border-radius: 6px; cursor: pointer; background: transparent; color: rgba(255,255,255,0.75);
+    transition: all .15s;
+  }
+  .mode-switch button.active { background: white; color: var(--u-blue-dark); }
+  .mode-switch button:not(.active):hover { background: rgba(255,255,255,0.1); color: white; }
+
+  /* ═══════════════════════ LAYOUT ═══════════════════════ */
+  .doc-view { display: none; }
+  .doc-view.active { display: block; }
+
+  .layout { display: flex; align-items: flex-start; max-width: 1400px; margin: 0 auto; }
+  .toc {
+    width: 270px; flex-shrink: 0; position: sticky; top: 54px;
+    max-height: calc(100vh - 54px); overflow-y: auto;
+    padding: 24px 18px; border-left: 1px solid var(--u-border);
+  }
+  .toc h3 { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em; color: var(--u-text-light); margin: 16px 0 6px; }
+  .toc h3:first-child { margin-top: 0; }
+  .toc a { display: block; font-size: 9.5pt; color: var(--u-text); text-decoration: none; padding: 5px 10px; border-radius: 5px; margin-bottom: 1px; }
+  .toc a:hover { background: var(--u-blue-light); }
+  .toc a.sub { padding-right: 22px; font-size: 9pt; color: var(--u-text-light); }
+
+  .content { flex: 1; min-width: 0; padding: 30px 44px 120px; }
+
+  /* ═══════════════════════ USER GUIDE TYPOGRAPHY ═══════════════════════ */
+  .content h1 { font-size: 20pt; font-weight: 900; color: var(--u-blue-dark); margin-bottom: 6px; }
+  .content .lead { font-size: 11pt; color: var(--u-text-light); margin-bottom: 28px; max-width: 640px; }
+  .content section { margin-bottom: 52px; scroll-margin-top: 68px; }
+  .content h2 {
+    font-size: 15pt; font-weight: 800; color: var(--u-blue-dark);
+    padding-bottom: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--u-blue-light);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .content h2 .num { background: var(--u-teal); color: white; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10pt; flex-shrink: 0; }
+  .content h3 { font-size: 12pt; font-weight: 800; color: var(--u-blue); margin: 22px 0 10px; scroll-margin-top: 68px; }
+  .content p { margin-bottom: 12px; max-width: 720px; }
+  .content ul, .content ol { margin: 10px 0 16px 0; padding-right: 22px; max-width: 700px; }
+  .content li { margin-bottom: 7px; }
+  .content strong { color: var(--u-blue-dark); }
+  .content a.inline-link { color: var(--u-brand-blue); font-weight: 700; }
+
+  .callout {
+    background: var(--u-blue-light); border-right: 4px solid var(--u-teal);
+    border-radius: 6px; padding: 14px 18px; margin: 16px 0; max-width: 700px; font-size: 9.8pt;
+  }
+  .callout.warn { background: #fff8e1; border-right-color: #e0a339; }
+  .callout.danger { background: #fdecea; border-right-color: #c0392b; }
+  .callout b { display: block; margin-bottom: 4px; }
+
+  .step-list { counter-reset: step; list-style: none; padding-right: 0; max-width: 720px; }
+  .step-list > li {
+    counter-increment: step; position: relative; padding-right: 42px; margin-bottom: 16px; min-height: 28px;
+  }
+  .step-list > li::before {
+    content: counter(step); position: absolute; right: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--u-brand-blue); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10pt;
+  }
+
+  .ui-btn {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--u-blue-light);
+    border: 1px solid var(--u-border); border-radius: 5px; padding: 2px 9px; font-size: 9pt; font-weight: 700; color: var(--u-blue-dark);
+  }
+  .kbd { display: inline-block; background: #eef2f5; border: 1px solid #c7d2d9; border-bottom-width: 2px; border-radius: 4px; padding: 1px 7px; font-family: var(--mono); font-size: 8.5pt; }
+
+  table.ref-table { border-collapse: collapse; width: 100%; max-width: 760px; margin: 14px 0 22px; font-size: 9.3pt; }
+  table.ref-table th { background: var(--u-blue); color: white; padding: 7px 10px; text-align: right; font-weight: 700; }
+  table.ref-table td { padding: 7px 10px; border-bottom: 1px solid var(--u-border); vertical-align: top; }
+  table.ref-table tr:nth-child(even) td { background: var(--u-blue-light); }
+
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 760px; margin: 16px 0; }
+  @media (max-width: 900px) { .section-grid { grid-template-columns: 1fr; } }
+  .mini-card { border: 1px solid var(--u-border); border-radius: 8px; padding: 14px; background: white; }
+  .mini-card h4 { font-size: 10pt; color: var(--u-blue-dark); margin-bottom: 6px; }
+  .mini-card p { font-size: 9pt; color: var(--u-text-light); margin: 0; }
+
+  /* ═══════════════════════ TECHNICAL DOC TYPOGRAPHY ═══════════════════════ */
+  #view-tech { background: var(--t-bg); color: var(--t-text); }
+  #view-tech .toc { border-left-color: var(--t-border); }
+  #view-tech .toc h3 { color: var(--t-text-dim); }
+  #view-tech .toc a { color: var(--t-text); }
+  #view-tech .toc a:hover { background: var(--t-panel-alt); }
+  #view-tech .toc a.sub { color: var(--t-text-dim); }
+
+  #view-tech .content h1 { color: var(--t-amber); }
+  #view-tech .content .lead { color: var(--t-text-dim); }
+  #view-tech .content h2 { color: var(--t-amber); border-bottom-color: var(--t-border); }
+  #view-tech .content h2 .num { background: var(--t-amber-dim); }
+  #view-tech .content h3 { color: var(--t-blue); }
+  #view-tech .content strong { color: var(--t-amber); }
+  #view-tech .content a.inline-link { color: var(--t-blue); }
+
+  #view-tech .callout { background: var(--t-panel); border-right-color: var(--t-amber); color: var(--t-text); }
+  #view-tech .callout.warn { background: #2b2417; border-right-color: var(--t-amber); }
+  #view-tech .callout.danger { background: #2b1a18; border-right-color: var(--t-red); }
+
+  #view-tech table.ref-table th { background: var(--t-panel-alt); color: var(--t-amber); }
+  #view-tech table.ref-table td { border-bottom-color: var(--t-border); color: var(--t-text); }
+  #view-tech table.ref-table tr:nth-child(even) td { background: var(--t-panel); }
+
+  #view-tech .mini-card { background: var(--t-panel); border-color: var(--t-border); }
+  #view-tech .mini-card h4 { color: var(--t-blue); }
+  #view-tech .mini-card p { color: var(--t-text-dim); }
+
+  pre.code-block {
+    background: var(--t-code-bg); border: 1px solid var(--t-border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; margin: 12px 0 20px; max-width: 760px;
+    font-family: var(--mono); font-size: 8.7pt; line-height: 1.6; direction: ltr; text-align: left;
+    color: var(--t-text);
+  }
+  pre.code-block .cm { color: #6b7688; font-style: italic; }
+  pre.code-block .kw { color: #c586c0; }
+  pre.code-block .fn { color: #5aa9d6; }
+  pre.code-block .str { color: #6fbf8b; }
+  pre.code-block .num { color: #e0a339; }
+
+  .func-sig {
+    font-family: var(--mono); direction: ltr; text-align: left; background: var(--t-code-bg);
+    border: 1px solid var(--t-border); border-radius: 6px; padding: 8px 12px; font-size: 9.5pt;
+    color: var(--t-green); margin-bottom: 8px; display: inline-block;
+  }
+  .id-tag {
+    font-family: var(--mono); direction: ltr; unicode-bidi: embed; background: var(--t-panel-alt);
+    border: 1px solid var(--t-border); border-radius: 4px; padding: 1px 6px; font-size: 8.5pt; color: var(--t-blue);
+  }
+  #view-user .id-tag { background: #eef2f5; border-color: #c7d2d9; color: var(--u-blue-dark); }
+
+  .file-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 8pt; font-weight: 700;
+    padding: 2px 9px; border-radius: 12px; margin-inline-end: 6px;
+  }
+  .file-badge.quote { background: #e3f2f7; color: var(--u-blue-dark); }
+  .file-badge.editor { background: #fdecea; color: #c0392b; }
+  #view-tech .file-badge.quote { background: rgba(90,169,214,0.15); color: var(--t-blue); }
+  #view-tech .file-badge.editor { background: rgba(217,115,106,0.15); color: var(--t-red); }
+
+  .fn-index { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 24px; max-width: 760px; margin: 10px 0 20px; }
+  @media (max-width: 900px) { .fn-index { grid-template-columns: 1fr; } }
+  .fn-index a { font-family: var(--mono); font-size: 8.7pt; color: var(--t-blue); text-decoration: none; direction: ltr; text-align: left; }
+  .fn-index a:hover { text-decoration: underline; }
+
+  footer.doc-footer { text-align: center; padding: 30px; font-size: 8.5pt; color: var(--u-text-light); }
+  #view-tech footer.doc-footer { color: var(--t-text-dim); }
+
+  @media print {
+    .mode-bar, .toc { display: none !important; }
+    .content { padding: 0; }
+    .doc-view { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mode-bar">
+  <div class="mode-switch">
+    <button id="btn-mode-user" class="active" onclick="setMode('user')">📘 מדריך למשתמש</button>
+    <button id="btn-mode-tech" onclick="setMode('tech')">🔧 תיעוד טכני</button>
+  </div>
+  <div class="doc-title">
+    תיעוד מחולל הצעות המחיר
+    <small>בראשית סולאר · עודכן ל-2 קבצים: מחולל + עורך תבנית</small>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     VIEW 1: USER GUIDE
+     ══════════════════════════════════════════════════════════ -->
+<div id="view-user" class="doc-view active">
+<div class="layout">
+  <nav class="toc">
+    <h3>ניווט מהיר</h3>
+<a href="#u-intro">1. שני הקבצים - מה ההבדל</a>
+<a href="#u-quote-start">2. פתיחה ראשונה</a>
+<a href="#u-panel">3. סיור בלוח הבקרה</a>
+<a href="#u-systype" class="sub">בורר סוג מערכת</a>
+<a href="#u-signatures" class="sub">חתימות (מקטע 10)</a>
+<a href="#u-finance" class="sub">מודל פיננסי (מקטע 11)</a>
+<a href="#u-universal">4. כלים שחוזרים בכל מקום</a>
+<a href="#u-print">5. הפקת PDF</a>
+<a href="#u-editor">6. כלי עריכת התבנית</a>
+<a href="#u-faq">7. שאלות נפוצות</a>
+
+  </nav>
+  <div class="content">
+    <h1>מדריך למשתמש</h1>
+<p class="lead">הדרכה מלאה, שלב-אחר-שלב, לשימוש במחולל הצעות המחיר של בראשית סולאר ובכלי עריכת התבנית שלו. אין צורך בידע טכני - כל מה שצריך זה דפדפן.</p>
+
+<section id="u-intro">
+  <h2><span class="num">1</span> שני הקבצים - מה ההבדל</h2>
+  <p>המערכת מורכבת משני קבצי HTML נפרדים. שניהם נפתחים פשוט בלחיצה כפולה - הם רצים ישירות בדפדפן, בלי התקנה, בלי אינטרנט (מלבד חריג אחד שמוסבר בהמשך), ובלי צורך בהרשאות מיוחדות.</p>
+  <div class="section-grid">
+    <div class="mini-card">
+      <h4><span class="file-badge quote">📄 הקובץ הרגיל</span></h4>
+      <p><strong>מחולל הצעת המחיר עצמה.</strong> זה הקובץ שבו משתמשים <strong>כל יום</strong> ליצירת הצעת מחיר בפועל עבור לקוח - מזינים פרטי לקוח, בוחרים אילו סעיפים להציג, ומדפיסים ל-PDF. זה הקובץ ששולחים ללקוח (בתור PDF, לא את קובץ ה-HTML עצמו).</p>
+    </div>
+    <div class="mini-card">
+      <h4><span class="file-badge editor">⚙️ עורך התבנית</span></h4>
+      <p><strong>כלי ניהול לתחזוקת התבנית עצמה.</strong> נפתח <strong>רק כשרוצים לשנות את התבנית הבסיסית</strong> - למשל להוסיף/למחוק דף קבוע, לשנות תמונת ברירת מחדל, או לסדר מחדש את סדר הדפים. בסיום העריכה מייצאים ממנו קובץ HTML חדש, שהופך להיות "הקובץ הרגיל" החדש לשימוש יומיומי.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <b>איך לדעת באיזה קובץ אני?</b>
+    בקובץ הרגיל, לוח הבקרה (בצד ימין) מתחיל מיד בבורר "סוג המערכת המוצעת". בעורך התבנית יופיע <strong>מעליו</strong> תיבה אדומה עם הכותרת "⚙️ מצב עריכת תבנית (מנהל)" - זה הסימן הברור ביותר.
+  </div>
+</section>
+
+<section id="u-quote-start">
+  <h2><span class="num">2</span> פתיחה ראשונה של מחולל ההצעה</h2>
+  <ol class="step-list">
+    <li>לוחצים לחיצה כפולה על קובץ ה-HTML של ההצעה (למשל <code>bereshit_solar_quote_final.html</code>). הוא ייפתח בדפדפן ברירת המחדל (כרום, אדג', ספארי וכו').</li>
+    <li>המסך מתחלק לשניים: מימין (או למעלה, במסך צר) <strong>לוח הבקרה</strong> - כל השדות שממלאים; משמאל <strong>התצוגה המקדימה</strong> - איך ההצעה תיראה בפועל, בדיוק כפי שתודפס.</li>
+    <li>כל שינוי בלוח הבקרה מתעדכן <strong>מיידית</strong> בתצוגה המקדימה - אין כפתור "שמור" או "רענן", הכל חי.</li>
+  </ol>
+  <div class="callout warn">
+    <b>חשוב לדעת</b>
+    שום דבר לא נשמר אוטומטית לקובץ עצמו. אם סוגרים את הדפדפן באמצע מילוי הצעה, המידע הולך לאיבוד (אלא אם כבר הדפסתם/ייצאתם ל-PDF). מומלץ למלא הצעה ברצף אחד ולהדפיס בסיום.
+  </div>
+</section>
+
+<section id="u-panel">
+  <h2><span class="num">3</span> סיור בלוח הבקרה</h2>
+  <p>לוח הבקרה בנוי מ-11 מקטעים מתקפלים (לוחצים על הכותרת כדי לפתוח/לסגור), ובראשם בורר "סוג מערכת". כל מקטע אחראי על עמוד אחד או יותר בתצוגה המקדימה.</p>
+
+  <h3 id="u-systype">בורר "סוג המערכת המוצעת" (בראש הלוח)</h3>
+  <p>תיבה בצבע תכלת בראש לוח הבקרה, עם שלוש אפשרויות: <strong>סולארי בלבד</strong>, <strong>אגירה בלבד</strong>, או <strong>סולארי + אגירה</strong>. הבחירה כאן <strong>מסמנת/מבטלת אוטומטית</strong> שורות שרלוונטיות רק לסוג מסוים - למשל אם בוחרים "אגירה בלבד", השורה "קולטים סולאריים" בטבלת הרכיבים תתבטל אוטומטית, כי היא לא רלוונטית להצעה כזו. אפשר תמיד לחזור ולסמן ידנית שורות בודדות אחר כך אם צריך חריגה.</p>
+
+  <h3>1. פרטי לקוח ושער</h3>
+  <p>שם הפרויקט, שם הלקוח, כתובת, איש קשר, תאריך (ממולא אוטומטית בתאריך הנוכחי בעת הפתיחה - אפשר לשנות), ותמונת השער. שולט בעמוד 1 בתצוגה.</p>
+
+  <h3>2. תמצית הפרויקט ונתונים</h3>
+  <p>מקטע מדדי ה-KPI שמופיעים בראש ההצעה: הספק, קיבולת אגירה, עלות, תפוקה שנתית, רווח שנתי, רווח מצטבר ותשואה. אפשר לבטל סימון לכל מדד בנפרד, ויש כפתור <span class="ui-btn">+ הוסף נתון</span> בתחתית הרשימה להוספת מדד מותאם אישית (עם ✎ לעריכת השם והערך).</p>
+
+  <h3>3. מתחילים מבראשית (אודות)</h3>
+  <p>פתיח והמלצות לקוחות (4 קופסאות צבעוניות). ניתן להוסיף המלצה נוספת בכפתור <span class="ui-btn">+ הוסף המלצה</span>.</p>
+
+  <h3>4. למה דווקא אנחנו</h3>
+  <p>שלושה בלוקים של יתרונות (איכות/שירות/אחריות). ניתן להוסיף בלוק נוסף בכפתור <span class="ui-btn">+ הוסף סעיף</span>.</p>
+
+  <h3>5. מפרט טכני</h3>
+  <p>שני תתי-פרקים נפרדים - "תכנון פיקוח וליווי" ו"רישוי" - כל אחד עם רשימת סעיפים ממוספרת וכפתור הוספה נפרד.</p>
+
+  <h3>6. רכיבים ועבודות</h3>
+  <p>טבלת רכיבים (פאנלים, ממירים, מצברים וכו') ורשימת "ניטור ובקרה". שני כפתורי הוספה נפרדים, אחד לכל רשימה.</p>
+
+  <h3>7. החרגות ותוספות</h3>
+  <p>טבלה ממוספרת (1-12 כברירת מחדל) של דברים שלא כלולים במחיר. <strong>המספור מתעדכן אוטומטית</strong> - אם מבטלים סימון של סעיף אמצעי, שאר הסעיפים מתקדמים במספור כדי שלא יהיה "חור" (למשל 1,2,4,5 יהפוך ל-1,2,3,4).</p>
+
+  <h3>8. אחריות ושירות</h3>
+  <p>טבלת תקופות אחריות לפי רכיב.</p>
+
+  <h3>9. תנאי תשלום</h3>
+  <p>טבלת אבני דרך לתשלום עם אחוזים ו"סך מצטבר". גם כאן - ביטול סימון של שלב תשלום מעדכן אוטומטית את הסכום המצטבר בשורות שאחריו, כך שהטבלה תמיד עקבית.</p>
+
+  <h3 id="u-signatures">10. הערות וחתימות</h3>
+  <p>רשימת הערות משפטיות/כלליות ממוספרת, ואחריה אזור החתימות. יש שני שדות טקסט (שם מלא ומורשה חתימה, מספר ת.ז./ח.פ) שמוזנים ומופיעים בעמוד ההערות. לחתימה עצמה יש <strong>שני לוחות ציור</strong> בתצוגה המקדימה (לא בלוח הבקרה) - אחד לחתימת המוסד/הלקוח ואחד לחתימת נציג בראשית.</p>
+  <div class="callout">
+    <b>איך חותמים בפועל</b>
+    גוללים לעמוד ההערות בתצוגה המקדימה. בתוך המלבן המסומן ("חתימה וחותמת המוסד" / "חתימת נציג בראשית סולאר") פשוט מציירים עם העכבר (או האצבע, במסך מגע) כמו בחתימה על מסמך בטאבלט. בלוח הבקרה, בתחתית מקטע 10, יש שני כפתורים לניקוי חתימה אם טעיתם - <span class="ui-btn">נקה חתימת מוסד</span> ו-<span class="ui-btn">נקה חתימת נציג בראשית</span>.
+  </div>
+
+  <h3 id="u-finance">11. מודל פיננסי</h3>
+  <p>המקטע המפורט ביותר. בראשו יש בורר <strong>"אופן הצגת הניתוח הפיננסי"</strong> עם שתי אפשרויות:</p>
+  <ul>
+    <li><strong>מחשבון אוטומטי (ברירת מחדל)</strong> - כל נתוני עמודים 11-12 מחושבים בזמן אמת מהפרמטרים שממלאים כאן: סוג הסדרה תעריפית, גודל מערכת ועלות, תעריף חשמל, עליית תעריף שנתית, דעיכת פאנלים, הוצאות תפעול, פרמטרי הלוואה (אחוז מימון, ריבית, תקופה), ובמידת הצורך גם פרמטרי אגירה (קיבולת, ערך שנתי, עלות, שחיקה). המחשבון מפיק טבלת תזרים מזומנים מלאה ל-25 שנה, IRR, NPV, LCOE ושני גרפים אינטראקטיביים.</li>
+    <li><strong>תמונות ידניות - למקרים חריגים</strong> - למקרה שבו הניתוח הפיננסי נעשה מחוץ למחשבון (למשל בגיליון אקסל נפרד) ורוצים פשוט להדביק תמונות מוכנות. בבחירה זו מופיעים שני שדות להעלאת תמונה (סיכום פיננסי וטבלת תזרים), שמחליפים את התוכן המחושב.</li>
+  </ul>
+  <div class="callout warn">
+    <b>שימו לב</b>
+    גרפי המודל הפיננסי (בעמוד 12) דורשים חיבור לאינטרנט בפעם הראשונה שפותחים את הקובץ, כדי לטעון ספריית ציור גרפים חיצונית (Chart.js). אם פותחים בלי אינטרנט, שאר ההצעה (כולל טבלת התזרים והמספרים עצמם) עדיין תעבוד כרגיל - רק הגרפים לא יופיעו.
+  </div>
+</section>
+
+<section id="u-universal">
+  <h2><span class="num">4</span> כלים שחוזרים בכל מקום</h2>
+  <div class="section-grid">
+    <div class="mini-card">
+      <h4>☑️ תיבת סימון</h4>
+      <p>מציגה/מסתירה סעיף, שורה או עמוד שלם בתצוגה המקדימה. לא מוחקת כלום - אפשר תמיד לסמן בחזרה.</p>
+    </div>
+    <div class="mini-card">
+      <h4>✎ עיפרון עריכה</h4>
+      <p>מופיע ליד כל שורה/סעיף. לחיצה עליו פותחת שדה עריכה קטן שמאפשר לשנות את הטקסט המדויק שיודפס, בלי לגעת בקוד.</p>
+    </div>
+    <div class="mini-card">
+      <h4>+ הוסף</h4>
+      <p>בתחתית כל רשימה/טבלה. יוצר שורה חדשה ריקה, מוכנה לעריכה מיידית דרך ה-✎ שלה.</p>
+    </div>
+    <div class="mini-card">
+      <h4>🖼️ תמונות</h4>
+      <p>בכל שדה תמונה יש שתי דרכים למלא: להדביק כתובת URL, או ללחוץ "העלה תמונה" ולבחור קובץ מהמחשב.</p>
+    </div>
+  </div>
+</section>
+
+<section id="u-print">
+  <h2><span class="num">5</span> הפקת PDF להצעה</h2>
+  <ol class="step-list">
+    <li>ממלאים את כל הפרטים הרלוונטיים בלוח הבקרה, ומוודאים בתצוגה המקדימה שהכל נראה נכון.</li>
+    <li>לוחצים על הכפתור הירוק-כחול <span class="ui-btn">🖨️ הדפסה ישירה ל-PDF (A4)</span> בראש לוח הבקרה.</li>
+    <li>נפתח חלון ההדפסה הרגיל של הדפדפן. תחת "יעד" (Destination) בוחרים <strong>"שמור כ-PDF"</strong> (Save as PDF) במקום מדפסת פיזית.</li>
+    <li>לוחצים "שמור", בוחרים היכן לשמור את הקובץ, וזהו - קובץ ה-PDF המוכן לשליחה ללקוח.</li>
+  </ol>
+  <div class="callout danger">
+    <b>טעות נפוצה</b>
+    אם שולחים בטעות את קובץ ה-<code>.html</code> עצמו ללקוח (במקום ה-PDF שנוצר ממנו), הלקוח יראה קובץ אינטראקטיבי עם לוח בקרה עריך במקום מסמך הצעה סופי. תמיד לוודא ששולחים את קובץ ה-PDF.
+  </div>
+</section>
+
+<section id="u-editor">
+  <h2><span class="num">6</span> כלי עריכת התבנית</h2>
+  <p>כלי נפרד (<span class="file-badge editor">⚙️ עורך התבנית</span>) המיועד <strong>לא</strong> למילוי הצעה בודדת, אלא לשינוי התבנית הבסיסית שממנה כל ההצעות העתידיות ייווצרו. משתמשים בו כשרוצים, למשל: להוסיף דף קבוע חדש לכל ההצעות, לשנות תמונת שער ברירת מחדל, למחוק סעיף שכבר לא רלוונטי, או לסדר מחדש את סדר העמודים.</p>
+
+  <h3>פתיחה</h3>
+  <p>לחיצה כפולה על קובץ העורך (למשל <code>bereshit_template_editor.html</code>) פותחת אותו בדפדפן. התבנית הנוכחית כבר טעונה בפנים אוטומטית - <strong>אין צורך להעלות שום קובץ</strong> כדי להתחיל. בראש המסך יש סרגל כלים, ומתחתיו מוצגת ההצעה המלאה (לוח בקרה + תצוגה מקדימה), בדיוק כמו בקובץ הרגיל - אבל עם תוספות ניהול.</p>
+
+  <h3>סרגל הכלים העליון</h3>
+  <table class="ref-table">
+    <tr><th>כפתור</th><th>מה הוא עושה</th></tr>
+    <tr><td><span class="ui-btn">⬇ ייצוא תבנית מעודכנת</span></td><td>מוריד קובץ HTML חדש, המשקף את כל השינויים שנעשו בעריכה, כאשר הם הופכים להיות ברירת המחדל של הקובץ החדש.</td></tr>
+    <tr><td><span class="ui-btn">↺ טען מחדש את התבנית המקורית</span></td><td>מבטל את כל השינויים שלא יוצאו, וחוזר לתבנית שהייתה מוטמעת בכלי מלכתחילה.</td></tr>
+    <tr><td><span class="ui-btn">📂 טען קובץ תבנית אחר</span></td><td>מאפשר לבחור קובץ HTML אחר מהמחשב (למשל תבנית מעודכנת שיוצאה בעבר) ולהמשיך לערוך אותו.</td></tr>
+  </table>
+
+  <h3>הפאנל האדום - "מצב עריכת תבנית (מנהל)"</h3>
+  <p>מופיע כתיבה אדומה בראש לוח הבקרה, ומכיל:</p>
+  <ul>
+    <li><strong>רשימת תמונות ברירת מחדל</strong> - הלוגו וכל תמונות ברירת המחדל של ההצעה (כולל תמונות שהוספתם דרך 🖼️ - ראו בהמשך). לכל תמונה שדה כתובת URL, ואפשרות "או העלה קובץ" להטמעה ישירה של קובץ מהמחשב (בלי צורך באחסון חיצוני).</li>
+    <li><strong>כפתור + הוסף דף חדש</strong> - יוצר עמוד ריק חדש (עם כותרת ואזור תוכן חופשי לעריכה), הנוסף תמיד ממש לפני עמוד יצירת הקשר הסוגר.</li>
+    <li><strong>כפתור 🔄 נקה נתוני לקוח לדוגמה</strong> - מנקה שם לקוח/כתובת/איש קשר/חתימות שאולי הזנתם לצורך בדיקה, לפני שמייצאים - כדי שלא ייצאו בטעות כברירת מחדל.</li>
+  </ul>
+
+  <h3>הבקרים שנוספו לכל דף</h3>
+  <p>בלוח הבקרה, ליד כותרת כל דף (מלבד עמוד 11-12, המודל הפיננסי, שאינו ניתן לעריכה מבנית), מופיעים עכשיו סמלים נוספים:</p>
+  <table class="ref-table">
+    <tr><th>סמל</th><th>שימוש</th></tr>
+    <tr><td>⠿⠿ (ידית גרירה)</td><td>גוררים ומשחררים כדי לשנות את מיקום הדף בסדר ההצעה.</td></tr>
+    <tr><td>▲ / ▼</td><td>מזיז את הדף מקום אחד למעלה/למטה - חלופה לגרירה, עובדת גם בלי עכבר מדויק.</td></tr>
+    <tr><td>🖼️</td><td>מוסיף תמונה חדשה וריקה לסוף הדף. התמונה מופיעה מיד ברשימת התמונות בפאנל האדום, שם קובעים לה כתובת/מעלים קובץ.</td></tr>
+    <tr><td>🗑️</td><td>מוחק את הדף לצמיתות מהתבנית (מבקש אישור לפני מחיקה).</td></tr>
+  </table>
+
+  <h3>הבקרים שנוספו לכל שורה ברשימות/בטבלאות</h3>
+  <p>ליד כל שורה בכל רשימה/טבלה (בעמודים 2-10) מופיעים עכשיו, בנוסף ל-✎ הרגיל:</p>
+  <table class="ref-table">
+    <tr><th>בקר</th><th>שימוש</th></tr>
+    <tr><td>בורר "משותף / סולארי / אגירה"</td><td>קובע לאיזה סוג מערכת השורה שייכת. שורה שמסומנת "סולארי" תוסתר אוטומטית כשבוחרים "אגירה בלבד" בבורר סוג המערכת הראשי, וההפך. "משותף" - השורה לא מושפעת מהבחירה.</td></tr>
+    <tr><td>🗑️</td><td>מוחק את השורה לצמיתות מהתבנית (בשונה מביטול סימון רגיל, שרק מסתיר).</td></tr>
+  </table>
+
+  <h3>ייצוא הקובץ המעודכן</h3>
+  <ol class="step-list">
+    <li>מבצעים את כל השינויים הרצויים בתבנית (מחיקה/הוספה/סידור מחדש/עדכון תמונות/שיוך סוג מערכת).</li>
+    <li>אם הזנתם נתוני לקוח לדוגמה כדי לבדוק שהכל נראה טוב - לוחצים <span class="ui-btn">🔄 נקה נתוני לקוח לדוגמה</span> בפאנל האדום.</li>
+    <li>לוחצים <span class="ui-btn">⬇ ייצוא תבנית מעודכנת</span> בסרגל הכלים העליון.</li>
+    <li>מתקבל קובץ בשם <code>bereshit_quote_template_updated.html</code> - זהו קובץ הצעת מחיר <strong>רגיל ונקי לגמרי</strong> (ללא כל סימני העריכה האדומים), עם כל השינויים שערכתם כברירת המחדל שלו.</li>
+    <li><strong>חשוב:</strong> זה הקובץ שצריך להפיץ הלאה לצוות המכירות כ"קובץ הרגיל" החדש, במקום הקודם.</li>
+  </ol>
+  <div class="callout">
+    <b>אפשר להמשיך לערוך אחרי ייצוא</b>
+    הייצוא לא "נועל" או מאפס את העריכה - אפשר להמשיך לערוך באותו חלון ולייצא שוב מספר פעמים ברציפות. אם רוצים להמשיך לערוך קובץ שכבר יוצא בעבר (בסבב עבודה נפרד), משתמשים בכפתור <span class="ui-btn">📂 טען קובץ תבנית אחר</span> ובוחרים אותו.
+  </div>
+</section>
+
+<section id="u-faq">
+  <h2><span class="num">7</span> שאלות נפוצות ופתרון תקלות</h2>
+
+  <h3>התמונות לא נטענות / מופיעות כריבוע שבור</h3>
+  <p>תמונות ברירת המחדל (לוגו, תמונת שער וכו') מגיעות מקישורים חיצוניים. אם הקישור השתנה או ההרשאות שונו, התמונה לא תיטען. פתרון: בכלי עריכת התבנית, פאנל התמונות, מעלים קובץ ישירות במקום להסתמך על קישור חיצוני - כך התמונה מוטמעת בתוך הקובץ עצמו ולא תלויה בכלום.</p>
+
+  <h3>הגרפים בעמוד 12 לא מופיעים</h3>
+  <p>סימן שאין חיבור לאינטרנט כרגע (הגרפים דורשים ספרייה חיצונית בטעינה הראשונה). כל שאר הנתונים בעמוד ממשיכים לעבוד כרגיל.</p>
+
+  <h3>ביטלתי סימון של שורה בטעות - איך מחזירים?</h3>
+  <p>פשוט מסמנים את התיבה בחזרה. ביטול סימון רק מסתיר, לא מוחק. מחיקה אמיתית אפשרית רק דרך כלי עריכת התבנית (🗑️), ותמיד עם בקשת אישור.</p>
+
+  <h3>איך מוסיפים תמונה שלא הייתה קיימת מלכתחילה?</h3>
+  <p>רק דרך כלי עריכת התבנית: כפתור 🖼️ ליד כל דף. בקובץ הרגיל (היומיומי) אי אפשר להוסיף שדות תמונה חדשים - רק למלא את הקיימים.</p>
+
+  <h3>מה קורה אם סוגרים את הדפדפן בלי לייצא/להדפיס?</h3>
+  <p>כל המידע שהוזן הולך לאיבוד - הקובץ עצמו לא משתנה. זה נכון גם למחולל ההצעה וגם לעורך התבנית.</p>
+
+  <h3>אפשר לפתוח את שני הקבצים בו-זמנית?</h3>
+  <p>כן, אין שום בעיה לפתוח כל אחד מהם בכרטיסייה נפרדת בדפדפן - הם לא משפיעים זה על זה.</p>
+</section>
+
+    <footer class="doc-footer">מדריך למשתמש · מחולל הצעות המחיר בראשית סולאר</footer>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     VIEW 2: TECHNICAL DOCUMENTATION
+     ══════════════════════════════════════════════════════════ -->
+<div id="view-tech" class="doc-view">
+<div class="layout">
+  <nav class="toc">
+    <h3>ניווט מהיר</h3>
+<a href="#t-overview">1. סקירת ארכיטקטורה</a>
+<a href="#t-structure">2. מבנה קובץ ה-quote</a>
+<a href="#t-core">3. מנגנוני הליבה</a>
+<a href="#t-togglesec" class="sub">toggleSec</a>
+<a href="#t-editors" class="sub">עורכים דינמיים</a>
+<a href="#t-addrow" class="sub">הוספת שורות</a>
+<a href="#t-integrity" class="sub">רינמור וסכומים</a>
+<a href="#t-systype" class="sub">קסקדת סוג מערכת</a>
+<a href="#t-images" class="sub">ניהול תמונות</a>
+<a href="#t-signatures" class="sub">לוחות חתימה</a>
+<a href="#t-finance">4. המנוע הפיננסי</a>
+<a href="#t-integration">5. אינטגרציה - pendingQuote</a>
+<a href="#t-admin">6. תשתית ADMIN_MODE</a>
+<a href="#t-export">7. מנגנון הייצוא</a>
+<a href="#t-wrapper">8. קובץ העורך (editor)</a>
+<a href="#t-decisions">9. החלטות עיצוב ותיקונים</a>
+<a href="#t-extend">10. מדריך הרחבה</a>
+<a href="#t-limits">11. מגבלות ידועות</a>
+<a href="#t-manifest">12. טבלת מפתח + אינדקס</a>
+
+  </nav>
+  <div class="content">
+    <h1>תיעוד טכני</h1>
+<p class="lead">ארכיטקטורה, מבנה קוד, ורפרנס מלא לכל פונקציה - עבור מפתחים שצריכים לתחזק, לבדוק, או להרחיב את המערכת.</p>
+
+<section id="t-overview">
+  <h2><span class="num">1</span> סקירת ארכיטקטורה</h2>
+  <p>המערכת מורכבת משני קבצי HTML עצמאיים, ללא build step, ללא framework, ללא תלות ב-backend או שרת. הכל רץ client-side בדפדפן. JavaScript וניל (ES6+), CSS עם custom properties (<code>:root</code> variables), ו-HTML5 סמנטי.</p>
+
+  <table class="ref-table">
+    <tr><th>קובץ</th><th>תפקיד</th><th>גודל בערך</th></tr>
+    <tr><td><span class="file-badge quote">quote</span> <code>bereshit_solar_quote_final.html</code></td><td>מחולל הצעת המחיר - קובץ יחיד, self-contained, כולל CSS+JS מוטמעים.</td><td>~150KB</td></tr>
+    <tr><td><span class="file-badge editor">editor</span> <code>bereshit_template_editor.html</code></td><td>עורך תבנית - "עטיפה" דקה סביב <b>עותק מוטמע (base64)</b> של קובץ ה-quote, עם iframe + סרגל כלים.</td><td>~230KB (כולל ה-payload המוטמע)</td></tr>
+  </table>
+
+  <div class="callout">
+    <b>עקרון מפתח: ADMIN_MODE הוא דלת חבויה, לא קובץ נפרד</b>
+    כל יכולות הניהול (מחיקת שורות/דפים, גרירה, שיוך סוג מערכת, ניהול תמונות) <b>מוגדרות בתוך קובץ ה-quote עצמו</b>, אך מותנות בדגל <code class="id-tag">window.ADMIN_MODE</code> שכברירת מחדל הוא <code class="id-tag">false</code>. קובץ העורך רק מדליק את הדגל (דרך <code class="id-tag">initAdminMode()</code>) אחרי טעינת ה-iframe. המשמעות: <b>אין קוד כפול</b> בין שני הקבצים - כל הלוגיקה חיה במקום אחד.
+  </div>
+
+  <p>תלות חיצונית יחידה בכל המערכת: <code class="id-tag">Chart.js</code> דרך CDN (<code>cdn.jsdelivr.net/npm/chart.js</code>), נטען רק לצורך שני הגרפים במודל הפיננסי (עמוד 12). קריאת הרינדור עטופה ב-<code>try/catch</code> כדי שחסימת ה-CDN (חוסם פרסומות, אין אינטרנט) לא תשבור את שאר החישוב.</p>
+</section>
+
+<section id="t-structure">
+  <h2><span class="num">2</span> מבנה קובץ ה-quote</h2>
+
+  <h3>עמודי הדפסה (בסדר DOM, בתוך <code class="id-tag">.preview-area</code>)</h3>
+  <pre class="code-block">page-cover            <span class="cm">// 1. שער</span>
+page-summary          <span class="cm">// 2. תמצית + KPI</span>
+page-intro            <span class="cm">// 3. אודות + המלצות</span>
+page-why              <span class="cm">// 4. למה אנחנו</span>
+page-spec             <span class="cm">// 5. מפרט טכני (plan + lic)</span>
+page-components       <span class="cm">// 6. רכיבים + ניטור</span>
+page-exclusions       <span class="cm">// 7. החרגות (טבלה עם # ידני)</span>
+page-warranty         <span class="cm">// 8. אחריות</span>
+page-payment          <span class="cm">// 9. תנאי תשלום (טבלה עם % מצטבר)</span>
+page-notes            <span class="cm">// 10. הערות + חתימות</span>
+page-finance          <span class="cm">// 11. מודל פיננסי - לא נגיש לעריכת תבנית</span>
+page-finance-charts   <span class="cm">// 12. גרפים ותעריפים - לא נגיש לעריכת תבנית</span>
+page-contact          <span class="cm">// 13. יצירת קשר - קבוע, ללא בלוק בקרה משלו</span>
+[page-custom-N ...]   <span class="cm">// דפים מותאמים, נוספים תמיד לפני page-contact</span></pre>
+
+  <h3>לוח הבקרה (<code class="id-tag">.sidebar</code>) - סדר ילדים ישירים</h3>
+  <p><code class="id-tag">&lt;h2&gt;</code> → <code class="id-tag">.btn-print</code> → <code class="id-tag">#admin-master-panel</code> (מוזרק רק ב-ADMIN_MODE) → <code class="id-tag">.system-type-picker</code> → 11 בלוקי <code class="id-tag">&lt;details&gt;</code> (אחד לכל עמוד/זוג-עמודים; ה-11ה הוא "מודל פיננסי" ומכסה גם page-finance וגם page-finance-charts יחד).</p>
+  <p>כל <code class="id-tag">&lt;summary&gt;</code> נושא <code class="id-tag">data-target="page-X"</code> - זהו החוט המקשר בין הבקרה לתוכן המודפס, ומנוצל בכל מקום: אקורדיון (סגירת אחרים + גלילה לעמוד), מחיקת דף, וסנכרון סדר.</p>
+
+  <h3>קונבנציות מזהים (id prefixes)</h3>
+  <table class="ref-table">
+    <tr><th>תבנית</th><th>משמעות</th><th>דוגמה</th></tr>
+    <tr><td><code>chk-row-{tbl}-N</code></td><td>checkbox לשורה N בטבלה/רשימה <code>{tbl}</code></td><td><code>chk-row-ex-7</code></td></tr>
+    <tr><td><code>row-{tbl}-N</code></td><td>אלמנט השורה/ה-tr עצמו בתצוגה</td><td><code>row-pay-3</code></td></tr>
+    <tr><td><code>tbody-{tbl}</code></td><td>מזהה ה-tbody, יעד ל-appendChild בהוספת שורה + לרינמור</td><td><code>tbody-exclusions</code></td></tr>
+    <tr><td><code>ol-{list}-list</code></td><td>מזהה ה-ol (רשימות ממוספרות טבעיות - plan/lic/mon/notes)</td><td><code>ol-notes-list</code></td></tr>
+    <tr><td><code>tgl-{section}</code></td><td>מזהה ה-<code>.item-toggle-list</code> בלוח הבקרה, יעד ל-appendChild של toggle-row חדשה</td><td><code>tgl-payment</code></td></tr>
+    <tr><td><code>inp-{field}</code></td><td>שדה קלט</td><td><code>inp-battery-kwh</code></td></tr>
+    <tr><td><code>m-N</code></td><td>מדד KPI בעמוד 2</td><td><code>m-3</code></td></tr>
+    <tr><td><code>page-custom-N</code></td><td>דף מותאם שנוסף דרך עריכת תבנית</td><td><code>page-custom-2</code></td></tr>
+    <tr><td><code>img-extra-N</code></td><td>תמונה שנוספה דרך עריכת תבנית</td><td><code>img-extra-1</code></td></tr>
+  </table>
+  <p>כל מנגנוני ה"מספר עוקב הבא" (הוספת שורה/דף/תמונה) <b>סורקים את ה-DOM בפועל</b> לפי הקידומת (<code>document.querySelectorAll('[id^="page-custom-"]')</code> וכו') ולוקחים <code>max+1</code>, ולא מסתמכים על משתנה session - כדי שטעינת קובץ שכבר נערך בעבר (עם page-custom-1 קיים למשל) לא תיצור התנגשות מזהים.</p>
+</section>
+
+<section id="t-core">
+  <h2><span class="num">3</span> מנגנוני הליבה</h2>
+
+  <h3 id="t-togglesec"><span class="func-sig">toggleSec(elementId, isChecked)</span></h3>
+  <p>הפרימיטיב הבסיסי ביותר במערכת - כל checkbox בלוח הבקרה קורא לו דרך <code>onchange</code>. פשוט מגדיר <code>element.style.display = isChecked ? '' : 'none'</code>. כמעט כל שאר המערכת (אקורדיון, סוג מערכת, מחיקת דף) בסופו של דבר מפעילה את הפונקציה הזו בעקיפין.</p>
+
+  <h3 id="t-editors">עורכי תוכן דינמיים</h3>
+  <p><span class="func-sig">initDynamicEditors()</span> רץ פעם אחת ב-<code>window.onload</code>, ומריץ <span class="func-sig">attachRowEditor(row)</span> על כל <code>.item-toggle-list .toggle-row</code> קיים. <code>attachRowEditor</code> מזהה את <b>סוג</b> אלמנט היעד (<code>targetEl</code>, לפי <code>tagName</code>/class) ובונה שדות עריכה מתאימים:</p>
+  <table class="ref-table">
+    <tr><th>סוג היעד</th><th>שדות שנוצרים</th></tr>
+    <tr><td><code>TR</code> (שורת טבלה)</td><td>שדה טקסט לכל <code>&lt;td&gt;</code>, מדלג על עמודת מספר אוטומטי (זיהוי: 3 תאים + תא ראשון הוא ספרה בלבד)</td></tr>
+    <tr><td><code>LI</code> (פריט רשימה)</td><td>שדה טקסט יחיד</td></tr>
+    <tr><td><code>.metric-row</code></td><td>שדה לכותרת (<code>.m-label</code>) ולערך (<code>.m-value</code>)</td></tr>
+    <tr><td><code>.testi-box</code></td><td>שם ממליץ + טקסט המלצה</td></tr>
+    <tr><td><code>.feature-block</code></td><td>כותרת + רשימת נקודות (שורה לכל אחת בטקסטאריה)</td></tr>
+  </table>
+  <p>שדות העריכה עצמם (טקסט/טקסטאריה) נבנים ע"י פונקציית עזר מקומית <code>createField(labelTxt, initialVal, onInputCb, isMultiline)</code>, המוגדרת <b>בתוך</b> <code>attachRowEditor</code> עצמה (closure) - כל שורה מקבלת instance נפרד כדי שכל שדה יעדכן בדיוק את האלמנט שלו.</p>
+  <p>בסוף <code>attachRowEditor</code> יש בדיקה: <code>if (window.ADMIN_MODE) injectAdminRowControls(row, targetId);</code> - כלומר הבקרים המנהליים (בורר סוג + מחיקה) מוזרקים <b>דרך אותה נקודת כניסה</b> שמטפלת בעריכה רגילה, גם עבור שורות שכבר קיימות בטעינה וגם עבור שורות חדשות שנוצרות דרך כפתורי "+".</p>
+
+  <h3 id="t-addrow">מנגנון הוספת שורות</h3>
+  <p><span class="func-sig">createToggleRow(container, chkId, targetId, labelText, extraOnchange)</span> - עוזר משותף: בונה div.toggle-row עם checkbox+label, מחבר ל-<code>toggleSec</code> (ובמידת הצורך שרשור onchange נוסף, למשל רינמור), ומצרפת אליו מיד את <code>attachRowEditor</code>.</p>
+  <p>עבור 4 הרשימות המבוססות <code>&lt;ol&gt;</code> טבעי (plan/lic/mon/notes) יש עוזר גנרי נוסף: <span class="func-sig">addOlListItem(olId, tglId, idPrefix, labelPrefix, defaultText)</span>. עבור שאר 7 הרשימות/הטבלאות יש פונקציה ייעודית לכל אחת (<code>addMetricRow</code>, <code>addTestimonialRow</code>, <code>addFeatureRow</code>, <code>addComponentRow</code>, <code>addExclusionRow</code>, <code>addWarrantyRow</code>, <code>addPaymentRow</code>) כי מבנה ה-HTML שונה מהותית בין כל אחת (מספר עמודות, קיום עמודת מספור, קיום עמודת אחוז מצטבר).</p>
+
+  <h3 id="t-integrity">שמירת עקביות: רינמור וסכומים מצטברים</h3>
+  <p>שתי בעיות אמיתיות שתוקנו (ולא רק "כמעט נכון") בקוד:</p>
+  <pre class="code-block"><span class="kw">function</span> <span class="fn">renumberTable</span>(tbodyId, cellIndex) {
+  <span class="cm">// עובר על כל ה-tr הגלויים בפועל בלבד (style.display !== 'none')</span>
+  <span class="cm">// וכותב לתא cellIndex מספר עוקב 1,2,3... - כך שביטול סימון שורה</span>
+  <span class="cm">// אמצעית לא משאיר "חור" (1,2,4,5 → 1,2,3,4)</span>
+}
+
+<span class="kw">function</span> <span class="fn">recomputePaymentCumulative</span>() {
+  <span class="cm">// עובר על tbody-payment, מחשב סכום רץ (cumulative) רק על שורות</span>
+  <span class="cm">// גלויות, ומעדכן את עמודת ה"מצטבר" (index 2) בהתאם</span>
+}</pre>
+  <p>שתיהן מחוברות ל-<code>onchange</code> של כל checkbox רלוונטי (ראו את ה-<code>extraOnchange</code> שהועבר ל-<code>createToggleRow</code>), וגם נקראות מחדש מתוך <code>applySystemType()</code> אחרי שינוי גורף.</p>
+  <p>תיקון שלישי מאותה משפחה: <code>chk-row-war-4</code> (הכותרת "אחריות התקנה בראשית") מפעיל <code>toggleSec</code> <b>פעמיים</b> - גם על <code>row-war-4</code> (שורת הכותרת) וגם על <code>row-war-5</code> (שורת התוכן בפועל) - כדי שביטול סימון לא ישאיר שורת תוכן יתומה בלי הכותרת שלה.</p>
+  <div class="callout">
+    <b>הערה: רשימות &lt;ol&gt; לא צריכות תיקון</b>
+    ל-4 הרשימות המבוססות <code>&lt;ol class="num-list"&gt;&lt;li&gt;</code> (plan/lic/mon/notes) <b>אין</b> מנגנון רינמור ידני - זו התנהגות CSS/HTML סטנדרטית: אלמנט עם <code>display:none</code> לא משתתף בספירת ה-list-item, כך שהדפדפן עצמו מספר מחדש את הפריטים הגלויים. זה לא נכון לגבי עמודות "#" שהן טקסט קשיח בתוך <code>&lt;td&gt;</code> (כמו בטבלת ההחרגות) - שם <b>כן</b> נדרש <code>renumberTable</code>.
+  </div>
+
+  <h3 id="t-systype">קסקדת סוג מערכת</h3>
+  <pre class="code-block"><span class="kw">function</span> <span class="fn">applySystemType</span>(type) { <span class="cm">// 'solar' | 'storage' | 'solar_storage'</span>
+  <span class="kw">const</span> showSolar = (type === <span class="str">'solar'</span> || type === <span class="str">'solar_storage'</span>);
+  <span class="kw">const</span> showStorage = (type === <span class="str">'storage'</span> || type === <span class="str">'solar_storage'</span>);
+  document.querySelectorAll(<span class="str">'.toggle-row[data-systype]'</span>).forEach(row => {
+    <span class="kw">const</span> st = row.getAttribute(<span class="str">'data-systype'</span>);
+    <span class="cm">// st === 'solar' → showSolar, st === 'storage' → showStorage</span>
+    <span class="cm">// שורה בלי data-systype כלל = "משותפת", לא מושפעת</span>
+  });
+  <span class="cm">// + מסנכרן inp-tech-type (למחשבון הפיננסי) + updateCalculations()</span>
+  <span class="cm">// + renumberTable + recomputePaymentCumulative (ראו סעיף קודם)</span>
+}</pre>
+  <p>עד השדרוג האחרון הסיווג היה מבוסס שני מערכים קשיחים ב-JS (<code>SOLAR_ONLY_IDS</code>, <code>STORAGE_ONLY_IDS</code>). זה הוחלף ב-attribute <code class="id-tag">data-systype="solar"|"storage"</code> על ה-<code>.toggle-row</code> עצמו, כדי שכלי עריכת התבנית יוכל לשנות סיווג בלי לגעת בקוד JS. 13 שורות מתויגות כברירת מחדל (8 solar, 5 storage) - ראו רשימה מלאה בטבלת ה-manifest בסוף המסמך.</p>
+
+  <h3 id="t-images">ניהול תמונות</h3>
+  <p>אובייקט <code class="id-tag">DEFAULT_URLS</code> מחזיק כתובות ברירת מחדל. במקור 5 מפתחות קבועים (<code>logo, cover, project, page4_bottom, page9_bottom</code>), אך מאז הוספת יכולת "🖼️ הוסף תמונה" הוא <b>ניתן להרחבה</b> - כל תמונה חדשה נרשמת תחת מפתח בעל שם המזהה שלה (<code>img-extra-1</code> וכו').</p>
+  <pre class="code-block"><span class="kw">function</span> <span class="fn">updateImageSrc</span>(targetId, path) {
+  <span class="cm">// 4 branches קשיחים לתאימות אחורה עם 4 השדות המקוריים,</span>
+  <span class="cm">// + fallback גנרי: DEFAULT_URLS[targetId] לכל דבר אחר</span>
+  img.src = path ? path : defaultPath;
+}</pre>
+  <p><span class="func-sig">injectLogo()</span> משכפל את <code>DEFAULT_URLS.logo</code> לכל <code>.logo-target</code> (לוגו מופיע במספר מקומות - שער, פוטרים). <span class="func-sig">uploadImage(input, targetIds)</span> קורא קובץ שנבחר כ-base64 (FileReader.readAsDataURL) ומזריק ל-<code>.src</code> ישירות - זו ההעלאה ה"רגילה" הזמינה תמיד (per-quote override), לא תלוית ADMIN_MODE.</p>
+
+  <h3 id="t-signatures">לוחות חתימה דיגיטליים</h3>
+  <p><span class="func-sig">initSignaturePad(canvasId)</span> מממש ציור חופשי על <code>&lt;canvas&gt;</code> ללא ספרייה חיצונית - עכבר (<code>mousedown/mousemove/mouseup</code>) ומגע (<code>touchstart/touchmove/touchend</code>, עם <code>passive:false</code> כדי לאפשר <code>preventDefault</code> וכך למנוע גלילת הדף תוך כדי חתימה). פונקציית עזר מקומית <code>getPos(e)</code> ממירה קואורדינטת מסך לקואורדינטת קנבס פנימית, כולל תיקון יחס קנה-מידה (<code>canvas.width / rect.width</code>) למקרה שהקנבס מוצג בגודל CSS שונה מרזולוציית ה-pixel הפנימית שלו. <span class="func-sig">clearSignature(canvasId)</span> מנקה עם <code>ctx.clearRect</code>. שני ה-canvas מאותחלים ב-<code>window.onload</code>. תוכן קנבס <b>אינו</b> נלכד ע"י <code>cloneNode</code>/סריאליזציית HTML (זו הסיבה שאין צורך במיוחד לנקות חתימות "ידנית" בזמן ייצוא - הן ממילא לא היו נכללות - אך זה נעשה בכל זאת ליתר ביטחון, ראו סעיף 7).</p>
+</section>
+
+<section id="t-finance">
+  <h2><span class="num">4</span> המנוע הפיננסי (עמודים 11-12)</h2>
+  <p><span class="func-sig">updateCalculations()</span> היא הפונקציה המרכזית, מופעלת מכל שינוי בפרמטרים הפיננסיים. בונה מודל תזרים מזומנים מלא ל-<code>inp-lifetime</code> שנים (ברירת מחדל 25):</p>
+  <ul>
+    <li>הון עצמי מול הלוואה, לפי <code>inp-loan-pct</code> / <code>inp-interest-rate</code> / <code>inp-loan-term</code></li>
+    <li>לכל שנה: תפוקה (עם דעיכת פאנלים <code>inp-degradation</code>), תעריף (בסיס + פרמיה אורבנית מוגבלת ל-<code>inp-urban-years</code> שנים, עולה שנתית לפי <code>inp-escalation</code>), הכנסת אגירה (אם קיימת, דועכת בנפרד לפי <code>inp-battery-degradation</code>), פחות תפעול/דמי רשת/שכ"ד</li>
+    <li>עמלת רשת (<code>inp-grid-fee</code>) ושכ"ד (<code>inp-rent-pct</code>) מחושבים <b>רק על הכנסת הסולארי</b>, לא על ערך האגירה</li>
+  </ul>
+  <p>פונקציות עזר פיננסיות טהורות: <span class="func-sig">npv(rate, cashflows)</span>, <span class="func-sig">irr(cashflows)</span> - חישוב IRR באיטרציה (Newton-Raphson או דומה על בסיס NPV=0). התוצאה מוזנת ל-<span class="func-sig">renderInteractiveCharts(...)</span> שמצייר שני גרפי Chart.js (תזרים מצטבר, עוגת עלויות) - עטוף ב-try/catch ברמת הקורא (ראו סעיף 1).</p>
+  <p><span class="func-sig">setFinanceMode(mode)</span> - מנוע ה-toggle בין <code>finance-calc-content</code>/<code>finance-charts-calc-content</code> (מחושב) לבין <code>finance-image-content</code>/<code>finance-charts-image-content</code> (תמונות ידניות), שולט גם ב-<code>#fin-image-upload-fields</code> בלוח הבקרה.</p>
+  <p><span class="func-sig">handleRegTypeChange(type)</span> - ממלא ברירות מחדל שונות (עליית תעריף, עמלת רשת, אורך חיים, כותרת) לפי סוג ההסדרה התעריפית שנבחר.</p>
+</section>
+
+<section id="t-integration">
+  <h2><span class="num">5</span> אינטגרציה חיצונית - pendingQuote</h2>
+  <p>ב-<code>window.onload</code>, הקובץ קורא (<b>רק get, לא set</b>) מפתח בשם <code class="id-tag">localStorage['pendingQuote']</code>, ומצפה ל-JSON עם המבנה הבא:</p>
+  <pre class="code-block">{
+  projectTitle, clientName, clientAddress, clientContact, quoteDate,
+  analysisNotes, sysSize, sysCost,
+  selectedCover, selectedProject, selectedLogo,
+  selectedFinSummary, selectedFinTable,   <span class="cm">// מפעילים אוטומטית מצב "תמונות ידניות"</span>
+  storageCapacity, annualSavings, roiPercentage, profit25Years,
+  gridQuota, form4Status,                 <span class="cm">// מתווספים לתיאור התמצית כטקסט חופשי</span>
+  rawCalculatorData: {
+    withBat: { batKwh, capex, capacity },
+    rawAssumptions: {
+      weightedTariff, yieldPerKwp, degradationPct, urbanEligible,
+      urbanPremium, urbanYears, opexPerKwp, loanPct, loanRatePct,
+      loanYears, discountRatePct, batteryAnnualValue0, batteryCapex,
+      batteryDegradationPct
+    }
+  }
+}</pre>
+  <div class="callout warn">
+    <b>אין כלי מזין מוכר במערכת הנוכחית</b>
+    לא נמצא בשום קובץ קוד שכותב (<code>setItem</code>) למפתח הזה - כלומר קיים (או היה מתוכנן) כלי חיצוני נוסף, ככל הנראה בשם <code>Index.html</code>, המבוסס ככל הנראה על Google Apps Script (יש התייחסות בתיעוד קודם ל"שאיבת הלוגו הדינמי מהאקסל"), שממלא את המפתח הזה לפני שמפנה את המשתמש לקובץ ה-quote. אם קיים - מומלץ מאוד לתעד גם אותו בנפרד ולוודא שהשדות שהוא כותב תואמים בדיוק לרשימה שלמעלה.
+  </div>
+</section>
+
+<section id="t-admin">
+  <h2><span class="num">6</span> תשתית ADMIN_MODE (עורך תבנית)</h2>
+  <p>כל הפונקציות בסעיף זה מוגדרות בקובץ ה-quote עצמו אך <b>אינרטיות</b> (ללא השפעה) עד קריאה מפורשת ל-<code>initAdminMode()</code>.</p>
+
+  <h3><span class="func-sig">initAdminMode()</span> - נקודת הכניסה היחידה</h3>
+  <pre class="code-block"><span class="kw">function</span> <span class="fn">initAdminMode</span>() {
+  window.ADMIN_MODE = <span class="kw">true</span>;
+  document.body.classList.add(<span class="str">'admin-mode'</span>);
+  injectAdminPanel();          <span class="cm">// פאנל אדום עליון</span>
+  initPageAdminControls();     <span class="cm">// בקרי דף לכל details קיים</span>
+  initPageDragDropContainer(); <span class="cm">// listener יחיד על .sidebar</span>
+  <span class="cm">// + injectAdminRowControls לכל toggle-row קיים</span>
+}</pre>
+
+  <h3>בקרת דפים: מחיקה, גרירה, הזזה, הוספת תמונה</h3>
+  <p><span class="func-sig">initPageAdminControls()</span> עובר על <code>.sidebar > details > summary[data-target]</code>, <b>מדלג מפורשות על <code>page-finance</code></b> (ה-11ה, המכסה גם charts), ומזריק לכל summary: ידית גרירה (SVG 6 נקודות, <code>draggable="true"</code> על ה-<code>&lt;details&gt;</code> עצמו), כפתורי ▲/▼ (<code>movePageInSidebar</code>), כפתור 🖼️ (<code>addImageToPage</code>), וכפתור 🗑️.</p>
+  <p>גרירה: <span class="func-sig">initPageDragDropContainer()</span> נקרא <b>פעם אחת בלבד</b> (idempotency guard: <code>sidebar.dataset.dragInit</code>), מצרף <code>dragover</code>/<code>drop</code> ל-<code>.sidebar</code> (event delegation, לא per-element). ב-<code>dragover</code> - "הזזה חיה": ברגע שהעכבר עובר מעל details אחר, <code>insertBefore</code> מפעיל מיד את המיקום החדש (לא ממתין ל-drop).</p>
+  <div class="callout danger">
+    <b>באג אמיתי שתוקן: הגנה מפני בליעת בלוק המודל הפיננסי</b>
+    גם <code>movePageInSidebar</code> וגם ה-<code>dragover</code> handler בדקו במקור רק <code>sibling.tagName === 'DETAILS'</code> - אבל בלוק "11. מודל פיננסי" <b>הוא</b> details תקני! המשמעות: לחיצת ▼ על הדף האחרון הרגיל (page-notes), או גרירה לאזור שלו, הייתה מזיזה/מחליפה אותו בפועל. התיקון: בדיקה נוספת שה-<code>summary[data-target]</code> של השכן/היעד <b>אינו</b> <code>page-finance</code>, בשני המקומות בנפרד.
+  </div>
+  <p><span class="func-sig">syncPageOrderToPreview()</span> - אחרי כל שינוי סדר (dragend / לחיצת חץ), מריץ מחדש את סדר <code>.preview-area</code> לפי סדר ה-<code>&lt;details&gt;</code> הנוכחי בפועל בסיידבר: מוסיף (appendChild, שמזיז אלמנט קיים לסוף) כל עמוד רגיל בסדר החדש, ואז <b>תמיד</b> מוסיף page-finance → page-finance-charts → page-contact בסוף, בסדר קבוע - כך גם אם אלגוריתם ההזזה יחזיר תוצאה לא צפויה, שלושת אלה תמיד ננעלים למקום האחרון.</p>
+
+  <h3><span class="func-sig">addCustomPage()</span></h3>
+  <p>יוצר <code>&lt;div class="page"&gt;</code> חדש (כותרת + <code>contenteditable</code> לתוכן חופשי + פוטר זהה לשאר הדפים), מוכנס תמיד <b>ממש לפני <code>page-contact</code></b> (<code>contactPage.parentNode.insertBefore(pageDiv, contactPage)</code>), ובלוק <code>&lt;details&gt;</code> תואם בסיידבר, מוכנס לפני בלוק "11. מודל פיננסי". מספר עוקב (<code>page-custom-N</code>) מחושב דינמית מסריקת DOM (<code>[id^="page-custom-"]</code>), לא ממשתנה session - נמנע התנגשות מזהים אם טוענים לעריכה קובץ שכבר מכיל דפים כאלה מסבב קודם.</p>
+
+  <h3>הרחבת ניהול תמונות (עריכת תבנית בלבד)</h3>
+  <table class="ref-table">
+    <tr><th>פונקציה</th><th>תפקיד</th></tr>
+    <tr><td><code>renderImageUrlFields()</code></td><td>בונה מחדש (מאפס ומחדש) את רשימת שדות התמונה בפאנל: 5 השדות הקבועים + שדה לכל <code>img[id^="img-extra-"]</code> שנמצא ב-DOM (לא לפי DEFAULT_URLS - לפי סריקת אלמנטים בפועל, DOM כמקור אמת יחיד)</td></tr>
+    <tr><td><code>buildImageField(key, label, applyFn, removable)</code></td><td>בונה שדה בודד: label, input טקסט ל-URL, input קובץ להעלאה, וכפתור הסרה אם <code>removable</code></td></tr>
+    <tr><td><code>adminUploadDefaultImage(key, inputEl, applyFn)</code></td><td>קורא קובץ כ-base64, כותב ל-<code>DEFAULT_URLS[key]</code> (לא רק ל-<code>.src</code> כמו <code>uploadImage</code> הרגילה) - כלומר נשמר כברירת מחדל, לא רק תצוגה זמנית</td></tr>
+    <tr><td><code>addImageToPage(pageId)</code></td><td>יוצר <code>&lt;img id="img-extra-N"&gt;</code>, מוסיף ל-DEFAULT_URLS, ומכניס אותו <b>לפני ה-.page-footer של הדף אם קיים, אחרת ל-.cover-wrapper אם זה page-cover, אחרת append רגיל</b> (ראו הערה למטה)</td></tr>
+    <tr><td><code>removeExtraImage(key)</code></td><td>מסיר את ה-img מה-DOM + <code>delete DEFAULT_URLS[key]</code> + מרענן את הפאנל</td></tr>
+  </table>
+  <div class="callout danger">
+    <b>באג אמיתי שתוקן: עמוד השער כחריג מבני</b>
+    ל-<code>page-cover</code> אין <code>.page-footer</code> כלל - כל תוכנו עטוף ב-<code>.cover-wrapper</code> יחיד עם <code>height:100%</code>. append ישיר ל-<code>#page-cover</code> (כפי שנעשה בכל שאר הדפים) היה ממקם את התמונה <b>כאחות</b> של ה-wrapper, מחוץ לפריסת ה-flex שלו, ועלול לדחוף אותה מחוץ לגבולות העמוד המודפס. נבדקו כל 10 הדפים במפורש (סקריפט Python על ה-DOM) - זהו החריג היחיד, וטופל בנפרד ב-<code>addImageToPage</code>.
+  </div>
+  <div class="callout danger">
+    <b>באג אמיתי שתוקן: מפתחות עם מקף במחרוזת אובייקט JS</b>
+    <code>img-extra-1</code> כמפתח <b>בלי מירכאות</b> באובייקט literal (<code>{img-extra-1: "..."}</code>) הוא שגיאת תחביר - JS מפרש מקף כחיסור. כל מקום שבו מפתח דינמי נכתב לתוך קוד מיוצא (ב-<code>exportTemplate</code>, ראו בהמשך) <b>חייב</b> <code>JSON.stringify(key)</code> סביב המפתח עצמו, לא רק סביב הערך. אומת בהרצה בפועל ב-Node לפני שילוב.
+  </div>
+</section>
+
+<section id="t-export">
+  <h2><span class="num">7</span> מנגנון הייצוא</h2>
+  <p><span class="func-sig">exportTemplate()</span> הוא הפונקציה המורכבת ביותר במערכת. שלבים, בסדר:</p>
+  <ol class="step-list">
+    <li><b>ניקוי חתימות</b> - <code>clearSignature()</code> על שני ה-canvas, כדי שלא ייצאו חתימות בדיקה כברירת מחדל. (הערה: תוכן canvas ממילא לא נלכד ע"י cloneNode/outerHTML - זה בעיקר עבור מצב live באותו סבב עריכה.)</li>
+    <li><b>הקפאת מצב טפסים ל-attributes</b> - עובר על כל <code>input, select, textarea</code>: checkbox/radio → <code>toggleAttribute('checked', el.checked)</code>; select → <code>option.toggleAttribute('selected', ...)</code> לכל option; textarea → <code>el.textContent = el.value</code>; אחר → <code>setAttribute('value', el.value)</code>. מדלג על <code>type="file"</code> (לא ניתן לקריאה מטעמי אבטחת דפדפן). <b>קריטי:</b> שינוי attribute לא משפיע על ה-property הנוכחי באלמנט שכבר "התלכלך" (dirty value flag) - כך שהעריכה החיה בעורך <b>לא מושפעת</b> מהאיפוס הזה, הוא רק קובע מה ישתקף בסריאליזציה הבאה.</li>
+    <li><b>שכפול המסמך</b> - <code>document.documentElement.cloneNode(true)</code>, ואז הסרת כל <code>.admin-only-ui</code> מהעותק (לא מהמסמך החי!) כך שהקובץ המיוצא נקי לגמרי מממשק ניהול.</li>
+    <li><b>שכתוב DEFAULT_URLS בעותק המיוצא</b> - ראו הסבר מפורט למטה.</li>
+    <li><b>הורדה</b> - <code>Blob</code> + <code>URL.createObjectURL</code> + קליק תכנותי על <code>&lt;a download&gt;</code> זמני.</li>
+  </ol>
+
+  <div class="callout danger">
+    <b>באג אמיתי שתוקן: DEFAULT_URLS הוא משתנה JS, לא DOM state</b>
+    <code>cloneNode</code> משכפל DOM בלבד. עריכת כתובות תמונה בפאנל הניהול משנה את המשתנה <code>DEFAULT_URLS</code> בזיכרון - שינוי שלא נלכד ע"י שכפול DOM כלל, ולכן <b>לא היה משפיע על הקובץ המיוצא בכלל</b> בגרסה הראשונית. התיקון: איתור ה-<code>&lt;script&gt;</code> המכיל <code>'const DEFAULT_URLS = {'</code> בתוך העותק המשוכפל, ושכתוב טקסט המקור שלו (regex, non-greedy עד <code>\n  };</code>) לפי המצב הנוכחי בפועל של האובייקט:
+    <pre class="code-block">clone.querySelectorAll(<span class="str">'script'</span>).forEach(scriptEl => {
+  <span class="kw">if</span> (scriptEl.textContent.includes(<span class="str">'const DEFAULT_URLS = {'</span>)) {
+    <span class="kw">const</span> entries = Object.keys(DEFAULT_URLS)
+      .map(k => <span class="str">`    ${JSON.stringify(k)}: ${JSON.stringify(DEFAULT_URLS[k])}`</span>)
+      .join(<span class="str">',\n'</span>);
+    scriptEl.textContent = scriptEl.textContent.replace(
+      <span class="cm">/const DEFAULT_URLS = \{[\s\S]*?\n  \};/</span>,
+      <span class="str">`const DEFAULT_URLS = {\n${entries}\n  };`</span>
+    );
+  }
+});</pre>
+    גרסה זו <b>גנרית לחלוטין</b> - היא מייצאת את <em>כל</em> המפתחות הקיימים כרגע ב-DEFAULT_URLS, כולל כל <code>img-extra-N</code> שנוסף דינמית, לא רק את 5 המפתחות המקוריים. גרסה קודמת ששכתבה רק את 5 המפתחות הקשיחים הייתה מפספסת שקט תמונות שנוספו אחרי השדרוג הזה.
+  </div>
+
+  <h3><span class="func-sig">resetSampleData()</span></h3>
+  <p>פונקציה נפרדת ומכוונת: מנקה <b>רק</b> שדות שהם מטבעם נתוני-הצעה-בודדת (שם/כתובת/איש קשר לקוח, שם+ת.ז. חותם, חתימות) - <b>לא</b> נוגעת במבנה/שורות/תמונות/סיווגים. מיועדת ללחיצה ידנית לפני ייצוא, אחרי שהמנהל בדק את התבנית עם נתוני דוגמה.</p>
+</section>
+
+<section id="t-wrapper">
+  <h2><span class="num">8</span> קובץ העורך (bereshit_template_editor.html)</h2>
+  <p>קובץ "עטיפה" דק (סרגל כלים + iframe), שמטמיע בתוכו עותק מלא של קובץ ה-quote בתוך <code>&lt;textarea id="quote-template-b64" style="display:none"&gt;</code>, מקודד <b>base64</b>.</p>
+
+  <h3>למה base64 ולא הטמעה גולמית?</h3>
+  <p>הטמעת HTML גולמי (ללא base64) בתוך textarea נשברת אם התוכן המוטמע עצמו מכיל את הרצף המילולי <code>&lt;/textarea&gt;</code> - וזה קורה בפועל: קובץ ה-quote מכיל שדה <code>&lt;textarea&gt;</code> משלו (לתיאור אגירה) שמסתיים ב-<code>&lt;/textarea&gt;</code>, שהיה סוגר את ה-textarea החיצוני מוקדם מדי ומשחית את שאר ההטמעה. base64 (אלפבית A-Za-z0-9+/=) לא יכול לכלול את הרצף הזה מבנייתו, כך שהבעיה נמנעת לגמרי, ללא צורך ב-escaping ידני.</p>
+
+  <h3>פענוח בטוח ל-UTF-8</h3>
+  <pre class="code-block"><span class="kw">const</span> decoded = decodeURIComponent(escape(atob(b64)));</pre>
+  <p><code>atob()</code> מחזיר "מחרוזת בייטים" (כל תו = ערך בייט 0-255 מקודד UTF-8 גולמי, לא תו יוניקוד מפוענח). <code>escape()</code> ממיר כל בייט לרצף <code>%XX</code>, ו-<code>decodeURIComponent()</code> מפרש את הרצפים כ-UTF-8 ובונה את המחרוזת האמיתית. טכניקה ותיקה אך תקינה ונתמכת בכל דפדפן. <b>אומת בפועל</b> ב-Node - השוואת בת-לבת בין המקור לתוצאת הפענוח על כל הקובץ (140K+ תווים, כולל עברית מלאה) - התאמה מדויקת.</p>
+
+  <h3>זרימת הטעינה</h3>
+  <pre class="code-block"><span class="fn">loadHtmlIntoFrame</span>(htmlString) {
+  frame.onload = () => frame.contentWindow.initAdminMode(); <span class="cm">// מוגדר לפני</span>
+  frame.srcdoc = htmlString;                                 <span class="cm">// מפעיל load מחדש</span>
+}</pre>
+  <p><code>iframe.srcdoc</code> נחשב same-origin עם מסמך ההורה לצורכי scripting (חלק מהתקן), כך שאין בעיית CORS בגישה ל-<code>frame.contentWindow</code>/<code>frame.contentDocument</code> מההורה - זה מה שמאפשר להורה לקרוא ל-<code>initAdminMode()</code> ול-<code>exportTemplate()</code> ישירות.</p>
+  <p>שלושה כפתורי סרגל: <code>reloadOriginal()</code> (מפענח מחדש מה-textarea המוטמע, עם אישור לפני דריסת שינויים), <code>loadOtherFile(input)</code> (FileReader על קובץ שנבחר), <code>exportFromFrame()</code> (קורא ל-<code>exportTemplate()</code> בתוך ה-iframe). בטעינה הראשונית של הכלי (<code>window.onload</code>) נקראת <code>reloadOriginalSilent()</code> - זהה ל-<code>reloadOriginal()</code> אך בלי דיאלוג אישור, כי אין עדיין שינויים לאבד.</p>
+</section>
+
+<section id="t-decisions">
+  <h2><span class="num">9</span> החלטות עיצוב ותיקוני באגים - סיכום</h2>
+  <p>רשימה מרוכזת, לתועלת מתחזק עתידי שרוצה להבין <em>למה</em> משהו כתוב כמו שהוא כתוב:</p>
+  <table class="ref-table">
+    <tr><th>החלטה/תיקון</th><th>סיבה</th></tr>
+    <tr><td>סיווג סוג מערכת: <code>data-systype</code> attribute, לא מערכי ID קשיחים</td><td>מאפשר לכלי עריכת התבנית לשנות שיוך שורה בלי לגעת ב-JS</td></tr>
+    <tr><td>הגנת page-finance בגרירה/הזזה</td><td><code>tagName === 'DETAILS'</code> לבד לא מספיק - בלוק המודל הפיננסי הוא details תקני</td></tr>
+    <tr><td><code>addImageToPage</code> בודק <code>.cover-wrapper</code> לפני append</td><td>page-cover הוא היחיד ללא page-footer, עם עטיפה פנימית ממלאת-גובה</td></tr>
+    <tr><td>מפתחות דינמיים תמיד עם <code>JSON.stringify(key)</code></td><td>מקף לא חוקי במפתח object literal לא-מצוטט</td></tr>
+    <tr><td>DEFAULT_URLS export הפך לגנרי (לולאת Object.keys)</td><td>הגרסה הקשיחה (5 מפתחות) פספסה תמונות שנוספו דינמית</td></tr>
+    <tr><td>base64 להטמעת quote בתוך editor, לא textarea גולמי</td><td>הקובץ המוטמע עצמו מכיל <code>&lt;/textarea&gt;</code> אמיתי (שדה תיאור אגירה)</td></tr>
+    <tr><td>מספרים עוקבים (page-custom-N, img-extra-N) מסריקת DOM, לא session counter</td><td>מונע התנגשות מזהים בעריכה חוזרת של קובץ שכבר יוצא</td></tr>
+    <tr><td>רינמור טבלת החרגות ידני, רשימות ol לא</td><td>עמודת # היא טקסט קשיח ב-td; ol/li ממוספר טבעית ע"י הדפדפן</td></tr>
+    <tr><td>renderInteractiveCharts עטוף try/catch</td><td>Chart.js מ-CDN עלול להיחסם; שאר החישוב לא צריך להישבר בגללו</td></tr>
+    <tr><td>onCostManualInput מפחית batteryCapex לפני חישוב CAPEX/kWp</td><td>עלות אגירה לא אמורה להיכלל בעלות הסולארי לצורך זה</td></tr>
+  </table>
+</section>
+
+<section id="t-extend">
+  <h2><span class="num">10</span> מדריך הרחבה - "איך מוסיפים..."</h2>
+
+  <h3>...שדה חדש למחשבון הפיננסי</h3>
+  <ol class="step-list">
+    <li>הוסיפו <code>&lt;input id="inp-xxx"&gt;</code> בתוך בלוק ה-<code>&lt;details&gt;</code> של "11. מודל פיננסי", עם <code>oninput="updateCalculations()"</code></li>
+    <li>קראו את הערך בתוך <code>updateCalculations()</code>: <code>const xxx = parseFloat(document.getElementById('inp-xxx').value) || 0;</code></li>
+    <li>שלבו בנוסחה הרלוונטית בתוך לולאת השנים</li>
+  </ol>
+
+  <h3>...רשימה/טבלה חדשה שניתנת להוספת שורות</h3>
+  <ol class="step-list">
+    <li>ב-HTML: מבנה קבוע (tr/li) + <code>&lt;tbody id="tbody-xxx"&gt;</code> או <code>&lt;ol id="ol-xxx-list"&gt;</code></li>
+    <li>בלוח הבקרה: <code>&lt;div class="item-toggle-list" id="tgl-xxx"&gt;</code> עם toggle-row לכל שורה קיימת, וכפתור <code>&lt;button class="btn-add-item" onclick="addXxxRow()"&gt;</code> בסוף</li>
+    <li>ב-JS: אם זו רשימת ol רגילה - שורה אחת שקוראת ל-<code>addOlListItem(...)</code>. אחרת - פונקציה ייעודית לפי הדוגמאות הקיימות (<code>addComponentRow</code> לטבלה פשוטה, <code>addExclusionRow</code> לטבלה עם מספור, <code>addPaymentRow</code> לטבלה עם אחוז מצטבר)</li>
+    <li>אם יש עמודת מספור/סכום מצטבר - זכרו לחבר <code>renumberTable</code>/<code>recomputePaymentCumulative</code> גם ל-onchange של כל checkbox קיים וגם ל-extraOnchange בפונקציית ההוספה</li>
+  </ol>
+
+  <h3>...דף חדש קבוע (לא "מותאם" דרך העורך, אלא חלק מהתבנית הבסיסית)</h3>
+  <ol class="step-list">
+    <li>הוסיפו <code>&lt;div id="page-xxx" class="page page-preview-shadow"&gt;</code> בתוך <code>.preview-area</code>, במיקום הרצוי</li>
+    <li>הוסיפו <code>&lt;details&gt;&lt;summary data-target="page-xxx"&gt;...&lt;/summary&gt;...&lt;/details&gt;</code> בסיידבר, באותו סדר יחסי</li>
+    <li>אם רוצים שהדף יהיה נגיש למחיקה/גרירה בעריכת תבנית - אין צורך בקוד נוסף, <code>initPageAdminControls</code> ו-<code>initPageDragDropContainer</code> מזהים כל <code>details &gt; summary[data-target]</code> אוטומטית (מלבד page-finance המוחרג בשמו המפורש)</li>
+  </ol>
+
+  <h3>...שינוי הכללים של סיווג סוג מערכת</h3>
+  <p>ערכו ישירות את <code>data-systype="solar"|"storage"</code> על ה-<code>&lt;div class="toggle-row"&gt;</code> הרצוי ב-HTML (או, מעכשיו, פשוט דרך בורר הסיווג בעריכת תבנית - אין צורך לגעת בקוד כלל).</p>
+</section>
+
+<section id="t-limits">
+  <h2><span class="num">11</span> מגבלות ידועות</h2>
+  <ul>
+    <li><b>גרירת דפים היא desktop-only.</b> מבוססת HTML5 Drag and Drop הרגיל, שאינו אמין במסכי מגע. כפתורי ▲/▼ הם החלופה הפועלת בכל מכשיר.</li>
+    <li><b>אין undo/redo בעורך התבנית.</b> "↺ טען מחדש את התבנית המקורית" מבטל הכל (חוזר לעותק המוטמע), אין ביטול צעד-בודד.</li>
+    <li><b>תמונות שנוספו דרך "🖼️ הוסף תמונה" אין להן שדה per-quote override.</b> ב-4 התמונות המקוריות (cover/project/page4_bottom/page9_bottom) יש לכל אחת שדה ייעודי בלוח הבקרה הרגיל לדריסה per-quote; תמונות extra מנוהלות רק כברירת מחדל דרך עריכת תבנית.</li>
+    <li><b>page-contact אינו ניתן למחיקה/הזזה.</b> אין לו בלוק <code>&lt;details&gt;</code> משלו במבנה הקיים - הוא נשאר תמיד עמוד סוגר קבוע.</li>
+    <li><b>אין וידוא זמן-ריצה אמיתי בדפדפן</b> לכל התיקונים בסעיף 9 - כולם אומתו בבדיקות יחידה מבוססות-לוגיקה (מוק DOM ב-Node) ובניתוח קוד ידני, לא בהרצה חזותית בדפדפן אמיתי. מומלץ לבצע QA ידני לפני הפצה רחבה.</li>
+    <li><b>אין קובץ מזין (feeder) מתועד</b> ל-<code>pendingQuote</code> - ראו סעיף 5.</li>
+  </ul>
+</section>
+
+<section id="t-manifest">
+  <h2><span class="num">12</span> טבלת מפתח מלאה - שורות מתויגות data-systype</h2>
+  <table class="ref-table">
+    <tr><th>סוג</th><th>מזהי checkbox</th></tr>
+    <tr><td>solar</td><td><span class="id-tag">chk-m-1</span> <span class="id-tag">chk-row-comp-1</span> <span class="id-tag">chk-row-comp-4</span> <span class="id-tag">chk-row-war-1</span> <span class="id-tag">chk-row-ex-1</span> <span class="id-tag">chk-row-ex-6</span> <span class="id-tag">chk-row-ex-8</span> <span class="id-tag">chk-row-pay-3</span></td></tr>
+    <tr><td>storage</td><td><span class="id-tag">chk-m-2</span> <span class="id-tag">chk-row-comp-3</span> <span class="id-tag">chk-row-war-3</span> <span class="id-tag">chk-row-ex-11</span> <span class="id-tag">chk-row-ex-12</span></td></tr>
+  </table>
+
+  <h3>אינדקס פונקציות מלא (סדר הופעה בקובץ)</h3>
+  <div class="fn-index">
+    <a href="#t-images">injectLogo()</a>
+    <a href="#t-finance">setFinanceMode(mode)</a>
+    <a href="#t-editors">initDynamicEditors()</a>
+    <a href="#t-editors">attachRowEditor(row)</a>
+    <a href="#t-admin">initAdminMode()</a>
+    <a href="#t-admin">injectAdminRowControls(row, targetId)</a>
+    <a href="#t-admin">initPageAdminControls()</a>
+    <a href="#t-admin">initPageDragDropContainer()</a>
+    <a href="#t-admin">movePageInSidebar(details, direction)</a>
+    <a href="#t-admin">syncPageOrderToPreview()</a>
+    <a href="#t-admin">addCustomPage()</a>
+    <a href="#t-admin">injectAdminPanel()</a>
+    <a href="#t-admin">renderImageUrlFields()</a>
+    <a href="#t-admin">buildImageField(key, label, applyFn, removable)</a>
+    <a href="#t-admin">adminUploadDefaultImage(key, inputEl, applyFn)</a>
+    <a href="#t-admin">addImageToPage(pageId)</a>
+    <a href="#t-admin">removeExtraImage(key)</a>
+    <a href="#t-export">resetSampleData()</a>
+    <a href="#t-export">exportTemplate()</a>
+    <a href="#t-addrow">createToggleRow(container, chkId, targetId, labelText, extraOnchange)</a>
+    <a href="#t-addrow">addOlListItem(olId, tglId, idPrefix, labelPrefix, defaultText)</a>
+    <a href="#t-addrow">addMetricRow() / addTestimonialRow() / addFeatureRow() / addPlanRow() / addLicRow() / addComponentRow() / addMonitorRow() / addExclusionRow() / addWarrantyRow() / addPaymentRow() / addNoteRow()</a>
+    <a href="#t-finance">handleRegTypeChange(type)</a>
+    <a href="#t-finance">npv(rate, cashflows) / irr(cashflows)</a>
+    <a href="#t-finance">onCostManualInput()</a>
+    <a href="#t-finance">updateCalculations()</a>
+    <a href="#t-finance">renderInteractiveCharts(...)</a>
+    <a href="#t-editors">syncAllPreviewFields() / syncText(inputId, targetId)</a>
+    <a href="#t-togglesec">toggleSec(elementId, isChecked)</a>
+    <a href="#t-integrity">renumberTable(tbodyId, cellIndex)</a>
+    <a href="#t-integrity">recomputePaymentCumulative()</a>
+    <a href="#t-systype">setCheckboxState(chk, checked) / applySystemType(type)</a>
+    <a href="#t-signatures">initSignaturePad(canvasId) / clearSignature(canvasId)</a>
+    <a href="#t-images">uploadImage(input, targetIds) / updateImageSrc(targetId, path)</a>
+  </div>
+</section>
+
+    <footer class="doc-footer">תיעוד טכני · מחולל הצעות המחיר בראשית סולאר</footer>
+  </div>
+</div>
+</div>
+
+<script>
+  function setMode(mode) {
+    document.getElementById('view-user').classList.toggle('active', mode === 'user');
+    document.getElementById('view-tech').classList.toggle('active', mode === 'tech');
+    document.getElementById('btn-mode-user').classList.toggle('active', mode === 'user');
+    document.getElementById('btn-mode-tech').classList.toggle('active', mode === 'tech');
+    window.scrollTo(0, 0);
+    try { localStorage.setItem('docMode', mode); } catch(e) {}
+  }
+  (function() {
+    try {
+      const saved = localStorage.getItem('docMode');
+      if (saved === 'tech') setMode('tech');
+    } catch(e) {}
+  })();
+</script>
+
+</body>
+</html>

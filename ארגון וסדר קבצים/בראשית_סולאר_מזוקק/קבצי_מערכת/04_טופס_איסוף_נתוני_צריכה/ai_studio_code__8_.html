@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת איסוף נתוני צריכת חשמל</title>
+    
+    <style>
+        /* ================= תואם לעיצוב בראשית סולאר ================= */
+        :root { 
+            --primary: #1a3a5f; 
+            --secondary: #f39c12; 
+            --success: #27ae60; 
+            --danger: #e74c3c;
+            --bg: #f0f4f8; 
+            --white: #ffffff; 
+            --border: #dcdde1; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            color: #2f3640; 
+        }
+        
+        .container { max-width: 1200px; margin: auto; }
+        
+        .top-bar { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: var(--primary); 
+            padding: 20px; 
+            border-radius: 12px; 
+            color: white; 
+            margin-bottom: 25px; 
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .card { 
+            background: var(--white); 
+            border-radius: 12px; 
+            padding: 25px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        }
+
+        h2 { border-bottom: 3px solid var(--secondary); padding-bottom: 5px; color: var(--primary); margin-top: 0; }
+        h3 { background: #f8f9fa; padding: 10px; border-right: 5px solid var(--primary); margin-top: 20px; font-size: 1.1em; color: var(--primary); }
+
+        .btn-add { 
+            background: none; 
+            border: 2px solid var(--success); 
+            color: var(--success); 
+            padding: 8px 15px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            transition: all 0.2s;
+        }
+        .btn-add:hover { background: var(--success); color: white; }
+
+        .btn-delete {
+            background: none; 
+            border: 2px solid var(--danger); 
+            color: var(--danger); 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        .btn-primary-large {
+            background: var(--primary); 
+            color: white; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 1.2em;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .btn-primary-large:hover { background: #132b47; }
+
+        /* ================= פריסת שורה אחת (Grid) ================= */
+        .category-container {
+            overflow-x: auto; /* מאפשר גלילה אם המסך צר */
+            padding-bottom: 10px;
+        }
+
+        .item-row { 
+            display: grid; 
+            grid-template-columns: minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(180px, 1.5fr) minmax(180px, 1.5fr) 50px; 
+            gap: 15px; 
+            align-items: start; 
+            padding: 15px 0; 
+            border-bottom: 1px solid #eee; 
+            min-width: 1000px; /* מבטיח שהשדות לא יימעכו ויהיו בשורה אחת */
+        }
+
+        .field-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-wrapper label {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        input[type="text"], input[type="number"], select { 
+            padding: 10px; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            font-family: inherit; 
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+
+        /* ================= מולטי-סלקט מתוך העיצוב המקורי ================= */
+        .multi-select-container { position: relative; font-size: 13px; margin-top: 8px; }
+        .multi-select-box { 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            background: white; 
+            padding: 8px; 
+            max-height: 120px; 
+            overflow-y: auto; 
+        }
+        .multi-select-box label { 
+            display: flex; 
+            align-items: center;
+            font-weight: normal; 
+            cursor: pointer; 
+            padding: 4px; 
+            color: #333;
+        }
+        .multi-select-box label:hover { background: #f0f4f8; border-radius: 4px; }
+        .multi-select-box input[type="checkbox"] {
+            width: auto;
+            margin-left: 8px;
+        }
+
+        /* עריכת שם המיקום */
+        .location-title-input {
+            font-size: 1.5em;
+            font-weight: bold;
+            border: 1px solid transparent;
+            border-bottom: 2px dashed var(--secondary);
+            padding: 5px 10px;
+            color: var(--primary);
+            background: transparent;
+            width: 300px;
+            transition: all 0.2s;
+        }
+        .location-title-input:focus {
+            background: #fff;
+            border-style: solid;
+            outline: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="top-bar">
+        מערכת לאיסוף נתוני צריכת חשמל
+    </div>
+    
+    <!-- פה יתווספו המיקומים -->
+    <div id="locations-container"></div>
+    
+    <!-- לחצן הוספה למטה -->
+    <button class="btn-primary-large" onclick="addLocation()">+ הוסף מיקום חדש</button>
+
+</div>
+
+<script>
+    // מאגר המידע על הצרכנים לפי סקשנים
+    const consumerData = {
+        "מיזוג": {
+            "מזגן": ["power", "hp", "qty"],
+            "מזגן VRF": ["power", "hp", "qty"],
+            "מזגן אינוורטר": ["power", "hp", "qty"],
+            "רדיאטור": ["power", "qty"],
+            "מפזר חום": ["power", "qty"],
+            "תנור ספירלה": ["power", "qty"],
+            "משאבת חום": ["power", "qty"],
+            "מאווררים וונטות": ["power", "qty"]
+        },
+        "תאורה": {
+            "נורות": ["power", "qty"],
+            "פסי לד": ["power_per_meter", "qty"],
+            "תאורת חוץ/לילה": ["power", "qty"]
+        },
+        "מטבח": {
+            "קומקום (הרתחה חד פעמית)": ["power", "qty", "usage_avg"],
+            "מיחם (שמירת חום)": ["power", "qty"],
+            "מיני בר": ["power", "qty"],
+            "מקרר": ["power", "volume", "qty"],
+            "מקפיא": ["power", "volume", "qty"],
+            "תנור אפייה": ["power", "qty"],
+            "פלטות חימום": ["power", "pots", "qty"],
+            "חדר קירור": ["power", "nominal_power", "qty"],
+            "מדיח כלים": ["power", "qty", "usage_avg"],
+            "כיריים": ["power", "qty", "usage_avg"]
+        },
+        "תפעול": {
+            "דוד חשמל": ["power", "qty"],
+            "מחמם מהיר": ["power", "qty", "usage_avg"],
+            "מכונת כביסה": ["power", "qty", "usage_avg"],
+            "מייבש כביסה": ["power", "qty", "usage_avg"],
+            "מייבשי ידים": ["power", "qty", "usage_avg"]
+        },
+        "משרד": {
+            "מסכים": ["power", "qty"],
+            "מערכות מיחשוב": ["power", "qty"],
+            "אבטחה": ["power", "qty"],
+            "שרתים": ["power", "qty"],
+            "מכונות הדפסה/צילום": ["power", "qty"]
+        },
+        "כללי": {
+            "מטען רכב": ["power", "qty"],
+            "מעלית": ["power", "qty", "usage_avg"],
+            "משאבות": ["power", "qty"],
+            "משאבת מים": ["power", "qty"],
+            "משאבת סחרור": ["power", "qty"]
+        },
+        "אחר": "custom"
+    };
+
+    // תרגום משתנים לתוויות תצוגה עבריות
+    const fieldDefinitions = {
+        "power": { label: "הספק (W)" },
+        "power_per_meter": { label: "הספק למטר (W)" },
+        "hp": { label: "כוח סוס" },
+        "qty": { label: "כמות" },
+        "usage_avg": { label: "שימוש ממוצע (דק'/שעה)" },
+        "volume": { label: "נפח (ליטר)" },
+        "pots": { label: "כמות סירים" },
+        "nominal_power": { label: "הספק נומינלי (W)" }
+    };
+
+    // מערכים לבניית הצ'קבוקסים
+    const DAYS_ARR = ['יום א\'', 'יום ב\'', 'יום ג\'', 'יום ד\'', 'יום ה\'', 'יום ו\'', 'יום ז\'', 'יום שבת יהודי'];
+    const HOURS_ARR = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0') + ':00');
+
+    let locationCounter = 0;
+
+    // הוספת מיקום חדש (כרטיסייה)
+    function addLocation() {
+        locationCounter++;
+        const container = document.getElementById("locations-container");
+        
+        const locDiv = document.createElement("div");
+        locDiv.className = "card";
+        locDiv.id = `location-${locationCounter}`;
+
+        // כותרת המיקום נערכת בשורה למעלה
+        let locHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <h2 style="margin:0; border:none;">שם מיקום:</h2>
+                    <input type="text" class="location-title-input" value="מיקום ${locationCounter}">
+                </div>
+                <button class="btn-delete" onclick="document.getElementById('${locDiv.id}').remove()">מחק מיקום</button>
+            </div>
+        `;
+
+        // יצירת סקשנים לכל קטגוריה
+        for (const category in consumerData) {
+            const safeCategory = category.replace(/\s+/g, '-').replace(/\//g, '');
+            const catContainerId = `loc${locationCounter}-cat-${safeCategory}`;
+            
+            locHTML += `
+                <h3>${category}</h3>
+                <div class="category-container">
+                    <div id="${catContainerId}"></div>
+                </div>
+                <button class="btn-add" onclick="addConsumer('${catContainerId}', '${category}')">+ הוסף ${category === 'אחר' ? 'צרכן אחר' : 'צרכן'}</button>
+            `;
+        }
+
+        locDiv.innerHTML = locHTML;
+        container.appendChild(locDiv);
+    }
+
+    // הוספת שורת צרכן
+    function addConsumer(containerId, category) {
+        const container = document.getElementById(containerId);
+        const rowId = 'row-' + Date.now() + Math.floor(Math.random() * 1000);
+        const row = document.createElement("div");
+        row.className = "item-row";
+        row.id = rowId;
+
+        // בניית דרופדאון סוג הצרכן או שדה חופשי (בקטגוריית "אחר")
+        let typeHtml = '';
+        if (category === 'אחר') {
+            typeHtml = `
+                <div class="field-wrapper">
+                    <label>שם הצרכן</label>
+                    <input type="text" placeholder="הכנס שם...">
+                </div>
+            `;
+        } else {
+            let options = `<option value="">-- בחר --</option>`;
+            for (let item in consumerData[category]) {
+                options += `<option value="${item}">${item}</option>`;
+            }
+            typeHtml = `
+                <div class="field-wrapper">
+                    <label>סוג הצרכן</label>
+                    <select onchange="updateDynamicFields(this, '${category}', '${rowId}')">
+                        ${options}
+                    </select>
+                </div>
+            `;
+        }
+
+        // אפשרויות הימים המדויקות
+        const daysOptions = `
+            <option value="all">כל הימים</option>
+            <option value="sun">יום א'</option>
+            <option value="mon">יום ב'</option>
+            <option value="tue">יום ג'</option>
+            <option value="wed">יום ד'</option>
+            <option value="thu">יום ה'</option>
+            <option value="fri">יום ו'</option>
+            <option value="sat">יום ז'</option>
+            <option value="jewish_shabbat">יום שבת יהודי</option>
+            <option value="custom">בחירת ימים...</option>
+        `;
+
+        // בניית פריסת הגריד המלאה (על שורה אחת)
+        row.innerHTML = `
+            <!-- טור 1: בחירת הצרכן -->
+            <div class="col-type">${typeHtml}</div>
+            
+            <!-- טורים 2, 3, 4: שדות דינמיים לפי הצרכן -->
+            <div class="col-dyn" id="dyn1-${rowId}"></div>
+            <div class="col-dyn" id="dyn2-${rowId}"></div>
+            <div class="col-dyn" id="dyn3-${rowId}"></div>
+            
+            <!-- טור 5: ימים -->
+            <div class="col-days">
+                <div class="field-wrapper">
+                    <label>ימים בשבוע</label>
+                    <select onchange="toggleCustomSelect(this)">
+                        ${daysOptions}
+                    </select>
+                    <div class="multi-select-container" style="display:none;">
+                        <div class="multi-select-box">
+                            ${DAYS_ARR.map(d => `<label><input type="checkbox" value="${d}"> ${d}</label>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- טור 6: שעות -->
+            <div class="col-hours">
+                <div class="field-wrapper">
+                    <label>שעות פעילות</label>
+                    <select onchange="toggleCustomSelect(this)">
+                        <option value="all">כל שעות היום</option>
+                        <option value="custom">בחירת שעות מרובה...</option>
+                    </select>
+                    <div class="multi-select-container" style="display:none;">
+                        <div class="multi-select-box" style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                            ${HOURS_ARR.map(h => `<label><input type="checkbox" value="${h}"> ${h}</label>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- טור 7: מחיקה -->
+            <div style="display:flex; align-items:flex-end; padding-bottom:5px;">
+                <button type="button" class="btn-delete" title="מחק צרכן" onclick="this.closest('.item-row').remove()">✕</button>
+            </div>
+        `;
+
+        container.appendChild(row);
+
+        // אם "אחר" נבחר כברירת מחדל, טען את השדות הקבועים "הספק" ו"כמות"
+        if (category === 'אחר') {
+            renderDynamicFieldsDirect(rowId, ["power", "qty"]);
+        }
+    }
+
+    // כשבוחרים צרכן מהרשימה, טוען את 3 העמודות הדינמיות המיועדות לו
+    function updateDynamicFields(selectElem, category, rowId) {
+        const val = selectElem.value;
+        const fields = (val && consumerData[category][val]) ? consumerData[category][val] : [];
+        renderDynamicFieldsDirect(rowId, fields);
+    }
+
+    // הזרקת השדות (Inputs) לעמודות בהתאמה (dyn1, dyn2, dyn3)
+    function renderDynamicFieldsDirect(rowId, fieldsArray) {
+        for(let i = 1; i <= 3; i++) {
+            const containerDiv = document.getElementById(`dyn${i}-${rowId}`);
+            containerDiv.innerHTML = ''; // מנקה שדות ישנים
+            
+            if (fieldsArray[i - 1]) {
+                const fieldKey = fieldsArray[i - 1];
+                const labelTxt = fieldDefinitions[fieldKey].label;
+                
+                containerDiv.innerHTML = `
+                    <div class="field-wrapper">
+                        <label>${labelTxt}</label>
+                        <input type="number" min="0" placeholder="${labelTxt}">
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // פתיחה והסתרה של תיבות הצ'קבוקסים בבחירת "בחירת ימים..." או "בחירת שעות מרובה..."
+    function toggleCustomSelect(selectElem) {
+        // מחפש את .multi-select-container שיושב מיד אחרי הסלקט
+        const hiddenBox = selectElem.nextElementSibling;
+        if (selectElem.value === 'custom') {
+            hiddenBox.style.display = 'block';
+        } else {
+            hiddenBox.style.display = 'none';
+        }
+    }
+
+    // טעינת מיקום ראשון בטעינת העמוד
+    window.onload = () => {
+        addLocation();
+    };
+</script>
+
+</body>
+</html>

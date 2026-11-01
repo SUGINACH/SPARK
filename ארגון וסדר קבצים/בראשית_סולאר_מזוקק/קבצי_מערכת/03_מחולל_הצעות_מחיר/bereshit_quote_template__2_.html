@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הדפסת הצעת מחיר - בראשית סולאר</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --brand-blue: #007CAA; /* צבע נדגם מהלוגו עבור הקווים בפוטר */
+    --blue: #00798c;
+    --blue-dark: #005a70;
+    --blue-light: #f0f6fa;
+    --teal: #2a9d8f;
+    --border: #d0dde6;
+    --bg-row: #f5f9fc;
+    --text: #2c2c2c;
+    --text-light: #555;
+    --white: #ffffff;
+    
+    /* צבעי קוביות ההמלצות בעמוד 3 */
+    --testi-top-right: #cce9f5;
+    --testi-top-left: #e3e3e3;
+    --testi-bottom-right: #d2d2d2;
+    --testi-bottom-left: #d2f1f5;
+  }
+
+  body {
+    font-family: 'Assistant', Arial, sans-serif;
+    color: var(--text);
+    background: #f1f5f9;
+    font-size: 11pt;
+    line-height: 1.5;
+    counter-reset: page-num; /* מספור עמודים אוטומטי */
+  }
+
+  /* ── WORKSPACE LAYOUT ── */
+  @media screen {
+    body {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 450px;
+      min-width: 450px;
+      background: #ffffff;
+      border-left: 2px solid #cbd5e1;
+      overflow-y: auto;
+      padding: 20px;
+      height: 100vh;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+    }
+    .preview-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 30px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+
+  @media print {
+    body { background: none; overflow: visible; display: block; height: auto; }
+    .sidebar { display: none !important; }
+    .preview-area { padding: 0 !important; overflow: visible !important; height: auto !important; display: block !important; }
+    .page { margin: 0 !important; box-shadow: none !important; page-break-after: always; page-break-inside: avoid; }
+  }
+
+  /* ── SIDEBAR CONTROLS ── */
+  .sidebar h2 { color: var(--blue-dark); margin-bottom: 15px; font-size: 14pt; border-bottom: 2px solid var(--blue); padding-bottom: 8px; }
+  details { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; padding: 10px; }
+  summary { font-weight: 700; cursor: pointer; color: var(--blue-dark); outline: none; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; margin-bottom: 10px; }
+  .form-group label { font-weight: 700; font-size: 9pt; color: var(--text-light); }
+  .form-group input, .form-group textarea, .form-group select { padding: 7px; border: 1px solid var(--border); border-radius: 4px; font-family: 'Assistant', sans-serif; font-size: 9.5pt; }
+  .item-toggle-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-right: 10px; border-right: 2px solid var(--border); }
+  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 9pt; font-weight: 600; }
+  .btn-print { background: var(--teal); color: white; border: none; padding: 12px; font-size: 11pt; font-weight: 700; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .btn-print:hover { background: var(--blue-dark); }
+
+  /* ── A4 PAGE SETUP ── */
+  @page { size: A4; margin: 0; }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    flex-shrink: 0;
+    background: white;
+    position: relative;
+    overflow: hidden;
+    padding: 20mm 15mm 25mm;
+    box-sizing: border-box;
+    counter-increment: page-num;
+  }
+  .page-preview-shadow { box-shadow: 0 0 15px rgba(0,0,0,0.1); margin-bottom: 25px; }
+  .page.no-padding { padding: 0; }
+
+  /* ── FOOTER STYLE (RTL FIXED) ── */
+  .page-footer {
+    position: absolute;
+    bottom: 5mm;
+    left: 15mm;
+    right: 15mm;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* ב-RTL זה מצמיד לימין */
+    direction: rtl;
+    z-index: 10;
+  }
+  .footer-divider {
+    width: 1.5px;
+    height: 35px;
+    background-color: var(--brand-blue);
+    margin: 0 12px;
+  }
+  .footer-logo {
+    height: 38px;
+    display: flex;
+    align-items: center;
+  }
+  .footer-logo svg { height: 100%; width: auto; }
+  .footer-page-num {
+    font-size: 16pt;
+    font-weight: 800;
+    color: #000;
+    min-width: 15px;
+    text-align: center;
+  }
+  .footer-page-num::after {
+    content: counter(page-num);
+  }
+  .footer-text {
+    display: flex;
+    align-items: center;
+    font-size: 10pt;
+    font-weight: 600;
+    color: #000;
+  }
+  .footer-text .sep { font-weight: 400; margin: 0 8px; }
+
+  /* ── COVER PAGE ── */
+  .cover-wrapper { display: flex; flex-direction: column; align-items: center; padding: 25mm 20mm 20mm; height: 100%; }
+  .cover-logo { height: 60mm; margin-bottom: 6mm; display: flex; justify-content: center; width: 100%; }
+  .cover-logo svg { height: 100%; width: auto; max-width: 100%; }
+  .cover-bar { background: var(--blue); color: white; font-size: 22pt; font-weight: 800; padding: 8px 0; width: 100%; text-align: center; margin-bottom: 6mm; }
+  .cover-title { font-size: 20pt; font-weight: 800; text-align: center; margin-bottom: 6mm; color: #000; }
+  .cover-meta-box { width: 100%; border-top: 2px solid var(--blue); border-bottom: 2px solid var(--blue); padding: 6mm 0; margin-bottom: 6mm; }
+  .cover-meta-row { display: flex; gap: 8px; margin-bottom: 5px; margin-right: 36mm; font-size: 11pt; }
+  .cover-meta-label { font-weight: 700; color: var(--blue); width: 100px; }
+  .cover-meta-value { font-weight: 400; }
+  .cover-meta-value.large { font-size: 15pt; font-weight: 800; color: #000; }
+  .cover-hr { width: 100%; border: none; border-top: 2px solid var(--blue); margin: 4mm 0; }
+
+  /* ── GLOBALS ── */
+  .image-box { width: 100%; background-size: cover; background-position: center; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: #888; font-size: 10pt; background-color: #f1f5f9; }
+  .section-header-box { background: var(--blue); color: white; font-size: 16pt; font-weight: 700; text-align: center; padding: 6px 15px; margin-bottom: 5mm; }
+
+  /* ── METRICS SUMMARY ── */
+  .metrics-summary-container { display: flex; flex-direction: column; gap: 4px; width: 100%; margin-top: 4mm; }
+  .metric-row { background: #e6e6e6; border-radius: 4px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .metric-row .m-label { font-weight: 700; font-size: 11pt; }
+  .metric-row .m-value-container { display: flex; align-items: center; gap: 10px; }
+  .metric-row .m-value { font-weight: 800; font-size: 11pt; color: var(--blue-dark); }
+  .metric-row .m-icon { background: var(--blue); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10pt; }
+
+  /* ── PAGE 3: INTRO & TESTIMONIALS ── */
+  .bg-gray { background-color: #e6e6e6; }
+  .main-header { background-color: var(--blue); color: white; font-size: 24pt; font-weight: 800; text-align: center; width: 75%; margin: 15mm auto 10mm auto; padding: 8px 0; }
+  .intro-text { width: 85%; margin: 0 auto; font-size: 12pt; line-height: 1.5; text-align: justify; }
+  .intro-text p { margin-bottom: 15px; }
+  .testimonials-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 85%; margin: 0 auto; }
+  .testi-box { padding: 12px 18px; font-size: 11.5pt; line-height: 1.3; display: flex; flex-direction: column; justify-content: center; }
+  .testi-box .author { font-weight: 400; margin-bottom: 4px; }
+  .testi-box .quote { font-weight: 800; }
+  .box-tr { background-color: var(--testi-top-right); }
+  .box-tl { background-color: var(--testi-top-left); }
+  .box-br { background-color: var(--testi-bottom-right); }
+  .box-bl { background-color: var(--testi-bottom-left); }
+
+  /* ── PAGE 4: WHY US ── */
+  .features-wrapper { width: 85%; margin: 0 auto; display: flex; flex-direction: column; gap: 3mm; margin-top: 5mm; flex: 1; }
+  .feature-block { display: flex; flex-direction: column; }
+  .feature-title-row { display: flex; align-items: center; margin-bottom: 8px; }
+  .feature-line { flex-grow: 1; height: 2px; background-color: var(--blue); margin-top: 6px; }
+  .feature-title { font-size: 24pt; font-weight: 700; color: var(--blue); margin: 0 15px; }
+  .feature-icon { width: 35px; height: 35px; }
+  .feature-icon svg { width: 100%; height: 100%; fill: var(--blue); }
+  .feature-list { list-style: none; padding: 0; margin: 0; padding-right: 50px; }
+  .feature-list li { position: relative; font-size: 11.5pt; line-height: 1.5; margin-bottom: 4px; font-weight: 400; }
+  .feature-list li::before { content: ''; position: absolute; right: -15px; top: 9px; width: 5px; height: 5px; border-radius: 50%; background-color: var(--blue); }
+  .bottom-image-container { position: absolute; bottom: 12; left: 0; right: 0; height: 75mm; z-index: 1;}
+  .bottom-image-container img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ── SPEC GRID & TABLES ── */
+  .spec-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); margin-bottom: 5mm; font-size: 10pt; }
+  .spec-cell { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .spec-cell:nth-child(odd) { border-left: 1px solid var(--border); }
+  .spec-cell .sc-lbl { font-weight: 700; color: var(--blue-dark); }
+  .spec-cell .sc-val { font-weight: 800; }
+  .num-section { margin-bottom: 5mm; }
+  .num-title { background: var(--blue-light); border-right: 4px solid var(--blue); font-size: 12pt; font-weight: 700; padding: 5px 10px; margin-bottom: 3mm; display: flex; align-items: center; gap: 8px; }
+  .num-badge { background: var(--blue); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: 700; }
+  .num-list { padding-right: 18px; font-size: 9.5pt; }
+  .num-list li { text-align: justify; font-weight:500; font-size:12pt; margin-bottom: 4px; }
+  .quote-table-1 { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  .quote-table-1 th { background: var(--blue); color: white; padding: 6px 10px; text-align: right; }
+  .quote-table-1 td { font-weight:500; font-size:11pt; padding: 6px 10px; border: 1px solid var(--border); vertical-align: middle; }
+  .quote-table-1 tr:nth-child(even) td { background: var(--bg-row); }
+  .quote-table-1 .ct-header { background: var(--blue); color: white; font-weight: 700; width: 25%; text-align: center; }
+  .quote-table-1 .no-inc { color: #d9534f; font-weight: 700; }
+  .quote-table-1 .center-col { text-align: center; font-weight: 700; font-size:14pt; color: var(--blue-dark); }
+  .quote-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+  .quote-table th { background: var(--blue); color: white; padding: 6px 10px; text-align: right; }
+  .quote-table td { font-weight:500; font-size:14pt; padding: 6px 10px; border: 1px solid var(--border); vertical-align: middle; }
+  .quote-table tr:nth-child(even) td { background: var(--bg-row); color: var(--blue); }
+  .quote-table .ct-header { background: var(--blue); color: white; font-weight: 700; width: 25%; text-align: center; }
+  .quote-table .no-inc { color: #d9534f; font-weight: 700; }
+  .quote-table .center-col { text-align: center; font-weight: 700; font-size:14pt; color: var(--blue-dark); }
+  .w-header-row td { background: #f0f6fa !important; font-weight: 700; color: var(--blue-dark); text-align: center; }
+
+  /* ── CONTACT END PAGE ── */
+  .contact-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40mm 20mm; }
+  .contact-logo-wrapper { height: 60mm; margin-bottom: 8mm; display: flex; justify-content: center; width: 100%; }
+  .contact-logo-wrapper svg { height: 100%; width: auto; max-width: 100%; }
+  .contact-phone { font-size: 40pt; font-weight: 800; color: var(--blue-dark); margin-bottom: 4mm; }
+  .contact-details { font-size: 13pt; color: var(--text-light); }
+</style>
+</head>
+<body>
+
+<!-- 
+========================================================================
+מקום הדבקת ה-SVG המרכזי 
+מחק את שורת ההערה הבאה והדבק את כל קוד ה-SVG של הלוגו שלך במקומה.
+======================================================================== 
+-->
+<div id="master-logo-container" style="display:none;">
+<svg xmlns="http://www.w3.org/2000/svg" width="201" height="231" viewBox="0 0 201 231" fill="none">
+  <g clip-path="url(#clip0_28_2640)">
+    <path d="M38.7064 150.777C38.7064 152.022 38.1322 152.626 36.9519 152.626H30.8136C29.6652 152.626 29.091 152.022 29.091 150.777V130.297C29.091 129.152 28.5533 128.58 27.4368 128.58H21.7678C21.4989 128.58 21.2939 128.78 21.1253 129.22L20.7197 130.465C20.4144 131.442 20.2457 132.519 20.2457 133.759V150.573C20.2457 151.95 19.6716 152.626 18.5232 152.626H7.79587C6.68395 152.626 6.14166 152.054 6.14166 150.909V145.462C6.14166 144.353 6.6794 143.813 7.79587 143.813H10.8309V135.472C10.8309 133.859 11.2364 132.042 12.0111 130.024L12.5489 128.58H9.1083C7.95993 128.58 7.38574 128.007 7.38574 126.862V121.415C7.38574 120.307 7.95993 119.766 9.1083 119.766H31.4379C36.2592 119.766 38.6881 122.156 38.6881 126.931V150.773L38.7064 150.777ZM55.6313 137.325C55.6313 138.57 55.0571 139.211 53.9452 139.211H47.7385C46.6265 139.211 46.0842 138.57 46.0842 137.325V128.58H43.4548C42.3429 128.58 41.8006 128.007 41.8006 126.862V121.415C41.8006 120.307 42.3383 119.766 43.4548 119.766H53.5396C54.9204 119.766 55.6313 120.538 55.6313 122.051V137.321V137.325ZM100.874 121.86L95.8473 143.549C94.4665 149.601 90.6522 152.631 84.4455 152.631H70.0771C67.9171 152.631 66.3677 152.027 65.4563 150.782C64.7499 149.805 64.276 148.192 64.0071 145.871L62.116 128.584H60.3296C59.2177 128.584 58.6754 128.012 58.6754 126.867V121.42C58.6754 120.311 59.2131 119.771 60.3296 119.771H69.2341C70.2457 119.771 70.8199 120.375 70.9885 121.62L72.506 136.18C72.5379 136.548 72.6746 136.716 72.9116 136.716C73.1805 136.716 73.3491 136.548 73.3856 136.18L75.8145 121.551C75.9831 120.375 76.6256 119.771 77.7375 119.771H83.9761C84.8192 119.771 85.2567 120.207 85.2567 121.084C85.2567 121.183 85.2248 121.452 85.12 121.924L82.5224 135.544C82.2855 136.821 81.7796 137.661 81.0049 138.102C80.4308 138.406 79.4555 138.575 78.0702 138.575H72.7066L72.9754 142.173C73.0757 143.281 73.5496 143.822 74.4246 143.822H83.9716C85.3888 143.822 86.2638 143.013 86.6375 141.4L91.0897 121.356C91.3267 120.316 92.0011 119.775 93.1495 119.775H99.6251C100.5 119.775 100.942 120.211 100.942 121.088C100.942 121.256 100.91 121.524 100.874 121.86ZM135.899 148.76L131.347 152.895C131.041 153.231 130.704 153.399 130.335 153.399C129.861 153.399 129.392 153.131 128.954 152.626L115.392 137.461C113.875 139.179 113.132 141.428 113.132 144.222H114.786C115.898 144.222 116.441 144.794 116.441 145.939V150.982C116.441 152.09 115.903 152.631 114.786 152.631H105.814C104.601 152.631 103.991 152.095 103.991 151.05V150.346L104.26 144.93C104.428 142.845 104.902 140.828 105.709 138.911C106.752 136.521 108.407 134.504 110.703 132.859L104.127 126.031C103.758 125.627 103.59 125.222 103.59 124.823C103.59 124.386 103.827 123.982 104.264 123.578L108.917 119.375C109.222 119.039 109.559 118.871 109.929 118.871C110.403 118.871 110.872 119.139 111.309 119.643L123.823 133.059H124.024C125.172 131.683 125.81 130.102 125.915 128.253H124.803C123.691 128.253 123.149 127.68 123.149 126.535V121.424C123.149 120.316 123.686 119.775 124.803 119.775H133.238C134.924 119.775 135.667 120.647 135.498 122.396L135.093 126.263C134.619 130.67 132.463 134.672 128.649 138.302L136.004 146.307C136.41 146.711 136.61 147.116 136.61 147.515C136.61 147.952 136.373 148.356 135.904 148.76H135.899ZM163.469 150.777C163.469 152.022 162.932 152.626 161.815 152.626H155.608C154.497 152.626 153.922 152.022 153.922 150.777V130.733C153.922 129.288 153.316 128.58 152.068 128.58H140.529C139.417 128.58 138.875 128.007 138.875 126.862V121.415C138.875 120.307 139.413 119.766 140.529 119.766H154.966C160.635 119.766 163.465 122.592 163.465 128.239V150.768L163.469 150.777ZM194.749 151.045C194.749 152.086 194.343 152.626 193.537 152.626H168.509C167.398 152.626 166.855 152.09 166.855 150.977V145.53C166.855 144.385 167.393 143.813 168.509 143.813H180.449C181.83 143.813 182.272 143.545 182.272 142.032V130.533C182.272 129.325 182.172 128.584 180.317 128.584H169.084C167.903 128.584 167.329 128.048 167.329 126.935V121.488C167.329 120.343 167.903 119.771 169.084 119.771H183.452C189.016 119.771 191.782 122.56 191.782 128.112V139.41C191.782 141.296 191.245 142.672 190.197 143.545V143.949H193.3C194.28 143.949 194.749 144.485 194.749 145.53V151.045Z" fill="green"></path>
+    <path d="M52.0631 198.735C52.0631 199.979 51.5253 200.584 50.4089 200.584H44.2022C43.0902 200.584 42.516 199.979 42.516 198.735V178.69C42.516 177.246 41.91 176.537 40.6613 176.537H29.1274C28.0155 176.537 27.4732 175.965 27.4732 174.82V169.372C27.4732 168.264 28.0109 167.723 29.1274 167.723H43.5642C49.2331 167.723 52.0631 170.549 52.0631 176.196V198.726V198.735ZM87.3529 196.718L82.8004 200.852C82.4951 201.188 82.1579 201.356 81.7887 201.356C81.3148 201.356 80.8454 201.088 80.408 200.584L66.8462 185.419C65.3287 187.136 64.5859 189.385 64.5859 192.179H66.2401C67.352 192.179 67.8943 192.751 67.8943 193.896V198.939C67.8943 200.048 67.3565 200.588 66.2401 200.588H57.2672C56.0551 200.588 55.4444 200.052 55.4444 199.007V198.303L55.7133 192.888C55.8819 190.802 56.3558 188.785 57.1624 186.868C58.206 184.478 59.8602 182.461 62.1569 180.817L55.5811 173.988C55.212 173.584 55.0434 173.18 55.0434 172.78C55.0434 172.344 55.2804 171.939 55.7178 171.535L60.3706 167.333C60.6759 166.996 61.0131 166.828 61.3822 166.828C61.8562 166.828 62.3256 167.096 62.763 167.601L75.2767 181.016H75.4772C76.6256 179.64 77.2636 178.059 77.3684 176.21H76.2565C75.1446 176.21 74.6023 175.637 74.6023 174.493V169.382C74.6023 168.273 75.14 167.732 76.2565 167.732H84.6916C86.3777 167.732 87.1205 168.605 86.9519 170.354L86.5463 174.22C86.0724 178.627 83.9169 182.629 80.1026 186.259L87.4577 194.264C87.8633 194.669 88.0638 195.073 88.0638 195.473C88.0638 195.909 87.8268 196.313 87.3575 196.718H87.3529ZM117.762 174.829L108.384 199.144C108.015 200.12 107.135 200.588 105.818 200.588H99.4428C98.5313 200.588 98.062 200.184 98.062 199.343C98.062 199.039 98.1622 198.639 98.3673 198.167L107.003 176.541H91.992C90.8801 176.541 90.3378 175.937 90.3378 174.692V160.836C90.3378 159.827 90.9803 159.323 92.2608 159.323H98.1987C99.379 159.323 99.9532 159.927 99.9532 161.104V167.728H115.639C117.056 167.728 117.762 168.5 117.762 170.013V174.82V174.829ZM134.322 198.735C134.322 199.979 133.748 200.584 132.636 200.584H126.43C125.318 200.584 124.775 199.979 124.775 198.735V176.541H122.146C121.034 176.541 120.492 175.969 120.492 174.824V169.377C120.492 168.268 121.03 167.728 122.146 167.728H132.231C133.612 167.728 134.322 168.5 134.322 170.013V198.73V198.735ZM168.851 191.911C167.94 197.931 164.467 200.924 158.498 200.924H151.247C148.176 200.924 145.952 200.284 144.503 199.039C143.086 197.794 142.243 195.641 141.974 192.651L140.32 176.541H139.071C137.959 176.541 137.417 175.969 137.417 174.824V169.377C137.417 168.268 137.954 167.728 139.071 167.728H169.667C171.421 167.728 172.365 169.209 172.096 170.958L168.856 191.906L168.851 191.911ZM161.195 176.541H149.862L151.01 190.462C151.111 191.57 151.785 192.111 153.034 192.111H157.454C158.835 192.111 159.578 191.438 159.746 190.057L161.195 176.537V176.541Z" fill="black"></path>
+    <path d="M9.43638 230.491C9.43638 230.836 9.24498 231 8.87586 231H7.63634C7.07583 231 7.01658 230.846 7.01658 230.287V217.561C7.01658 217.148 6.8024 216.934 6.38771 216.934H1.83521C1.42964 216.934 1.22913 216.735 1.22913 216.33V215.131C1.22913 214.74 1.42964 214.549 1.83521 214.549H7.02114C8.53408 214.549 9.43638 215.449 9.43638 216.934V230.491ZM20.4781 216.812L16.7641 225.789C16.6684 226.016 16.395 226.134 15.9439 226.134H14.6724C14.4218 226.134 14.3033 226.016 14.3033 225.766C14.3033 225.421 14.3489 225.171 14.4355 224.994L17.9216 216.93H12.1159C11.724 216.93 11.5326 216.716 11.5326 216.276V211.996C11.5326 211.642 11.7605 211.465 12.2116 211.465H13.3418C13.7474 211.465 13.9479 211.678 13.9479 212.091V214.545H19.7171C20.2275 214.545 20.4781 214.817 20.4781 215.353V216.812ZM26.1972 220.501C26.1972 220.942 25.9967 221.155 25.5911 221.155H24.4017C23.9871 221.155 23.782 220.942 23.782 220.501V216.93H22.6382C22.2326 216.93 22.0321 216.73 22.0321 216.326V215.126C22.0321 214.736 22.2326 214.545 22.6382 214.545H25.4453C25.9466 214.545 26.1927 214.817 26.1927 215.353V220.501H26.1972ZM37.6263 225.58C37.6263 225.948 37.4851 226.139 37.1843 226.139H28.7264C28.3345 226.139 28.1431 225.948 28.1431 225.557V224.358C28.1431 223.954 28.3345 223.754 28.7264 223.754H33.3062C33.8166 223.754 34.0673 223.422 34.0673 222.759V217.73C34.0673 217.198 33.7802 216.934 33.2105 216.934H29.1639C28.7583 216.934 28.5578 216.744 28.5578 216.353V215.154C28.5578 214.749 28.7583 214.549 29.1639 214.549H33.885C34.8237 214.549 35.4891 214.763 35.8719 215.19C36.2546 215.603 36.4415 216.294 36.4415 217.243V222.082C36.4415 222.995 36.3002 223.554 36.0131 223.776V223.799H37.1068C37.4532 223.799 37.6172 223.99 37.6172 224.358V225.58H37.6263ZM52.5598 215.285L51.0013 222.4C50.4408 224.889 48.9916 226.134 46.6356 226.134H44.1611C43.2315 226.134 42.5434 225.957 42.0786 225.603C41.5682 225.162 41.2355 224.394 41.0897 223.29L40.2102 216.934H39.3762C38.9843 216.934 38.7929 216.735 38.7929 216.33V215.131C38.7929 214.74 38.9843 214.549 39.3762 214.549H42.0056C42.352 214.549 42.5297 214.727 42.5662 215.081L43.1631 220.455C43.8649 220.242 44.2568 219.792 44.3525 219.092L44.8401 215.176C44.8857 214.763 45.0771 214.549 45.4007 214.549H46.9364C47.2463 214.549 47.4012 214.704 47.4012 215.013C47.4012 215.058 47.3875 215.154 47.3556 215.308L46.7951 218.652C46.4761 220.596 45.3414 221.746 43.4047 222.105L43.4776 222.781C43.5368 223.436 43.9196 223.754 44.6214 223.754H46.5718C47.6291 223.754 48.2488 223.304 48.4539 222.4L50.058 215.104C50.14 214.736 50.3678 214.545 50.7461 214.545H52.1269C52.4231 214.545 52.578 214.699 52.5917 215.008C52.5917 215.09 52.578 215.176 52.5689 215.281L52.5598 215.285ZM63.8658 225.58C63.8658 225.948 63.7246 226.139 63.4238 226.139H54.9659C54.574 226.139 54.3826 225.948 54.3826 225.557V224.358C54.3826 223.954 54.574 223.754 54.9659 223.754H59.5457C60.0561 223.754 60.3068 223.422 60.3068 222.759V217.73C60.3068 217.198 60.0197 216.934 59.4501 216.934H55.4034C54.9978 216.934 54.7973 216.744 54.7973 216.353V215.154C54.7973 214.749 54.9978 214.549 55.4034 214.549H60.1245C61.0632 214.549 61.7286 214.763 62.1114 215.19C62.4942 215.603 62.681 216.294 62.681 217.243V222.082C62.681 222.995 62.5397 223.554 62.2526 223.776V223.799H63.3463C63.6927 223.799 63.8567 223.99 63.8567 224.358V225.58H63.8658ZM81.0095 225.485C81.0095 225.925 80.809 226.139 80.3897 226.139H79.2003C78.7947 226.139 78.5942 225.925 78.5942 225.485V217.539C78.5942 217.134 78.4028 216.934 78.0109 216.934H75.0124C74.9531 216.934 74.8802 217.016 74.8119 217.193L74.5977 217.907C74.4291 218.406 74.3471 218.952 74.3471 219.556V225.417C74.3471 225.903 74.1329 226.139 73.6908 226.139H70.6695C70.2776 226.139 70.0862 225.939 70.0862 225.535V224.335C70.0862 223.945 70.2776 223.754 70.6695 223.754H72.0366V219.747C72.0366 219.12 72.1551 218.538 72.383 217.979L72.8341 216.934H71.4533C71.0386 216.934 70.8336 216.735 70.8336 216.33V215.131C70.8336 214.74 71.0341 214.549 71.4533 214.549H78.6854C80.2302 214.549 81.0049 215.39 81.0049 217.075V225.485H81.0095ZM92.516 216.421C92.516 216.766 92.3474 216.93 92.0284 216.93H90.8755V225.48C90.8755 225.921 90.6841 226.134 90.2922 226.134H89.08C88.6881 226.134 88.4967 225.921 88.4967 225.48V216.93H83.6662C83.2607 216.93 83.0601 216.73 83.0601 216.326V215.126C83.0601 214.736 83.2607 214.545 83.6662 214.545H91.9829C92.3383 214.545 92.516 214.713 92.516 215.054V216.417V216.421ZM103.818 225.58C103.818 225.948 103.676 226.139 103.375 226.139H94.9176C94.5257 226.139 94.3343 225.948 94.3343 225.557V224.358C94.3343 223.954 94.5257 223.754 94.9176 223.754H99.4974C100.008 223.754 100.258 223.422 100.258 222.759V217.73C100.258 217.198 99.9714 216.934 99.4017 216.934H95.3551C94.9495 216.934 94.749 216.744 94.749 216.353V215.154C94.749 214.749 94.9495 214.549 95.3551 214.549H100.076C101.015 214.549 101.68 214.763 102.063 215.19C102.446 215.603 102.633 216.294 102.633 217.243V222.082C102.633 222.995 102.491 223.554 102.204 223.776V223.799H103.298C103.644 223.799 103.808 223.99 103.808 224.358V225.58H103.818ZM109.199 225.485C109.199 225.925 108.999 226.139 108.593 226.139H107.404C106.989 226.139 106.784 225.925 106.784 225.485V216.934H105.64C105.235 216.934 105.034 216.735 105.034 216.33V215.131C105.034 214.74 105.235 214.549 105.64 214.549H108.447C108.949 214.549 109.195 214.822 109.195 215.358V225.489L109.199 225.485ZM122.014 215.817L121.385 219.138C120.897 221.591 119.553 223.54 117.338 224.976L112.781 227.856C112.435 228.083 112.184 228.07 112.034 227.811L111.391 226.816C111.296 226.639 111.25 226.52 111.25 226.434C111.25 226.234 111.332 226.089 111.487 225.993L114.736 223.999L114.713 223.904L113.132 216.93H111.833C111.441 216.93 111.25 216.73 111.25 216.326V215.126C111.25 214.736 111.441 214.545 111.833 214.545H114.367C114.877 214.545 115.178 214.772 115.269 215.222L116.532 221.909C116.614 222.373 116.591 222.727 116.459 222.954L116.504 222.977L116.801 222.777C118.04 221.959 118.765 220.855 118.988 219.479L119.38 216.93H118.478C118.086 216.93 117.894 216.73 117.894 216.326V215.126C117.894 214.736 118.086 214.545 118.478 214.545H121.38C121.795 214.545 122.009 214.758 122.009 215.172V215.812L122.014 215.817ZM137.462 215.285L135.904 222.4C135.343 224.889 133.894 226.134 131.538 226.134H129.064C128.134 226.134 127.446 225.957 126.981 225.603C126.471 225.162 126.138 224.394 125.992 223.29L125.113 216.934H124.279C123.887 216.934 123.695 216.735 123.695 216.33V215.131C123.695 214.74 123.887 214.549 124.279 214.549H126.908C127.254 214.549 127.432 214.727 127.469 215.081L128.066 220.455C128.767 220.242 129.159 219.792 129.255 219.092L129.743 215.176C129.788 214.763 129.98 214.549 130.303 214.549H131.839C132.149 214.549 132.304 214.704 132.304 215.013C132.304 215.058 132.29 215.154 132.258 215.308L131.698 218.652C131.379 220.596 130.244 221.746 128.307 222.105L128.38 222.781C128.439 223.436 128.822 223.754 129.524 223.754H131.474C132.532 223.754 133.151 223.304 133.356 222.4L134.96 215.104C135.042 214.736 135.27 214.545 135.649 214.545H137.029C137.326 214.545 137.48 214.699 137.494 215.008C137.494 215.09 137.48 215.176 137.471 215.281L137.462 215.285ZM154.31 225.485C154.31 225.925 154.118 226.139 153.726 226.139H152.514C152.122 226.139 151.931 225.925 151.931 225.485V217.561C151.931 217.148 151.703 216.934 151.266 216.934H145.615C145.223 216.934 145.032 216.735 145.032 216.33V215.131C145.032 214.74 145.223 214.549 145.615 214.549H151.931C153.416 214.549 154.31 215.449 154.31 216.934V225.485ZM147.565 225.485C147.565 225.925 147.374 226.139 146.982 226.139H145.756C145.351 226.139 145.15 225.925 145.15 225.485V222.009C145.15 221.237 145.319 220.492 145.638 219.769C145.733 219.569 145.925 219.46 146.198 219.46H147.009C147.378 219.46 147.57 219.638 147.57 219.992V225.485H147.565ZM160.539 220.501C160.539 220.942 160.339 221.155 159.933 221.155H158.744C158.329 221.155 158.124 220.942 158.124 220.501V216.93H156.98C156.575 216.93 156.374 216.73 156.374 216.326V215.126C156.374 214.736 156.575 214.545 156.98 214.545H159.787C160.289 214.545 160.535 214.817 160.535 215.353V220.501H160.539ZM169.138 226.134H167.926C167.58 226.134 167.379 225.943 167.297 225.575L166.513 222.145H166.345L164.44 225.739C164.308 225.998 164.025 226.13 163.561 226.13H162.321C162.07 226.13 161.952 225.939 161.952 225.548C161.952 225.298 162.011 225.085 162.12 224.894L164.121 221.441C164.417 220.955 164.955 220.705 165.752 220.705H166.217V217.825C166.217 217.243 165.958 216.948 165.443 216.948H163.838C163.447 216.948 163.255 216.748 163.255 216.344V215.122C163.255 214.731 163.447 214.54 163.838 214.54H165.98C167.753 214.54 168.633 215.549 168.633 217.575V220.242C168.633 220.764 168.678 221.228 168.774 221.628L169.608 225.03C169.667 225.289 169.703 225.444 169.703 225.494C169.703 225.907 169.512 226.121 169.143 226.121L169.138 226.134ZM178.931 225.485C178.931 225.925 178.731 226.139 178.325 226.139H177.136C176.721 226.139 176.516 225.925 176.516 225.485V217.68C176.516 217.18 176.256 216.934 175.742 216.934H171.326C170.92 216.934 170.72 216.735 170.72 216.33V215.131C170.72 214.74 170.92 214.549 171.326 214.549H176.156C178.002 214.549 178.927 215.462 178.927 217.302V225.485H178.931ZM186.574 223.631C186.574 224.376 186.359 224.985 185.931 225.444C185.503 225.903 184.919 226.13 184.195 226.13H181.552C181.101 226.13 180.873 225.939 180.873 225.548V224.349C180.873 223.945 181.064 223.745 181.433 223.745H183.525C183.967 223.745 184.19 223.531 184.19 223.09V216.921H182.431C182.026 216.921 181.825 216.721 181.825 216.317V215.117C181.825 214.727 182.026 214.536 182.431 214.536H185.822C186.323 214.536 186.569 214.808 186.569 215.344V223.622L186.574 223.631ZM199.516 225.485L198.563 226.23C198.431 226.348 198.303 226.407 198.171 226.407C198.016 226.407 197.861 226.311 197.707 226.134L192.589 220.06C191.769 220.642 191.349 221.886 191.349 223.795H192.347C192.739 223.795 192.931 223.994 192.931 224.412V225.553C192.931 225.943 192.739 226.134 192.347 226.134H189.467C189.053 226.134 188.838 225.943 188.838 225.575V225.326L189.03 222.904C189.103 222.073 189.29 221.305 189.6 220.605C189.919 219.906 190.479 219.265 191.299 218.697L189.075 216.171C188.943 216.03 188.884 215.885 188.884 215.731C188.884 215.59 188.957 215.444 189.112 215.303L190.073 214.495C190.206 214.39 190.333 214.327 190.443 214.327C190.611 214.327 190.775 214.408 190.93 214.586L195.346 219.71H195.464C196.093 219.115 196.462 218.17 196.558 216.875H195.783C195.369 216.875 195.164 216.676 195.164 216.271V215.122C195.164 214.731 195.364 214.54 195.783 214.54H198.458C198.9 214.54 199.115 214.731 199.115 215.099C199.115 215.217 199.101 215.335 199.092 215.467L198.923 216.975C198.723 218.552 197.971 219.951 196.677 221.173L199.534 224.603C199.689 224.744 199.762 224.889 199.762 225.044C199.762 225.198 199.68 225.353 199.511 225.485H199.516Z" fill="black"></path>
+    <mask id="mask0_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="201" height="117">
+      <path d="M200.5 0H0.5V116.79H200.5V0Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask0_28_2640)">
+      <path d="M92.5616 43.6322H92.5571L51.2428 62.2454C51.539 64.3353 51.9902 66.416 52.5598 68.4922L29.3826 82.894L53.6398 71.9677L145.373 30.6434C144.353 28.8171 143.218 27.0816 142.006 25.4279L165.57 10.7445L92.5616 43.6322Z" fill="#357F3D"></path>
+    </g>
+    <mask id="mask1_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="29" y="10" width="137" height="73">
+      <path d="M92.5616 43.6322L51.2473 62.2454C51.5435 64.3353 51.9947 66.416 52.5643 68.4877L29.3871 82.894L53.6443 71.9677L145.378 30.6389C144.357 28.8125 143.222 27.0816 142.01 25.4279L165.575 10.7445L92.5616 43.6322Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask1_28_2640)">
+      <path d="M165.57 10.7445H29.3826V82.894H165.57V10.7445Z" fill="#357F3D"></path>
+    </g>
+    <mask id="mask2_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="201" height="117">
+      <path d="M200.5 0H0.5V116.79H200.5V0Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask2_28_2640)">
+      <path d="M121.239 50.2516L56.889 79.2367C57.8961 81.0903 59.0171 82.8485 60.2247 84.5204L36.7377 99.1175L62.5169 87.5052L99.4655 70.8592L110.384 65.939L151.211 47.5484C150.892 45.4767 150.423 43.4096 149.83 41.3561L172.292 27.3587V27.2497L121.239 50.247V50.2516Z" fill="#357F3D"></path>
+    </g>
+    <mask id="mask3_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="36" y="27" width="137" height="73">
+      <path d="M121.239 50.2516L56.889 79.2367C57.9006 81.0903 59.0171 82.8485 60.2247 84.5204L36.7377 99.1129L62.5169 87.5007L99.4655 70.8547L110.384 65.9344L151.211 47.5393C150.892 45.4676 150.423 43.4005 149.83 41.347L172.292 27.3542V27.2451L121.239 50.247V50.2516Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask3_28_2640)">
+      <path d="M172.292 27.2497H36.7377V99.1175H172.292V27.2497Z" fill="#357F3D"></path>
+    </g>
+    <mask id="mask4_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="56" y="48" width="113" height="62">
+      <path d="M151.799 56.0213L68.5095 93.543C70.387 95.1331 72.3829 96.5642 74.4519 97.8545L56.2646 109.862L78.1795 99.9852L150.249 67.52C150.906 64.9304 151.348 62.2863 151.585 59.615L168.099 48.6751L151.79 56.0213H151.799Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask4_28_2640)">
+      <path d="M168.104 48.6751H56.2646V109.857H168.104V48.6751Z" fill="url(#paint0_linear_28_2640)"></path>
+    </g>
+    <mask id="mask5_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="88" y="78" width="59" height="28">
+      <path d="M88.7155 103.979C99.461 106.736 111.182 106.009 122.078 101.098C132.978 96.1917 141.267 87.9005 146.294 78.0419L88.7155 103.979Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask5_28_2640)">
+      <path d="M146.294 78.0419H88.7155V106.736H146.294V78.0419Z" fill="url(#paint1_linear_28_2640)"></path>
+    </g>
+    <mask id="mask6_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="201" height="117">
+      <path d="M200.5 0H0.5V116.79H200.5V0Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask6_28_2640)">
+      <path d="M91.5454 24.5511L52.4641 42.1557C51.7714 44.7453 51.2929 47.3985 51.0149 50.0835L34.1994 61.1869L50.7552 53.7271L133.543 16.4325C131.657 14.8788 129.665 13.4886 127.587 12.2256L146.048 0L91.5499 24.5511H91.5454Z" fill="#FFC20E"></path>
+    </g>
+    <mask id="mask7_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="34" y="0" width="113" height="62">
+      <path d="M91.5499 24.5511L52.4732 42.1557C51.776 44.7498 51.302 47.3985 51.024 50.088L34.2131 61.1869L50.7689 53.7271L133.557 16.428C131.675 14.8742 129.679 13.4795 127.605 12.2165L146.048 0L91.5499 24.5465V24.5511Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask7_28_2640)">
+      <path d="M146.048 0H34.204V61.1823H146.048V0Z" fill="#FFC20E"></path>
+    </g>
+    <mask id="mask8_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="201" height="117">
+      <path d="M200.5 0H0.5V116.79H200.5V0Z" fill="white"></path>
+    </mask>
+    <g mask="url(#mask8_28_2640)">
+      <path d="M80.4672 9.2907C69.8766 14.061 61.7514 22.0251 56.6885 31.5202L112.918 6.18774C109.104 5.2882 105.18 4.81572 101.215 4.81572C94.2705 4.81572 87.2116 6.25135 80.4672 9.2907Z" fill="#FFC20E"></path>
+    </g>
+    <mask id="mask9_28_2640" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="56" y="4" width="57" height="28">
+      <path d="M80.4672 9.2907C69.8766 14.0655 61.7514 22.0296 56.6885 31.5202L112.918 6.18774C109.108 5.27912 105.18 4.81572 101.211 4.81572C94.2659 4.81572 87.2071 6.25135 80.4672 9.28616" fill="white"></path>
+    </mask>
+    <g mask="url(#mask9_28_2640)">
+      <path d="M112.918 4.81572H56.6885V31.5202H112.918V4.81572Z" fill="#FFC20E"></path>
+    </g>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear_28_2640" x1="56.1398" y1="79.8682" x2="167.979" y2="79.8682" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00A79D"></stop>
+      <stop offset="1" stop-color="#007CAA"></stop>
+    </linearGradient>
+    <linearGradient id="paint1_linear_28_2640" x1="88.6243" y1="92.7573" x2="146.203" y2="92.7573" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00A79D"></stop>
+      <stop offset="1" stop-color="#007CAA"></stop>
+    </linearGradient>
+    <clipPath id="clip0_28_2640">
+      <rect width="200" height="231" fill="white" transform="translate(0.5)"></rect>
+    </clipPath>
+  </defs>
+</svg>
+</div>
+
+<!-- ████████████████████████████████████
+     LEFT SIDEBAR: CONTROLS
+     ████████████████████████████████████ -->
+<div class="sidebar no-print">
+  <h2>לוח בקרה להדפסה - בראשית</h2>
+
+  <button class="btn-print" onclick="window.print()" style="margin-bottom:15px;">🖨️ הדפסה ישירה ל-PDF (A4)</button>
+
+  <details open>
+    <summary>1. פרטי לקוח ושער</summary>
+    <div class="form-group">
+      <label>סוג מערכת (כותרת)</label>
+      <input type="text" id="inp-sys-title" value="מערכת פוטו-וולטאית לייצור חשמל" oninput="syncText('inp-sys-title', 'preview-sys-title')">
+    </div>
+    <div class="form-group">
+      <label>שם הלקוח / מוסד</label>
+      <input type="text" id="inp-client" value="שם לקוח/מוסד" oninput="syncText('inp-client', 'preview-client')">
+    </div>
+    <div class="form-group">
+      <label>כתובת</label>
+      <input type="text" id="inp-address" value="רחוב - מספר בית - עיר" oninput="syncText('inp-address', 'preview-address')">
+    </div>
+    <div class="form-group">
+      <label>נציג הלקוח (לידי)</label>
+      <input type="text" id="inp-contact" value="שם נציג הלקוח" oninput="syncText('inp-contact', 'preview-contact')">
+    </div>
+    <div class="form-group">
+      <label>תאריך הצעה</label>
+      <input type="text" id="inp-date" value="00/00/0000" oninput="syncText('inp-date', 'preview-date')">
+    </div>
+    <div class="form-group">
+      <label>שם קובץ תמונת שער (ברירת מחדל: cover.jpg)</label>
+      <input type="text" id="inp-cover-local" value="" placeholder="cover.jpg" oninput="updateImageSrc('preview-cover', this.value)">
+      <label>או העלה תמונת שער</label>
+      <input type="file" accept="image/*" onchange="uploadImage(this, ['preview-cover'])">
+    </div>
+  </details>
+
+  <details>
+    <summary>2. תמצית הפרויקט ונתונים</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-summary" checked onchange="toggleSec('page-summary', this.checked)">
+      <label style="display:inline-block;" for="chk-page-summary">הצג עמוד זה</label>
+    </div>
+    
+    <div class="form-group">
+      <label>הספק פאנלים סולאריים (kW)</label>
+      <input type="number" id="inp-size" value="165.41" oninput="updateCalculations()">
+    </div>
+    <div class="form-group">
+      <label>עלות המערכת (₪, לא כולל מע"מ)</label>
+      <input type="number" id="inp-cost" value="1360000" oninput="updateCalculations()">
+    </div>
+    
+    <div class="form-group">
+      <label>תיאור הפרויקט (טקסט חופשי)</label>
+      <textarea id="inp-summary-desc" rows="6" oninput="syncText('inp-summary-desc', 'preview-summary-desc')">ההצעה מתייחסת להקמת מתקן פוטו וולטאי היברידי על גג המוסד כולל הוספת מתקן אגירה שיחובר לרשת באסדרה תעריף משלים. 
+
+באמצעות שילוב של מערכת סולארית ואגירת חשמל תוכלו להגדיל את החיסכון המיוצר מהמתקן ולחסוך בצריכת החשמל בשעות הפסגה או למכור לחברת החשמל בשעות הפסגה בתעריף גבוה משמעותית. בנוסף, מערכת האגירה תשמש לאספקת חשמל כשר בשבתות וחגי ישראל.</textarea>
+    </div>
+    <div class="form-group">
+      <label>שם קובץ תמונת גג (ברירת מחדל: project.jpg)</label>
+      <input type="text" id="inp-proj-local" value="" placeholder="project.jpg" oninput="updateImageSrc('preview-project', this.value)">
+      <label>או העלה תמונת גג</label>
+      <input type="file" accept="image/*" onchange="uploadImage(this, ['preview-project'])">
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">הצגת שורות נתונים:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-1" checked onchange="toggleSec('m-1', this.checked)"><label for="chk-m-1">הספק פאנלים סולאריים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-2" checked onchange="toggleSec('m-2', this.checked)"><label for="chk-m-2">קיבולת מערכת אגירה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-3" checked onchange="toggleSec('m-3', this.checked)"><label for="chk-m-3">עלות המתקן</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-4" checked onchange="toggleSec('m-4', this.checked)"><label for="chk-m-4">הכנסה/חיסכון שנתי</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-5" checked onchange="toggleSec('m-5', this.checked)"><label for="chk-m-5">רווח שנתי נטו</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-6" checked onchange="toggleSec('m-6', this.checked)"><label for="chk-m-6">רווח כולל ב-25 שנה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-m-7" checked onchange="toggleSec('m-7', this.checked)"><label for="chk-m-7">תשואה שנתית ממוצעת</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>3. מתחילים מבראשית (אודות)</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-intro" checked onchange="toggleSec('page-intro', this.checked)">
+      <label style="display:inline-block;" for="chk-page-intro">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list" style="margin-top:10px;">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">ממליצים להצגה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-testi-new-1" checked onchange="toggleSec('testi-new-1', this.checked)"><label for="chk-testi-new-1">צבי בראון, ישיבת אופקים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-testi-new-2" checked onchange="toggleSec('testi-new-2', this.checked)"><label for="chk-testi-new-2">ערן קופל, נציג האנווה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-testi-new-3" checked onchange="toggleSec('testi-new-3', this.checked)"><label for="chk-testi-new-3">אלי פרידמן, נווה ירושלים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-testi-new-4" checked onchange="toggleSec('testi-new-4', this.checked)"><label for="chk-testi-new-4">דויד זריצקי, ישיבת תפרח</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>4. למה דווקא אנחנו</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-why" checked onchange="toggleSec('page-why', this.checked)">
+      <label style="display:inline-block;" for="chk-page-why">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">סעיפים להצגה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-feat-1" checked onchange="toggleSec('feat-1', this.checked)"><label for="chk-feat-1">איכות</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-feat-2" checked onchange="toggleSec('feat-2', this.checked)"><label for="chk-feat-2">שירות</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-feat-3" checked onchange="toggleSec('feat-3', this.checked)"><label for="chk-feat-3">אחריות</label></div>
+    </div>
+    <div class="form-group">
+      <label>תמונת תחתית (ברירת מחדל: page_4_pic_1.png)</label>
+      <input type="text" id="inp-page4-local" value="" placeholder="page_4_pic_1.png" oninput="updateImageSrc('img-page4-bottom', this.value)">
+      <label>או העלה תמונת תחתית</label>
+      <input type="file" accept="image/*" onchange="uploadImage(this, ['img-page4-bottom'])">
+    </div>
+  </details>
+
+  <details>
+    <summary>5. מפרט טכני (פרקים 1-2)</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-spec" checked onchange="toggleSec('page-spec', this.checked)">
+      <label style="display:inline-block;" for="chk-page-spec">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">פרק 1: תכנון, פיקוח וליווי (סעיפים):</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-1" checked onchange="toggleSec('plan-1', this.checked)"><label for="chk-plan-1">סעיף 1 - היתכנות וכדאיות</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-2" checked onchange="toggleSec('plan-2', this.checked)"><label for="chk-plan-2">סעיף 2 - תכנון הנדסי ראשוני</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-3" checked onchange="toggleSec('plan-3', this.checked)"><label for="chk-plan-3">סעיף 3 - תוכנית מפורטת</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-4" checked onchange="toggleSec('plan-4', this.checked)"><label for="chk-plan-4">סעיף 4 - עומס וקונסטרוקטור</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-5" checked onchange="toggleSec('plan-5', this.checked)"><label for="chk-plan-5">סעיף 5 - בקרת איכות בהקמה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-plan-6" checked onchange="toggleSec('plan-6', this.checked)"><label for="chk-plan-6">סעיף 6 - תיאום בדיקות חח"י</label></div>
+    </div>
+    <div class="item-toggle-list" style="margin-top:10px;">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">פרק 2: רישוי (סעיפים):</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-lic-1" checked onchange="toggleSec('lic-1', this.checked)"><label for="chk-lic-1">סעיף 1 - רישום ומכסה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-lic-2" checked onchange="toggleSec('lic-2', this.checked)"><label for="chk-lic-2">סעיף 2 - התנהלות מול ועדות</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-lic-3" checked onchange="toggleSec('lic-3', this.checked)"><label for="chk-lic-3">סעיף 3 - ליווי הנדסי ומשפטי</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>6. רכיבים ועבודות</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-components" checked onchange="toggleSec('page-components', this.checked)">
+      <label style="display:inline-block;" for="chk-page-components">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">פרק 3: שורות טבלה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-comp-1" checked onchange="toggleSec('row-comp-1', this.checked)"><label for="chk-row-comp-1">קולטים סולאריים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-comp-2" checked onchange="toggleSec('row-comp-2', this.checked)"><label for="chk-row-comp-2">ממירי מתח</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-comp-3" checked onchange="toggleSec('row-comp-3', this.checked)"><label for="chk-row-comp-3">מצברי אגירה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-comp-4" checked onchange="toggleSec('row-comp-4', this.checked)"><label for="chk-row-comp-4">קונסטרוקציה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-comp-5" checked onchange="toggleSec('row-comp-5', this.checked)"><label for="chk-row-comp-5">רכיבי חשמל</label></div>
+    </div>
+    <div class="item-toggle-list" style="margin-top:10px;">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">פרק 4: ניטור ובקרה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-mon-1" checked onchange="toggleSec('row-mon-1', this.checked)"><label for="chk-row-mon-1">איסוף נתונים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-mon-2" checked onchange="toggleSec('row-mon-2', this.checked)"><label for="chk-row-mon-2">גישה מרחוק באפליקציה</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>7. החרגות ותוספות</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-exclusions" checked onchange="toggleSec('page-exclusions', this.checked)">
+      <label style="display:inline-block;" for="chk-page-exclusions">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">סעיפי החרגה בטבלה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-1" checked onchange="toggleSec('row-ex-1', this.checked)"><label for="chk-row-ex-1">
+	  1. אופטימייזרים TIGO
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-2" checked onchange="toggleSec('row-ex-2', this.checked)"><label for="chk-row-ex-2">
+	  2. כלוב מגן לממירים
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-3" checked onchange="toggleSec('row-ex-3', this.checked)"><label for="chk-row-ex-3">
+	  3. סולמות עלייה
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-4" checked onchange="toggleSec('row-ex-4', this.checked)"><label for="chk-row-ex-4">
+	  4. ארונות מניה
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-5" checked onchange="toggleSec('row-ex-5', this.checked)"><label for="chk-row-ex-5">
+	  5. תעלות וחיווט מעל 25מ'
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-6" checked onchange="toggleSec('row-ex-6', this.checked)"><label for="chk-row-ex-6">
+	  6. התאמות קונסטרוקציה
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-7" checked onchange="toggleSec('row-ex-7', this.checked)"><label for="chk-row-ex-7">
+	  7. חיבור אינטרנט
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-8" checked onchange="toggleSec('row-ex-8', this.checked)"><label for="chk-row-ex-8">
+	  8. הזזת דודים ומזגנים
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-9" checked onchange="toggleSec('row-ex-9', this.checked)"><label for="chk-row-ex-9">
+	  9. אגרות חח"י
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-10" checked onchange="toggleSec('row-ex-10', this.checked)"><label for="chk-row-ex-10">
+	  10. עלויות חריגות
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-11" checked onchange="toggleSec('row-ex-11', this.checked)"><label for="chk-row-ex-11">
+	  11. שדרוג ממיר היברידי + אגירה 128 קוט''ש
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-ex-12" checked onchange="toggleSec('row-ex-12', this.checked)"><label for="chk-row-ex-12">
+	  12. שדרוג ממיר היברידי + אגירה 256 קוט''ש
+	  </label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>8. אחריות ושירות</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-warranty" checked onchange="toggleSec('page-warranty', this.checked)">
+      <label style="display:inline-block;" for="chk-page-warranty">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">סעיפי אחריות בטבלה:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-war-1" checked onchange="toggleSec('row-war-1', this.checked)"><label for="chk-row-war-1">1. קולטים סולאריים</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-war-2" checked onchange="toggleSec('row-war-2', this.checked)"><label for="chk-row-war-2">2. ממירי מתח</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-war-3" checked onchange="toggleSec('row-war-3', this.checked)"><label for="chk-row-war-3">3. מצברי אגירה</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-war-4" checked onchange="toggleSec('row-war-4', this.checked)"><label for="chk-row-war-4">4. אחריות התקנה בראשית</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>9. תנאי תשלום</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-payment" checked onchange="toggleSec('page-payment', this.checked)">
+      <label style="display:inline-block;" for="chk-page-payment">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">אבני דרך לתשלום:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-pay-1" checked onchange="toggleSec('row-pay-1', this.checked)"><label for="chk-row-pay-1">מקדמה בחתימה (15%)</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-pay-2" checked onchange="toggleSec('row-pay-2', this.checked)"><label for="chk-row-pay-2">הגעת קונסטרוקציה (35%)</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-pay-3" checked onchange="toggleSec('row-pay-3', this.checked)"><label for="chk-row-pay-3">הגעת פאנלים (35%)</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-pay-4" checked onchange="toggleSec('row-pay-4', this.checked)"><label for="chk-row-pay-4">סיום הקמה ובודק (10%)</label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-pay-5" checked onchange="toggleSec('row-pay-5', this.checked)"><label for="chk-row-pay-5">חיבור לרשת בפועל (5%)</label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>10. הערות וחתימות</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-notes" checked onchange="toggleSec('page-notes', this.checked)">
+      <label style="display:inline-block;" for="chk-page-notes">הצג עמוד זה</label>
+    </div>
+    <div class="item-toggle-list">
+      <span style="font-weight:700; font-size:8.5pt; color:var(--blue);">סעיפי הערות:</span>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-1" checked onchange="toggleSec('row-note-1', this.checked)"><label for="chk-row-note-1">
+	  1. לא כולל מע"מ
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-2" checked onchange="toggleSec('row-note-2', this.checked)"><label for="chk-row-note-2">
+	  2. תוקף הצעה 60 יום
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-3" checked onchange="toggleSec('row-note-3', this.checked)"><label for="chk-row-note-3">
+	  3. התאמת תשתית החשמל
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-4" checked onchange="toggleSec('row-note-4', this.checked)"><label for="chk-row-note-4">
+	  4. זמן אספקה והקמה
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-5" checked onchange="toggleSec('row-note-5', this.checked)"><label for="chk-row-note-5">
+	  5. התקנה בפועל
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-6" checked onchange="toggleSec('row-note-6', this.checked)"><label for="chk-row-note-6">
+	  6. בעלות וטופס 4
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-7" checked onchange="toggleSec('row-note-7', this.checked)"><label for="chk-row-note-7">
+	  7. בעלות על הציוד
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-8" checked onchange="toggleSec('row-note-8', this.checked)"><label for="chk-row-note-8">
+	  8. זכות ביטול הסכם
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-9" checked onchange="toggleSec('row-note-9', this.checked)"><label for="chk-row-note-9">
+	  9. העסקת מומחים במקצועם
+	  </label></div>
+      <div class="toggle-row"><input type="checkbox" id="chk-row-note-10" checked onchange="toggleSec('row-note-10', this.checked)"><label for="chk-row-note-10">
+	  10. היתר עיסקא
+	  </label></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>11. מודל פיננסי</summary>
+    <div class="form-group">
+      <input type="checkbox" id="chk-page-finance" checked onchange="toggleSec('page-finance', this.checked)">
+      <label style="display:inline-block;" for="chk-page-finance">הצג עמוד זה</label>
+    </div>
+    <div class="form-group">
+      <label>שם קובץ סיכום פיננסי (ברירת מחדל: fin_summary.jpg)</label>
+      <input type="text" id="inp-finsum-local" value="" placeholder="fin_summary.jpg" oninput="updateImageSrc('preview-fin-summary', this.value)">
+      <label>או העלה קובץ סיכום</label>
+      <input type="file" accept="image/*" onchange="uploadImage(this, ['preview-fin-summary'])">
+    </div>
+    <div class="form-group">
+      <label>שם קובץ טבלת תזרים (ברירת מחדל: fin_table.jpg)</label>
+      <input type="text" id="inp-fintable-local" value="" placeholder="fin_table.jpg" oninput="updateImageSrc('preview-fin-table', this.value)">
+      <label>או העלה קובץ תזרים</label>
+      <input type="file" accept="image/*" onchange="uploadImage(this, ['preview-fin-table'])">
+    </div>
+  </details>
+</div>
+
+<!-- ████████████████████████████████████
+     RIGHT SIDEBAR: LIVE PREVIEW
+     ████████████████████████████████████ -->
+<div class="preview-area">
+
+  <!-- ══════════════════════════════════
+       עמוד 1: שער
+       ══════════════════════════════════ -->
+  <div id="page-cover" class="page no-padding page-preview-shadow">
+    <div class="cover-wrapper">
+      <div class="logo-target cover-logo"></div>
+
+      <div class="cover-bar">הצעת מחיר</div>
+
+      <div class="cover-title" id="preview-sys-title">מערכת פוטו-וולטאית לייצור חשמל</div>
+
+      <div class="cover-meta-box">
+        <div class="cover-meta-row">
+          <span class="cover-meta-label">לכבוד:</span>
+          <span class="cover-meta-value large" id="preview-client">ישיבת ישראל</span>
+        </div>
+        <div class="cover-meta-row">
+          <span class="cover-meta-label">כתובת:</span>
+          <span class="cover-meta-value" id="preview-address">ישראל</span>
+        </div>
+        <hr class="cover-hr">
+        <div class="cover-meta-row">
+          <span class="cover-meta-label">לידי:</span>
+          <span class="cover-meta-value" id="preview-contact">הרב ישראל ישראלי</span>
+        </div>
+        <div class="cover-meta-row">
+          <span class="cover-meta-label">תאריך הצעה:</span>
+          <span class="cover-meta-value" id="preview-date" style="color:var(--blue); font-weight:700;">00/00/0000</span>
+        </div>
+        <div class="cover-meta-row">
+          <span class="cover-meta-label">איש קשר:</span>
+          <span class="cover-meta-value">מוטי הורביץ , 050-5333115</span>
+        </div>
+      </div>
+
+      <hr class="cover-hr" style="margin-bottom: 6mm;">
+
+      <img id="preview-cover" class="image-box" style="height: 60mm; object-fit: cover;" src="cover.jpg" alt="תמונת גג המבנה">
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 2: תמצית הפרויקט
+       ══════════════════════════════════ -->
+  <div id="page-summary" class="page page-preview-shadow">
+    <div class="section-header-box">תמצית הפרוייקט</div>
+    <p class="body-text" id="preview-summary-desc" style="margin-bottom: 5mm; white-space: pre-wrap;">ההצעה מתייחסת להקמת מתקן פוטו וולטאי היברידי על גג המוסד כולל הוספת מתקן אגירה שיחובר לרשת באסדרה תעריף משלים. 
+
+באמצעות שילוב של מערכת סולארית ואגירת חשמל תוכלו להגדיל את החיסכון המיוצר מהמתקן ולחסוך בצריכת החשמל בשעות הפסגה או למכור לחברת החשמל בשעות הפסגה בתעריף גבוה משמעותית. בנוסף, מערכת האגירה תשמש לאספקת חשמל כשר בשבתות וחגי ישראל.</p>
+
+    <img id="preview-project" class="image-box" style="height: 60mm; object-fit: cover; margin-bottom: 5mm;" src="project.jpg" alt="הדמיית המערכת">
+
+    <div class="metrics-summary-container">
+      <div class="metric-row" id="m-1">
+        <span class="m-label">הספק פאנלים סולאריים:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-panels">165.41 קילו-וואט</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-2">
+        <span class="m-label">קיבולת מערכת אגירה:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-storage-cap">1,000 קוט"ש / 50 קו"ט</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-3">
+        <span class="m-label">עלות המתקן (לא כולל מע"מ):</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-total-cost">1,360,000 ₪</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-4">
+        <span class="m-label">שווי החשמל המיוצר בשנה:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-yearly-yield">~ 250,000 ₪</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-5">
+        <span class="m-label">רווח שנתי נטו:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-yearly-profit">~ 240,000 ₪</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-6">
+        <span class="m-label">רווח כולל ב-25 שנה:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-cumulative-profit">6,000,000 ₪</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+      <div class="metric-row" id="m-7">
+        <span class="m-label">תשואה שנתית ממוצעת:</span>
+        <div class="m-value-container">
+          <span class="m-value" id="lbl-roi">18.3%</span>
+          <span class="m-icon">&lt;</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- פוטר RTL מתוקן -->
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 3: מתחילים מבראשית (אודות) - חדש
+       ══════════════════════════════════ -->
+  <div id="page-intro" class="page page-preview-shadow bg-gray">
+    <div class="main-header">מתחילים מבראשית</div>
+
+    <div class="intro-text">
+      <p>
+        'בראשית סולאר' מביאה את בשורת הקיימות וחוסכת בעלויות החשמל למוסדות,
+        עסקים, מפעלים ובתים פרטיים. החברה מתמחה ביעוץ, הקמה וניהול של מערכות
+        סולאריות ביתיות ועסקיות, מערכות Off-Grid, מערכות היברידיות משולבות אגירה ו/או
+        גנרטור וחשמל כשר.
+      </p>
+      <p>
+        מתוך רצון לתרום לסביבה ירוקה ואקולוגית יותר תוך צמצום עלויות, אנו פועלים
+        לטובת הלקוח לאורך כל שלבי הקמת המערכת עם הקפדה על סטנדרטים גבוהים, יסודיות
+        ומקצועיות החל משלב התכנון, הטיפול מול חברת החשמל וההקמה ועד לניהול וניטור
+        התפוקה.
+      </p>
+      <p>
+        לנו, ב'בראשית סולאר' ניסיון עשיר בהקמת מערכות בגדלים שונים והתמחות בניצול
+        אופטימלי של שטח הגג להשגת תוצאה מיטבית. את הלקוח מלווה צוות מיומן המורכב
+        מאנשי תכנון, חשמל והנדסה מקצועיים בעלי ותק רב שנים. העבודה מתבצעת בהתאם
+        לתקנים ולדרישות חברת החשמל תוך שימוש ברכיבים איכותיים ואמינים המיוצרים על ידי
+        מיטב היצרנים המובילים בעולם.
+      </p>
+    </div>
+
+    <div class="main-header" style="margin-top: 15mm; margin-bottom: 8mm;">מה אומרים עלינו?</div>
+
+    <div class="testimonials-grid">
+      <div class="testi-box box-tr" id="testi-new-1">
+        <div class="author">צבי בראון, ישיבת אופקים:</div>
+        <div class="quote">"מאז הקמת המערכת חסכנו 70%<br>מצריכת החשמל השנתית, האמינות<br>מוכחת"</div>
+      </div>
+      <div class="testi-box box-tl" id="testi-new-2">
+        <div class="author">ערן קופל, נציג האנווה קיוסלס בישראל:</div>
+        <div class="quote">"מתוך ניסיוני עם עשרות חברות<br>מתקינות, אני ממליץ בחום על חברת<br>בראשית. זאת בזכות המקצועיות<br>והיסודיות, הקפדה על הפרטים תוך<br>דאגה למיקסום התועלת לבעל<br>המתקן."</div>
+      </div>
+      <div class="testi-box box-br" id="testi-new-3">
+        <div class="author">אלי פרידמן, נווה ירושלים:</div>
+        <div class="quote">"סיימנו פרויקט ענק עם חברת<br>בראשית ואני ממליץ עליהם בחום<br>מכל הבחינות גם מקצוענים וגם<br>אנושיים"</div>
+      </div>
+      <div class="testi-box box-bl" id="testi-new-4">
+        <div class="author">דויד זריצקי, ישיבת תפרח:</div>
+        <div class="quote">"חברה מקצועית ביותר. עבודה<br>איכותית וזריזה. תכנון מדויק ומפורט.<br>והכי חשוב - אמינות ויושר לפני הכל!"</div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 4: למה דווקא אנחנו - חדש
+       ══════════════════════════════════ -->
+  <div id="page-why" class="page page-preview-shadow">
+    
+    <div class="main-header" style="margin-top: 20mm;">למה דווקא אנחנו?</div>
+
+    <div class="features-wrapper">
+      <div class="feature-block" id="feat-1">
+        <div class="feature-title-row">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.5 10H15V4.5C15 3.1 13.9 2 12.5 2h-1c-.6 0-1 .4-1 1v4.5H6.5C5.1 7.5 4 8.6 4 10v9.5c0 1.4 1.1 2.5 2.5 2.5h11l4.5-9.5V10z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 10v12M15.5 5.5l1.5-2.5 1.5 2.5 3 .5-2 2 .5 3-2.5-1.5-2.5 1.5.5-3-2-2 3-.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="feature-title">איכות</div>
+          <div class="feature-line"></div>
+        </div>
+        <ul class="feature-list">
+          <li>לימוד מעמיק של אתר הלקוח והתאמת ההצעה לתנאי השטח, הכיס, והרצון של הלקוח.</li>
+          <li>תכנון קפדני, מיקסום נתוני האתר ופתרונות לבעיות מורכבות.</li>
+          <li>התקנה ע"י בעלי מקצוע מוסמכים ומיומנים.</li>
+          <li>הקפדה על התקנה של ציוד תקני ואיכותי.</li>
+        </ul>
+      </div>
+
+      <div class="feature-block" id="feat-2">
+        <div class="feature-title-row">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.5 15.5l-4 4c-1.1 1.1-2.9 1.1-4 0l-1-1c-1.1-1.1-1.1-2.9 0-4l4-4M16.5 11.5l4-4c1.1-1.1 1.1-2.9 0-4l-1-1c-1.1-1.1-2.9-1.1-4 0l-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8.5 11.5l3 3M11.5 8.5l3 3M14.5 13.5l-6 6M10.5 9.5l-6 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="feature-title">שירות</div>
+          <div class="feature-line"></div>
+        </div>
+        <ul class="feature-list">
+          <li>ליווי לאורך כל הדרך עד לחיבור והפעלה של המערכת.</li>
+          <li>שירות אנושי ואישי לכל לקוח.</li>
+          <li>אנו רואים דרך העיניים של הלקוח ועושים את המירב כדי להשביע את רצונו.</li>
+          <li>תמיכה וניהול תקלות באמצעות הטלפון ושליחת טכנאי שירות.</li>
+        </ul>
+      </div>
+
+      <div class="feature-block" id="feat-3">
+        <div class="feature-title-row">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 11l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="feature-title">אחריות</div>
+          <div class="feature-line"></div>
+        </div>
+        <ul class="feature-list">
+          <li>אחריות רבת שנים על הציוד המותקן.</li>
+          <li>אחריות על פעילות תקינה של המערכת.</li>
+          <li>ניטור ובקרה של פעילות רכיבי המערכת.</li>
+          <li>תחזוקה שוטפת לשמירה על תפוקה מרבית.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bottom-image-container">
+      <img id="img-page4-bottom" src="page_4_pic_1.png" alt="גג סולארי">
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 5: מפרט טכני (פרקים 1-2)
+       ══════════════════════════════════ -->
+  <div id="page-spec" class="page page-preview-shadow">
+    <div class="section-header-box">מפרט טכני להצעה</div>
+    
+    <div class="spec-grid">
+      <div class="spec-cell">
+        <span class="sc-lbl">הספק פאנלים מותקן</span>
+        <span class="sc-val" id="spec-lbl-panels">165.41 קילו-וואט</span>
+      </div>
+      <div class="spec-cell">
+        <span class="sc-lbl">עלות המערכת (ללא מע"מ)</span>
+        <span class="sc-val" id="spec-lbl-cost">1,360,000 ₪</span>
+      </div>
+    </div>
+
+    <div class="num-section">
+      <div class="num-title"><span class="num-badge">1</span> תכנון, פיקוח וליווי</div>
+      <ol class="num-list">
+        <li id="plan-1">בדיקת היתכנות ביצוע, ייעוץ מקצועי ובחינת כדאיות כלכלית.</li>
+        <li id="plan-2">הכנת תכנון הנדסי ראשוני הכולל הערכת גודל, הספק, תפוקה ויעילות.</li>
+        <li id="plan-3">הכנת תוכנית מפורטת בהתאם לתנאי ההסדרה וגופי המימון.</li>
+        <li id="plan-4">ניהול, פיקוח והתאמת העבודות בהתאם לעומס המערכת על גג המבנה, בהתאם להנחיות קונסטרוקטור מוסמך.</li>
+        <li id="plan-5">בקרת איכות רצופה על איכות החומרים והעבודה בכל שלבי ההקמה.</li>
+        <li id="plan-6">תיאום ביקורות חח"י לאחר ההתקנה וטיפול בקבלת אישור הפעלה סופי.</li>
+      </ol>
+    </div>
+
+    <div class="num-section">
+      <div class="num-title"><span class="num-badge">2</span> רישוי</div>
+      <ol class="num-list">
+        <li id="lic-1">התנהלות מלאה מול מחלקת התכנון של חברת החשמל לקבלת אישורי כניסה למכסה ואישורי חיבור.</li>
+        <li id="lic-2">התנהלות מול הגופים והוועדות השונות לקבלת אישורים נדרשים עד לחיבור המערכת בפועל.</li>
+        <li id="lic-3">ליווי הנדסי ומשפטי כולל מהנדס חשמל, מהנדס קונסטרוקציה ואדריכל במידת הצורך.</li>
+      </ol>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 6: רכיבים ועבודות
+       ══════════════════════════════════ -->
+  <div id="page-components" class="page page-preview-shadow">
+    <div class="section-header-box">רכיבים ועבודות</div>
+    
+    <div class="num-section">
+      <div class="num-title"><span class="num-badge">3</span> רכיבים ועבודות</div>
+      <table class="quote-table">
+        <tbody>
+          <tr id="row-comp-1">
+            <td class="ct-header">קולטים סולאריים</td>
+            <td>פאנלים מסוג AiKo Solar או שוו"ע המדורגים כ-TIER-1 (בלומברג). הספק יושג ע"י שימוש בפאנל 650-670 וואט החדשני והמתקדם ביותר.</td>
+          </tr>
+          <tr id="row-comp-2">
+            <td class="ct-header">ממירי מתח</td>
+            <td>ממירים מתוצרת GoodWe / Sungrow / DEYE / Solis בהספק מותאם בהתאם לתכנון ההנדסי הסופי.</td>
+          </tr>
+          <tr id="row-comp-3">
+            <td class="ct-header">מצברי אגירה</td>
+            <td>מצברי ליתיום LiFePO4 מתקדמים בקיבולת כוללת של 1,000 קוט"ש, כולל מערכת ניהם סוללות מובנית (BMS).</td>
+          </tr>
+          <tr id="row-comp-4">
+            <td class="ct-header">קונסטרוקציה</td>
+            <td>מערכת אחיזה מאלומיניום עמידה בפני פגעי מזג האוויר בעלת תקן ישראלי, כולל עיגון יציב לגג המבנה בהתאם להוראות הקונסטרוקטור.</td>
+          </tr>
+          <tr id="row-comp-5">
+            <td class="ct-header">רכיבי חשמל וחיווט</td>
+            <td>לוחות הגנה מובנים, כבלי DC סולאריים מוגני קרינת UV מנחושת מתוצרת Top Cable ספרד, ומחברי MC4 מקוריים מתוצרת Tyco/Huber Suhner.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="num-section">
+      <div class="num-title"><span class="num-badge">4</span> ניטור ובקרה</div>
+      <ol class="num-list">
+        <li id="row-mon-1">חיבור כבל תקשורת ומערכת לאיסוף נתונים רציפה מרכיבי המערכת השונים.</li>
+        <li id="row-mon-2">אפשרות גישה מרחוק לניהול האנרגיה, מעקב תפוקות בזמן אמת וקבלת התרעות על תקלות באמצעות אפליקציה ייעודית לנייד או למחשב.</li>
+      </ol>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 7: החרגות ותוספות
+       ══════════════════════════════════ -->
+  <div id="page-exclusions" class="page page-preview-shadow">
+    <div class="section-header-box">החרגות ותוספות בתשלום</div>
+    
+    <div class="num-section">
+      <div class="num-title"><span class="num-badge">5</span> החרגות ותוספות בתשלום</div>
+      <table class="quote-table-1">
+        <thead>
+          <tr>
+            <th style="width: 8%">#</th>
+            <th style="width: 52%">סעיף / פריט</th>
+            <th style="width: 40%">הערה / מחיר</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row-ex-1">
+            <td>1</td>
+            <td>הוספת אופטימייזרים TIGO לפי הצורך ללא שדרוג לממירי סולאראדג'. (תמחור לפי כמות הפאנלים שיחוברו לאופטימיזרים).</td>
+            <td>במידה ויידרש ע"י המתכנן, תוספת של 200 ₪ ליחידה</td>
+          </tr>
+          <tr id="row-ex-2">
+            <td>2</td>
+            <td>כלוב מגן חיצוני לממירים ממתכת כולל גגון (לעמדה)</td>
+            <td class="no-inc">לא כלול</td>
+          </tr>
+          <tr id="row-ex-3">
+            <td>3</td>
+            <td>סולמות עלייה קבועים ותקניים לגג המבנה</td>
+            <td>980 ₪ למטר אורך במידת הצורך</td>
+          </tr>
+	        <tr id="row-ex-4">
+            <td>4</td>
+            <td>ארונות מניה של חברת החשמל</td>
+            <td class="no-inc">לא כלול (לא נדרש במערכת ביתית)</td>
+          </tr>
+          <tr id="row-ex-5">
+            <td>5</td>
+            <td>תשתית AC כלולה במחיר עד 25 מטר (ללא חציבה / חפירה / הטמנה)</td>
+            <td>תוספת הולכה לפי עלות בפועל + 15%</td>
+          </tr>
+          <tr id="row-ex-6">
+            <td>6</td>
+            <td>התאמות הגג בהתאם לעומס המערכת (במידה והקונסטרוקטור ידרוש חיזוקים,  הלקוח יקבל הצעה לפני התקדמות)</td>
+            <td class="no-inc">לפי הוראת קונסטרוקטור. לא כלול.</td>
+          </tr>
+          <tr id="row-ex-7">
+            <td>7</td>
+            <td>חיבור מערכת הניטור לאינטרנט.<br>ניטור המערכת תלוי בחיבור קבוע לאינטרנט ועל הלקוח לדאוג לנקודת אינטרנט בסמוך לממיר.</td>
+            <td class="no-inc">לא כלול. ניתן לרכוש חלופה סלולרית בעלות 990 ₪ למתקן כולל חבילת תקשורת סלולרית ל-12 חודשים.</td>
+          </tr>
+          <tr id="row-ex-8">
+            <td>8</td>
+            <td>הזזה או פינוי של דודי שמש, קולטים או מדחסי מזגנים קיימים</td>
+            <td class="no-inc">לא כלול - באחריות הלקוח</td>
+          </tr>
+          <tr id="row-ex-9">
+            <td>9</td>
+            <td>תשלומים ואגרות חח"י </td>
+            <td class="no-inc">לא כלול</td>
+          </tr>
+          <tr id="row-ex-10">
+            <td>10</td>
+            <td>עלויות חריגות כגון: סולמות קבועים, בדיקה / שיפור הארקה ותקינות לוח החשמל של הצרכן (לפי דרישות חח"י) / החלפת האיטום בגג, החלפת גג אסבסט, חיזוק מבנה הגג, כלוב ממירים, מתקני הגנה / אבטחה וקווי חיים, במות הרמה, גיזום עצים וכו'.</td>
+            <td class="no-inc">לא כלול</td>
+          </tr>
+          <tr id="row-ex-11">
+            <td>11</td>
+            <td>שדרוג לממיר היברידי בהספק 50 קו"ט כולל מערכת אגירה בסוללות ליתיום בנפח 128 קוט"ש שתאפשר צריכת חשמל כשר בשבת ותאפשר לנצל בלילה את עודפי האנרגיה שיצטברו בשעות היום .</td>
+            <td class="no-inc">לא כלול. עלות השדרוג : 139,000 ₪ + מע"מ</td>
+          </tr>
+          <tr id="row-ex-12">
+            <td>12</td>
+            <td>שדרוג לממיר היברידי בהספק 50 קו"ט כולל מערכת אגירה בסוללות ליתיום בנפח 256 קוט"ש שתאפשר צריכת חשמל כשר בשבת ותאפשר לנצל בלילה את עודפי האנרגיה שיצטברו בשעות היום .</td>
+            <td class="no-inc">לא כלול. עלות השדרוג : 249,000 ₪ + מע"מ</td>
+          </tr>
+		</tbody>
+      </table>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 8: אחריות ושירות
+       ══════════════════════════════════ -->
+  <div id="page-warranty" class="page page-preview-shadow">
+    <div class="section-header-box">אחריות ושירות</div>
+    
+    <div class="section-header-box" style="background:#f0f6fa; color:var(--blue-dark); font-size:12pt; margin-bottom:3mm;">אחריות יצרן לרכיבים</div>
+    <table class="quote-table" style="margin-bottom: 5mm;">
+      <thead>
+        <tr>
+          <th>רכיב</th>
+          <th>יצרן מוצע</th>
+          <th>תקופת אחריות יצרן</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="row-war-1">
+          <td>קולטים סולאריים (פאנלים)</td>
+          <td>AiKo Solar / Tier 1</td>
+          <td>10 שנים אחריות מוצר + 30 שנה אחריות תפוקה ליניארית</td>
+        </tr>
+        <tr id="row-war-2">
+          <td>ממירי מתח סולאריים</td>
+          <td>GoodWe / Sungrow / DEYE</td>
+          <td>5 שנים (עם אפשרות להרחבה ל-10 שנים בתוספת תשלום)</td>
+        </tr>
+        <tr id="row-war-3">
+          <td>מצברי אגירה</td>
+          <td>ABSEN / GSL / EFORE</td>
+          <td>5 שנים אחריות מוצר מקיפה + 5 שנים נוספות על ביצועי קיבולת</td>
+        </tr>
+        <tr class="w-header-row" id="row-war-4">
+          <td colspan="3">אחריות "בראשית"</td>
+        </tr>
+        <tr id="row-war-5">
+          <td colspan="2">אחריות כוללת לטיב ההתקנה, החיווט ותקינות המערכת הכללית</td>
+          <td><strong>24 חודשים (שנתיים מלאות)</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-header-box" style="background:#f0f6fa; color:var(--blue-dark); font-size:12pt; margin-bottom:3mm;">שירות, תמיכה וזמני תגובה</div>
+    <p class="body-text" style="font-size:10pt;">
+      בראשית סולאר מעמידה לרשות לקוחותיה מרכז תמיכה טלפוני זמין לפניות והודעות. במידה ולא נפתרה התקלה בצורה טלפונית, מתחייבת בראשית סולאר לשלוח טכנאי לאתר הלקוח בתוך שלושה ימי עבודה. במהלך תקופת אחריות ההתקנה, השירות והביקור מבוצעים ללא כל עלות נוספת.
+    </p>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 9: תנאי תשלום
+       ══════════════════════════════════ -->
+  <div id="page-payment" class="page page-preview-shadow">
+    <div class="section-header-box">תנאי תשלום</div>
+    
+    <table class="quote-table" style="margin-top:5mm;">
+      <thead>
+        <tr>
+          <th style="width: 35%; text-align:center;">שלב / אבן דרך בפרויקט</th>
+          <th style="width: 20%; text-align:center;">אחוז תשלום</th>
+          <th style="width: 20%; text-align:center;">סך מצטבר ששולם</th>
+		  <th style="width: 25%; text-align:center;">מצב התקנה</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="row-pay-1">
+          <td>במועד אישור ההזמנה וחתימת ההסכם</td>
+          <td class="center-col">15%</td>
+          <td class="center-col">15%</td>
+		  <td>הכנת תכניות ורישום למכסה</td>
+        </tr>
+        <tr id="row-pay-2">
+          <td>עם הגעת הקונסטרוקציה לאתר הלקוח והתחלת עבודות העיגון</td>
+          <td class="center-col">35%</td>
+          <td class="center-col">50%</td>
+		  <td>הקמת קונסטרוקציה</td>
+        <tr id="row-pay-3">
+          <td>עם הגעת הפאנלים הסולאריים והנפתם אל גג המבנה</td>
+          <td class="center-col">35%</td>
+          <td class="center-col">85%</td>
+		  <td>שחרור והובלה לאתר הלקוח</td>
+        </tr>
+        <tr id="row-pay-4">
+          <td>סיום עבודות ההקמה, החיווט החשמלי ומעבר בדיקת בודק מוסמך</td>
+          <td class="center-col">10%</td>
+          <td class="center-col">95%</td>
+		  <td>מערכת מותקנת ממתינה לחיבור ע"י חח"י</td>
+        </tr>
+        <tr id="row-pay-5">
+          <td>חיבור המערכת לרשת החשמל בפועל או 90 יום מסיום העבודות (המוקדם מביניהם)</td>
+          <td class="center-col">5%</td>
+          <td class="center-col">100%</td>
+		  <td>מערכת מותקנת ומחוברת לרשת או ממתינה לחיבור</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <p style="font-size:10pt; font-style:italic; text-align:center; margin-top:5mm; color:var(--text-light);">
+      * כל התשלומים יבוצעו בפועל באמצעות העברה בנקאית או שיק מזומן לטובת "בראשית סולאר בע"מ".
+    </p>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 10: הערות וחתימות
+       ══════════════════════════════════ -->
+  <div id="page-notes" class="page page-preview-shadow">
+    <div class="section-header-box">הערות כלליות לחתימה</div>
+    <ol class="num-list" style="padding-right:20px; font-size:10pt;">
+<li id="row-note-1" style="margin-bottom:6px;">
+כל המחירים המצוינים בהצעת מחיר זו אינם כוללים מע"מ כחוק  אלא אם כן צוין אחרת.
+</li>
+<li id="row-note-2" style="margin-bottom:6px;">
+הצעת מחיר זו תקפה למשך 60 ימים קלנדריים ממועד הפקתה.
+</li>
+<li id="row-note-3" style="margin-bottom:6px;">
+יש לוודא כי מערכת החשמל של המבנה תואמת את דרישות חח"י. שינויים הנדרשים לתאימות לתנאים אלו אינם כלולים בהצעה והינם באחריות הלקוח.
+</li>
+<li id="row-note-4" style="margin-bottom:6px;">
+זמן אספקה וסיום ההתקנה מעת קבלת אישור הלקוח להצבה והעברת התשלומים על פי ההתקדמות - עד 120 ימי עבודה.
+</li>
+<li id="row-note-5" style="margin-bottom:6px;">
+עלות והספק המערכת הסופית יקבעו לפי ההספק המותקן בפועל. במידה וההתקנה בפועל תהיה קטנה מההשערה הראשונית, עקב אילוצים שונים בשטח, יחוייב הלקוח לפי גודל ההתקנה בפועל.
+</li>
+<li id="row-note-6" style="margin-bottom:6px;">
+ההצעה בתוקף כל עוד הלקוח הוא בעל הנכס או בעל זכות השימוש בו. בנוסף, לצורך השלמת החיבור לרשת, על בעל הנכס לוודא את קיומו של אישור "טופס 4" למבנה, היתר בניה במידת הצורך, טופס אישור זכויות בנכס וחיבור חשמל קבוע ולא זמני.
+</li>
+<li id="row-note-7" style="margin-bottom:6px;">
+כל הציוד המותקן הינו רכוש חברת בראשית סולאר בע"מ עד למועד פירעון מלא של התשלום.
+</li>
+<li id="row-note-8" style="margin-bottom:6px;">
+חברת בראשית סולאר בע"מ משאירה לעצמה את הזכות לבטל הסכם זה עד לאחר ביקור סוקר מקצועי מטעמה. במידה וימצא שהגג / הבית / תנאי השטח אינם מתאימים להתקנת המערכת הסולארית לפי שיקול דעתה הבלעדית של חברת בראשית סולא בע"מ, יוחזר ללקוח מלא סכום המקדמה ששולם תוך 10 ימים. 
+</li>
+<li id="row-note-9" style="margin-bottom:6px;">
+חברת בראשית סולאר בע"מ מעסיקה את בעלי המקצוע מהמומחים והותיקים ביותר בתחום. לחברה ניסיון רב בהתקנת מערכות במוסדות, מפעלים ובתים פרטיים. המלצות יימסרו לפי דרישה.
+</li>
+<li id="row-note-10" style="margin-bottom:6px;">
+כל העיסקאות בחברה מבוצעות על פי היתר עיסקא.
+</li>    </ol>
+
+    <div class="signature-block">
+      <div style="text-align: center; font-weight:700; font-size:11pt; margin-bottom:6px; color:var(--blue-dark);">אישור והזמנה - חתימת הלקוח:</div>
+      <div class="sig-row">
+        <div style="text-align: center; font-weight:700; font-size:11pt; color:var(--blue-dark); margin-top:5mm;">
+		שם מלא ומורשה חתימה:  _________________________ 
+		</div>
+        <div style="text-align: center; font-weight:700; font-size:11pt; color:var(--blue-dark); margin-top:5mm;">
+		מספר תעודת זהות / ח.פ:  _________________________
+		</div>
+        <div style="text-align: center; font-weight:700; font-size:11pt; color:var(--blue-dark); margin-top:5mm;">
+      חתימה וחותמת המוסד:  _________________________</div>
+      </div>
+      <div style="text-align: center; font-weight:700; font-size:11pt; color:var(--blue-dark); margin-top:5mm;">
+      חתימת נציג בראשית סולאר בע"מ: _________________________
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 11: תחשיב פיננסי (מבוסס תמונות)
+       ══════════════════════════════════ -->
+  <div id="page-finance" class="page page-preview-shadow">
+    <div class="section-header-box">תחשיב כלכלי ומותאם</div>
+    
+    <img id="preview-fin-summary" class="image-box" style="height: 105mm; object-fit: contain; margin-bottom: 6mm;" src="fin_summary.jpg" alt="סיכום נתוני השקעה ומודל פיננסי">
+    <img id="preview-fin-table" class="image-box" style="height: 120mm; object-fit: contain;" src="fin_table.jpg" alt="פירוט תזרים חזוי ל-25 שנה">
+
+    <div class="page-footer">
+      <div class="footer-page-num"></div>
+      <div class="footer-divider"></div>
+      <div class="logo-target footer-logo"></div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">
+        טל' <span dir="ltr">1599-505-125</span>
+        <span class="sep">|</span>
+        פקס <span dir="ltr">072-3730308</span>
+        <span class="sep">|</span>
+        <span dir="ltr">office@beresheetsolar.co.il</span>
+        <span class="sep">|</span>
+        כתובת: רבי עקיבא 86, בני ברק
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       עמוד 12: יצירת קשר / סיום
+       ══════════════════════════════════ -->
+  <div id="page-contact" class="page no-padding page-preview-shadow">
+    <div class="contact-wrapper">
+      <div class="logo-target contact-logo-wrapper"></div>
+      <div class="contact-phone">1599-505-125</div>
+      <div class="contact-details">
+        sales@beresheetSolar.co.il &nbsp;|&nbsp; פקס: 072-3730308
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ████████████████████████████████████
+     JAVASCRIPT CONTROLLER
+     ████████████████████████████████████ -->
+
+<script>
+  // פונקציית הפצת הלוגו - פותרת את בעיית קונפליקט המזהים (IDs) ב-SVG המשוכפל
+  function injectLogo() {
+    const container = document.getElementById('master-logo-container');
+    if (!container) return;
+    const svgSource = container.querySelector('svg');
+    if (!svgSource) return;
+    
+    const logoTargets = document.querySelectorAll('.logo-target');
+    logoTargets.forEach((target, index) => {
+      let svgString = svgSource.outerHTML;
+      
+      // מציאת כל המזהים (id="...") בתוך ה-SVG המקורי
+      const idRegex = /id="([^"]+)"/g;
+      let match;
+      const ids = [];
+      while ((match = idRegex.exec(svgString)) !== null) {
+        if (!ids.includes(match[1])) {
+          ids.push(match[1]);
+        }
+      }
+      
+      // החלפת כל מזהה וההפניות שלו במזהה ייחודי עבור העותק הנוכחי
+      ids.forEach(id => {
+        const escapedId = id.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const newId = id + '_' + index;
+        
+        // החלפת המזהה עצמו
+        svgString = svgString.replace(new RegExp('id="' + escapedId + '"', 'g'), 'id="' + newId + '"');
+        // החלפת הפניות מסוג url(#id)
+        svgString = svgString.replace(new RegExp('url\\(#' + escapedId + '\\)', 'g'), 'url(#' + newId + ')');
+        // החלפת הפניות מסוג href="#id"
+        svgString = svgString.replace(new RegExp('href="#' + escapedId + '"', 'g'), 'href="#' + newId + '"');
+        svgString = svgString.replace(new RegExp('xlink:href="#' + escapedId + '"', 'g'), 'xlink:href="#' + newId + '"');
+      });
+      
+      target.innerHTML = svgString;
+    });
+  }
+
+  // פונקציה חכמה לייצור שדות עריכה מתחת לכל שורת הגדרה בלוח הבקרה
+  function initDynamicEditors() {
+    const toggleRows = document.querySelectorAll('.item-toggle-list .toggle-row');
+    toggleRows.forEach(row => {
+      const chk = row.querySelector('input[type="checkbox"]');
+      if (!chk) return;
+      
+      // שליפת ה-ID של האלמנט המטרה מתוך פונקציית ה-onchange
+      const onchangeAttr = chk.getAttribute('onchange');
+      if (!onchangeAttr) return;
+      const match = onchangeAttr.match(/'([^']+)'/);
+      if (!match) return;
+      
+      const targetId = match[1];
+      const targetEl = document.getElementById(targetId);
+      if (!targetEl) return;
+
+      // יצירת כפתור "עריכה"
+      const editBtn = document.createElement('button');
+      editBtn.innerHTML = '✎';
+      editBtn.style.background = 'none';
+      editBtn.style.border = 'none';
+      editBtn.style.cursor = 'pointer';
+      editBtn.style.color = 'var(--blue)';
+      editBtn.style.fontSize = '12pt';
+      editBtn.style.marginRight = 'auto'; // דוחף שמאלה
+      editBtn.title = 'ערוך טקסט';
+      
+      row.appendChild(editBtn);
+
+      // יצירת קונטיינר לשדות העריכה (מוסתר כברירת מחדל)
+      const editContainer = document.createElement('div');
+      editContainer.style.display = 'none';
+      editContainer.style.flexDirection = 'column';
+      editContainer.style.gap = '6px';
+      editContainer.style.padding = '10px';
+      editContainer.style.background = '#eef2f6';
+      editContainer.style.border = '1px dashed var(--border)';
+      editContainer.style.borderRadius = '4px';
+      editContainer.style.marginTop = '4px';
+      editContainer.style.marginBottom = '8px';
+
+      // פתיחה / סגירה של אזור העריכה
+      editBtn.onclick = () => {
+        editContainer.style.display = editContainer.style.display === 'none' ? 'flex' : 'none';
+      };
+
+      // הכנסת הקונטיינר מתחת לשורה
+      row.parentNode.insertBefore(editContainer, row.nextSibling);
+
+      // פונקציית עזר ליצירת תיבת טקסט/קלט
+      function createField(labelTxt, initialVal, onInputCb, isMultiline = false) {
+          const wrap = document.createElement('div');
+          wrap.style.display = 'flex';
+          wrap.style.flexDirection = 'column';
+          wrap.style.gap = '3px';
+          
+          const lbl = document.createElement('span');
+          lbl.innerText = labelTxt;
+          lbl.style.fontSize = '8pt';
+          lbl.style.fontWeight = '700';
+          lbl.style.color = 'var(--blue-dark)';
+          
+          const inp = document.createElement(isMultiline ? 'textarea' : 'input');
+          inp.value = initialVal;
+          inp.style.fontSize = '9pt';
+          inp.style.padding = '5px';
+          inp.style.border = '1px solid #ccc';
+          inp.style.borderRadius = '3px';
+          inp.style.fontFamily = 'inherit';
+          inp.style.width = '100%';
+          if (isMultiline) inp.rows = 3;
+          
+          inp.oninput = (e) => onInputCb(e.target.value);
+          
+          wrap.appendChild(lbl);
+          wrap.appendChild(inp);
+          editContainer.appendChild(wrap);
+      }
+
+      // --- זיהוי סוג האלמנט כדי לבנות את שדות העריכה המתאימים ---
+      
+      // סוג א': שורת טבלה (TR) - למשל ברכיבים, החרגות, תנאי תשלום
+      if (targetEl.tagName === 'TR') {
+          const tds = targetEl.querySelectorAll('td');
+          tds.forEach((td, index) => {
+              // דילוג על עמודת מספור קבועה אם ישנה (כמו בהחרגות שמכילות מספר בלב)
+              if (tds.length === 3 && index === 0 && td.innerText.trim().match(/^\d+$/)) return;
+              
+              createField(`עמודה ${index + 1}`, td.innerText.trim(), (newVal) => {
+                  td.innerHTML = newVal.replace(/\n/g, '<br>'); // משמר ירידות שורה
+              }, true);
+          });
+      }
+      // סוג ב': סעיף רשימה (LI) - למשל מפרט טכני, ניטור, הערות
+      else if (targetEl.tagName === 'LI') {
+          createField('תוכן הסעיף', targetEl.innerText.trim(), (newVal) => {
+              targetEl.innerHTML = newVal.replace(/\n/g, '<br>');
+          }, true);
+      }
+      // סוג ג': שורת נתון במספרים (metric-row)
+      else if (targetEl.classList.contains('metric-row')) {
+          const lblEl = targetEl.querySelector('.m-label');
+          const valEl = targetEl.querySelector('.m-value');
+          if (lblEl) createField('כותרת נתון', lblEl.innerText.trim(), (v) => lblEl.innerText = v, false);
+          if (valEl) createField('ערך (מספר/טקסט)', valEl.innerText.trim(), (v) => valEl.innerText = v, false);
+      }
+      // סוג ד': קוביית המלצה (testi-box)
+      else if (targetEl.classList.contains('testi-box')) {
+          const authorEl = targetEl.querySelector('.author');
+          const quoteEl = targetEl.querySelector('.quote');
+          if (authorEl) createField('שם ומקום הממליץ', authorEl.innerText.trim(), (v) => authorEl.innerText = v, false);
+          if (quoteEl) createField('תוכן ההמלצה', quoteEl.innerText.replace(/"/g, '').trim(), (v) => quoteEl.innerHTML = `"${v.replace(/\n/g, '<br>')}"`, true);
+      }
+      // סוג ה': קוביית מאפיין/יתרון (feature-block) ב"למה אנחנו"
+      else if (targetEl.classList.contains('feature-block')) {
+          const titleEl = targetEl.querySelector('.feature-title');
+          const listEl = targetEl.querySelector('.feature-list');
+          if (titleEl) createField('כותרת המאפיין', titleEl.innerText.trim(), (v) => titleEl.innerText = v, false);
+          if (listEl) {
+              const lis = Array.from(listEl.querySelectorAll('li')).map(li => li.innerText.trim());
+              createField('נקודות (שורה לכל נקודה)', lis.join('\n'), (v) => {
+                  const lines = v.split('\n').filter(l => l.trim() !== '');
+                  listEl.innerHTML = lines.map(l => `<li>${l}</li>`).join('');
+              }, true);
+          }
+      }
+    });
+  }
+
+  window.onload = function() {
+    // הפצת הלוגו המקורי כברירת מחדל
+    injectLogo();
+
+    // בדיקת נתונים קודמים מהזיכרון המקומי
+    const storedData = localStorage.getItem('pendingQuote');
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData);
+        
+        // --- שאיבת טקסטים ונתונים ---
+        if(data.projectTitle) document.getElementById('inp-sys-title').value = data.projectTitle;
+        if(data.clientName) document.getElementById('inp-client').value = data.clientName;
+        if(data.clientAddress) document.getElementById('inp-address').value = data.clientAddress;
+        if(data.clientContact) document.getElementById('inp-contact').value = data.clientContact;
+        if(data.quoteDate) document.getElementById('inp-date').value = data.quoteDate;
+        if(data.analysisNotes) document.getElementById('inp-summary-desc').value = data.analysisNotes;
+        if(data.sysSize) document.getElementById('inp-size').value = data.sysSize;
+        if(data.sysCost) document.getElementById('inp-cost').value = data.sysCost;
+        
+        // --- שאיבת תמונות שבחרת במערכת ---
+        if(data.selectedCover) updateImageSrc('preview-cover', data.selectedCover);
+        if(data.selectedProject) updateImageSrc('preview-project', data.selectedProject);
+        if(data.selectedFinSummary) updateImageSrc('preview-fin-summary', data.selectedFinSummary);
+        if(data.selectedFinTable) updateImageSrc('preview-fin-table', data.selectedFinTable);
+        
+        // --- שאיבת הלוגו הדינמי מהאקסל (יחליף את ה-SVG המובנה אם קיים) ---
+        if(data.selectedLogo) {
+          const logoTargets = document.querySelectorAll('.logo-target');
+          logoTargets.forEach(target => {
+            target.innerHTML = `<img src="${data.selectedLogo}" style="height: 100%; width: auto; max-width: 100%;">`;
+          });
+        }
+        
+      } catch(e) {
+        console.error("שגיאה בטעינת נתוני ההצעה: ", e);
+      }
+    }
+    
+    syncAllPreviewFields();
+    updateCalculations();
+    
+    // אתחול כפתורי ושדות העריכה לכל הפריטים (התוספת מקודם)
+    initDynamicEditors();
+  };
+
+  function updateCalculations() {
+    const size = parseFloat(document.getElementById('inp-size').value) || 0;
+    const cost = parseFloat(document.getElementById('inp-cost').value) || 0;
+
+    const yieldVal = size * 1650 * 0.44; 
+    const profitVal = yieldVal - 4000;  
+    const cumulProfit = profitVal * 25;
+    const roi = cost > 0 ? (yieldVal / cost) * 100 : 0;
+
+    document.getElementById('lbl-panels').innerText = size.toLocaleString('he-IL') + ' קילו-וואט';
+    document.getElementById('spec-lbl-panels').innerText = size.toLocaleString('he-IL') + ' קילו-וואט';
+    
+    document.getElementById('lbl-total-cost').innerText = cost.toLocaleString('he-IL') + ' ₪';
+    document.getElementById('spec-lbl-cost').innerText = cost.toLocaleString('he-IL') + ' ₪';
+    
+    document.getElementById('lbl-yearly-yield').innerText = '~ ' + Math.round(yieldVal).toLocaleString('he-IL') + ' ₪';
+    document.getElementById('lbl-yearly-profit').innerText = '~ ' + Math.round(profitVal).toLocaleString('he-IL') + ' ₪';
+    document.getElementById('lbl-cumulative-profit').innerText = Math.round(cumulProfit).toLocaleString('he-IL') + ' ₪';
+    document.getElementById('lbl-roi').innerText = roi.toFixed(1) + '%';
+  }
+
+  function syncAllPreviewFields() {
+    syncText('inp-sys-title', 'preview-sys-title');
+    syncText('inp-client', 'preview-client');
+    syncText('inp-address', 'preview-address');
+    syncText('inp-contact', 'preview-contact');
+    syncText('inp-date', 'preview-date');
+    syncText('inp-summary-desc', 'preview-summary-desc');
+  }
+
+  function syncText(inputId, targetId) {
+    const input = document.getElementById(inputId);
+    const target = document.getElementById(targetId);
+    if (input && target) {
+      target.innerText = input.value;
+    }
+  }
+
+  function toggleSec(elementId, isChecked) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.style.display = isChecked ? '' : 'none';
+    }
+  }
+
+  function uploadImage(input, targetIds) {
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        targetIds.forEach(id => {
+          const img = document.getElementById(id);
+          if (img) {
+            img.src = e.target.result;
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function updateImageSrc(targetId, path) {
+    const img = document.getElementById(targetId);
+    if (img) {
+      img.src = path ? path : `${targetId.replace('preview-', '')}.jpg`;
+    }
+  }
+</script>
+
+</body>
+</html>

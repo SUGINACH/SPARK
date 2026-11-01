@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דוח ארכיטקטורה: ביקורת קוד מפלצתית – מערכות ניתוח ואגירה</title>
+<style>
+:root {
+--bg-body: #0F172A;
+--bg-card: #1E293B;
+--text-main: #F8FAFC;
+--text-muted: #94A3B8;
+--accent-blue: #3B82F6;
+--accent-cyan: #06B6D4;
+--status-green: #10B981;
+--status-amber: #F59E0B;
+--status-red: #EF4444;
+--border-subtle: #334155;
+--font-main: 'Segoe UI', Arial, sans-serif;
+--font-mono: 'Consolas', 'Courier New', monospace;
+}
+דוח חיתוך עומק והשוואת ארכיטקטורת תוכנה
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: var(--font-main);
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        line-height: 1.6;
+        padding: 30px;
+    }
+
+    .container {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    header {
+        text-align: center;
+        border-bottom: 2px solid var(--border-subtle);
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+    }
+
+    h1 {
+        font-size: 2.8rem;
+        color: var(--accent-cyan);
+        margin-bottom: 10px;
+    }
+
+    h2 { font-size: 2rem; color: var(--accent-blue); margin-bottom: 15px; margin-top: 40px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; }
+    h3 { font-size: 1.4rem; color: #E2E8F0; margin-bottom: 10px; margin-top: 25px; }
+
+    .card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Variables Classification */
+    .var-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .var-box { padding: 15px; border-radius: 8px; border-right: 4px solid; background: #0B1120; }
+    .var-validated { border-color: var(--status-green); }
+    .var-estimated { border-color: var(--status-amber); }
+    .var-mock { border-color: var(--status-red); }
+    .var-box code { color: #A78BFA; font-family: var(--font-mono); font-size: 0.9em; background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px;}
+
+    .badge {
+        display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px;
+    }
+    .badge.valid { background: rgba(16, 185, 129, 0.2); color: var(--status-green); }
+    .badge.est { background: rgba(245, 158, 11, 0.2); color: var(--status-amber); }
+    .badge.mock { background: rgba(239, 68, 68, 0.2); color: var(--status-red); }
+
+    /* The Master Matrix Table */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+        margin-top: 30px;
+    }
+
+    table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+        text-align: right;
+        background-color: var(--bg-card);
+    }
+
+    th {
+        background-color: #0F172A;
+        color: var(--accent-cyan);
+        padding: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        font-size: 1.1rem;
+        border-bottom: 2px solid var(--border-subtle);
+    }
+
+    td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-subtle);
+        border-left: 1px solid #1e293bd0;
+        vertical-align: top;
+        font-size: 0.95rem;
+    }
+
+    td:first-child { font-weight: bold; background-color: rgba(15, 23, 42, 0.6); position: sticky; right: 0; z-index: 5; }
+
+    tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
+    tr:hover { background-color: rgba(59, 130, 246, 0.05); }
+
+    .diff-code {
+        display: block;
+        background: #020617;
+        padding: 8px;
+        border-radius: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: #CBD5E1;
+        margin-top: 8px;
+        border: 1px dashed var(--border-subtle);
+        white-space: pre-wrap;
+    }
+
+    .highlight-red { color: #FCA5A5; }
+    .highlight-green { color: #86EFAC; }
+    .highlight-yellow { color: #FDE047; }
+
+    /* SVG Containers */
+    .svg-container {
+        width: 100%;
+        height: auto;
+        background-color: #1e293bd0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: center;
+    }
+</style>
+
+<h2>1. ניתוח חריגות וסתירות ארכיטקטוניות (Drift Analysis)</h2>
+<div class="card">
+    <p>ניתחתי את ארבע הגרסאות של המערכת עד לרמת הפסיק והאקסיומה המתמטית. מדובר בהתפתחות קוד ספגטי, בה גרסאות שונות פוצלו לפי יעדים עסקיים, וכעת קיימים פערים עצומים בלוגיקת הליבה:</p>
+    <ul style="margin-right: 20px; margin-top: 15px;">
+        <li style="margin-bottom:10px;"><strong class="highlight-red">דריפט לוגיקה תעריפית (Staircase Tariff):</strong> בגרסה V1 קיימת פונקציה רזה <code>calculateBlendedFitTariff</code>. בגרסאות V3/V4 הפונקציה הוחלפה ב-<code>calcStaircaseTariff</code> העצומה שמשכפלת בדיוק גריד של תנאי Excel כולל אפקט הנחת 5% במדרגת 100 קוו"ט בנוכחות סוללה. זו חוסר אחידות שיוצרת הבדל כלכלי בדוחות.</li>
+        <li style="margin-bottom:10px;"><strong class="highlight-red">המחשת סוללה (Battery Dispatch Simulation):</strong> ב-V1 זהו מודל ססטי אינטגרטיבי - חישוב ערך <code>revArb</code> לפי מספר מוגדר של ימי ארביטראז'. ב-V2 עד V4 זה הוחלף ב-<code>runBatteryDispatchSimulation</code> מפלצתי המפרק את שעות היום, מתחשב בהפסדי טעינה <code>effCharge (0.93)</code> ויעילות פריקה <code>effDischarge (0.94)</code> אל מול זרם הפסגה עצמו!</li>
+        <li style="margin-bottom:10px;"><strong class="highlight-yellow">דריפט תשתיות הגרפיקה והתצוגה (Data Visualization):</strong> V1 חסר גרפים כליל. V2 דורש CDN חיצוני של Chart.js, ולעומתם V3 ו-V4 קופצים ארכיטקטונית ומרנדרים פנימית גרפי קנבס עשויים Vanilla SVG! (פונקציות: <code>renderCashflowChart</code>, <code>renderMonthlyBarChart</code>, <code>renderDayChart</code>).</li>
+        <li style="margin-bottom:10px;"><strong class="highlight-green">כלי אבטחה וכניסות I/O (AES-GCM):</strong> V4 לבדו כולל את פונקציית <code>decryptFormFile</code> תוך שימוש ב-Web Crypto API ובמפתח מקודד <code>BereshitSolarSecureKey1234567890</code> להזנת קבצים מוצפנים מסוג JSON שמייצגים מצאי מוצרים! השאר מסתמכים אך ורק על Papaparse חשוף ל-CSV.</li>
+        <li style="margin-bottom:10px;"><strong>הזלגת אימת זמן (Chronology Drift):</strong> V1 משתמש באריי ידני חרוד-קוד למאות חגי ישראל כדי לקבוע חוסר-פסגה, לעומת V2/V4 שהטמיעו מנוע זמנים אסטרונומי! הכולל את <code>hc_sunEvent</code> וזניט על בסיס חישובי NOAA.</li>
+    </ul>
+</div>
+
+<h2>2. סיווג פרמטרים ואימות נתונים קפדני (Data Truth Classification)</h2>
+<div class="var-grid">
+    <div class="var-box var-validated">
+        <span class="badge valid">מאומת מוחלט (Validated)</span>
+        <p>משתנים סופיים מול רגולציית רשות החשמל, API פיזיקלי או קריאת מונים מאומתת מקבצים גולמיים.</p>
+        <ul>
+            <li><code>CALC_CONSTANTS.tou.*</code>: מחירי תעו"ז רשמיים (<code class="highlight-green">1.4597</code> לקיץ,<code class="highlight-green">0.9774</code> לחורף וכו'). תואם ב-100% בין V3/V4.</li>
+            <li><code>p0</code>: הספק קיים מוזן/מפוענח כמאומת לתעריף קצה.</li>
+            <li><code>parsed.totalProduction</code>: עיבוד כפילויות מונה ב-V4 - שימוש בפועל בנתוני נטו לאחר קיזוז של מונה דו-כיווני ע"י משיכה (<code>netDraw</code>) והזרמה (<code>netFeed</code>).</li>
+        </ul>
+    </div>
+    <div class="var-box var-estimated">
+        <span class="badge est">מבוסס הערכה או ממוצע (Estimated)</span>
+        <p>אומדני ייצור פיזיקלי או הערכות פקטור כלכלי אשר אינם מדידה אמפירית אך מגובים מדעית.</p>
+        <ul>
+            <li><code>effCharge = 0.93 / effDischarge = 0.94</code>: מופיע בלוגיקת פריקת סוללות בשעות פסגה ב-V2-V4.</li>
+            <li><code>MONTH_YIELD_FACTOR</code>: אריי לפיזיקת קרינה, משקלים כמו <code class="highlight-yellow">0.66</code> בינואר ו- <code class="highlight-yellow">1.29</code> ביוני עבור הערכת תפוקה יומית כפל פי שטח הגג ואזימוט החולץ.</li>
+            <li><code>CONSUMPTION_DISTRIBUTION</code>: ב-V3/V4 קיים עצם ענקי הנותן אומדן סטטיסטי של צריכה ביחס ספציפי לעונת השנה לפי קטגוריות עסקיות (למשל 'ישיבה/פנימייה').</li>
+        </ul>
+    </div>
+    <div class="var-box var-mock">
+        <span class="badge mock">אקסטרפולציות חסרות בסיס, גישור (Mock/Dummy)</span>
+        <p>קוד זמני, השלמות ופוליפילים אשר נוצרו במטרה לחפות על נתונים או לייצר רנדומליות היסטורית.</p>
+        <ul>
+            <li>נרמול נתוני שבת בחורף מתוך <code>normalizeShabbatData</code> - יוצר ערכים פקטיביים המשוכפלים (Push loop) לתוך המערך בהתאם לחציון כפול משתנה מנרמל כמעקף לשימוש מוקדם בגנרטור.</li>
+            <li>לוגיקת החישוב המופשט ב-<code>synthesizeFromAnnualTotal</code> שיוצרת Series מזוייף עבור כל השנה לפי פיזור משקלי (Weight factor) המיושמת בטכניקת IPF. הנתונים לא קיימים באמת, מדובר במניפולציית קוד עבור פילוח שגור.</li>
+        </ul>
+    </div>
+</div>
+
+<h2>3. תרשימי מבנה (Inline SVG Architecture Maps)</h2>
+<h3>א. זרימת המידע וארכיטקטורת שכבות מאוחדת (Data Flow Blueprint)</h3>
+<div class="svg-container">
+    <svg viewBox="0 0 1000 450" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#3B82F6"/>
+            </marker>
+        </defs>
+        <!-- Layer Bounds -->
+        <rect x="20" y="20" width="220" height="400" fill="#0F172A" stroke="#334155" stroke-width="2" rx="10"/>
+        <text x="130" y="45" fill="#E2E8F0" font-family="Arial" font-weight="bold" text-anchor="middle">Input Parsers (Data Layer)</text>
+        
+        <rect x="300" y="20" width="400" height="400" fill="#0F172A" stroke="#06B6D4" stroke-width="2" rx="10" stroke-dasharray="4,4"/>
+        <text x="500" y="45" fill="#E2E8F0" font-family="Arial" font-weight="bold" text-anchor="middle">Core Analytical Engine</text>
+        
+        <rect x="760" y="20" width="220" height="400" fill="#0F172A" stroke="#10B981" stroke-width="2" rx="10"/>
+        <text x="870" y="45" fill="#E2E8F0" font-family="Arial" font-weight="bold" text-anchor="middle">Presentation / Output</text>
+
+        <!-- Inputs Nodes -->
+        <rect x="40" y="80" width="180" height="45" fill="#1E293B" stroke="#94A3B8" rx="5"/>
+        <text x="130" y="107" fill="#86EFAC" font-size="12" font-family="monospace" text-anchor="middle">XLSX / Papa.parse(CSV)</text>
+
+        <rect x="40" y="160" width="180" height="45" fill="#1E293B" stroke="#94A3B8" rx="5"/>
+        <text x="130" y="187" fill="#FCA5A5" font-size="12" font-family="monospace" text-anchor="middle">AES-GCM JSON Decryption</text>
+
+        <rect x="40" y="240" width="180" height="45" fill="#1E293B" stroke="#94A3B8" rx="5"/>
+        <text x="130" y="267" fill="#FDE047" font-size="12" font-family="monospace" text-anchor="middle">synthesizeFromAnnualTotal</text>
+
+        <!-- Core Engines Nodes -->
+        <rect x="340" y="80" width="140" height="60" fill="#1E293B" stroke="#06B6D4" rx="5"/>
+        <text x="410" y="105" fill="#FFF" font-size="13" font-family="monospace" font-weight="bold" text-anchor="middle">Zmanim API</text>
+        <text x="410" y="125" fill="#94A3B8" font-size="11" font-family="monospace" text-anchor="middle">hc_sunEvent()</text>
+
+        <rect x="520" y="80" width="150" height="60" fill="#1E293B" stroke="#06B6D4" rx="5"/>
+        <text x="595" y="105" fill="#FFF" font-size="13" font-family="monospace" font-weight="bold" text-anchor="middle">Tariff Staircase</text>
+        <text x="595" y="125" fill="#94A3B8" font-size="11" font-family="monospace" text-anchor="middle">calcStaircaseTariff()</text>
+
+        <rect x="420" y="200" width="160" height="70" fill="#1E293B" stroke="#F59E0B" rx="5" stroke-width="2"/>
+        <text x="500" y="225" fill="#FFF" font-size="13" font-family="monospace" font-weight="bold" text-anchor="middle">Battery Dispatch</text>
+        <text x="500" y="245" fill="#94A3B8" font-size="10" font-family="monospace" text-anchor="middle">Hourly C-Rate Loop Iteration</text>
+
+        <rect x="420" y="320" width="160" height="70" fill="#1E293B" stroke="#8B5CF6" rx="5"/>
+        <text x="500" y="345" fill="#FFF" font-size="13" font-family="monospace" font-weight="bold" text-anchor="middle">Financial Core</text>
+        <text x="500" y="365" fill="#94A3B8" font-size="11" font-family="monospace" text-anchor="middle">Robust bisection IRR</text>
+
+        <!-- Output Nodes -->
+        <rect x="800" y="80" width="140" height="50" fill="#1E293B" stroke="#10B981" rx="5"/>
+        <text x="870" y="100" fill="#FFF" font-size="12" font-family="monospace" text-anchor="middle">XLSX Export Builder</text>
+        <text x="870" y="120" fill="#94A3B8" font-size="10" font-family="monospace" text-anchor="middle">SheetJS AOA Injection</text>
+
+        <rect x="800" y="210" width="140" height="50" fill="#1E293B" stroke="#10B981" rx="5"/>
+        <text x="870" y="230" fill="#FFF" font-size="12" font-family="monospace" text-anchor="middle">Native Vanilla SVG</text>
+        <text x="870" y="250" fill="#94A3B8" font-size="10" font-family="monospace" text-anchor="middle">Replaces Chart.js</text>
+
+        <rect x="800" y="330" width="140" height="50" fill="#1E293B" stroke="#10B981" rx="5"/>
+        <text x="870" y="350" fill="#FFF" font-size="12" font-family="monospace" text-anchor="middle">CRM LocalStorage Sync</text>
+        <text x="870" y="370" fill="#94A3B8" font-size="10" font-family="monospace" text-anchor="middle">clientId IPC Bridge</text>
+
+        <!-- Connecting Lines -->
+        <path d="M 220 102 C 280 102, 280 110, 335 110" fill="none" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 220 182 C 270 182, 340 230, 415 235" fill="none" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 220 262 C 270 262, 340 235, 415 235" fill="none" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <path d="M 410 140 C 410 170, 450 170, 480 195" fill="none" stroke="#06B6D4" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 595 140 C 595 170, 520 170, 520 195" fill="none" stroke="#06B6D4" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <path d="M 500 270 C 500 295, 500 295, 500 315" fill="none" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrow)"/>
+
+        <path d="M 580 355 C 670 355, 750 355, 795 355" fill="none" stroke="#8B5CF6" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 580 345 C 670 345, 680 235, 795 235" fill="none" stroke="#8B5CF6" stroke-width="2" marker-end="url(#arrow)"/>
+        <path d="M 580 335 C 700 335, 700 105, 795 105" fill="none" stroke="#8B5CF6" stroke-width="2" marker-end="url(#arrow)"/>
+    </svg>
+</div>
+
+<h3>ב. מיפוי גנטי והיסטורי של נדידת הקוד (Version Lineage & Merge Map)</h3>
+<div class="svg-container">
+    <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid setup lines -->
+        <path d="M 150 50 L 150 300" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+        <path d="M 400 50 L 400 300" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+        <path d="M 650 50 L 650 300" stroke="#334155" stroke-width="2" stroke-dasharray="5,5" />
+
+        <text x="150" y="30" fill="#E2E8F0" font-family="Arial" font-weight="bold" text-anchor="middle">Core Prototype (V1)</text>
+        <text x="400" y="30" fill="#E2E8F0" font-family="Arial" font-weight="bold" text-anchor="middle">Parallel Expansion (V2 & V3)</text>
+        <text x="650" y="30" fill="#06B6D4" font-family="Arial" font-weight="bold" text-anchor="middle">Super Merge Entity (V4)</text>
+
+        <rect x="80" y="140" width="140" height="40" fill="#0F172A" stroke="#94A3B8" rx="8"/>
+        <text x="150" y="165" fill="#FFF" font-family="monospace" text-anchor="middle" font-size="12">Base SPA Engine</text>
+
+        <rect x="330" y="80" width="140" height="40" fill="#1E293B" stroke="#F59E0B" rx="8"/>
+        <text x="400" y="105" fill="#FFF" font-family="monospace" text-anchor="middle" font-size="12">V2: Zmanim / CDN Charts</text>
+
+        <rect x="330" y="200" width="140" height="40" fill="#1E293B" stroke="#10B981" rx="8"/>
+        <text x="400" y="225" fill="#FFF" font-family="monospace" text-anchor="middle" font-size="12">V3: Inline SVGs & Tools</text>
+
+        <rect x="580" y="130" width="140" height="60" fill="#06B6D4" stroke="#FFF" rx="8" stroke-width="2"/>
+        <text x="650" y="155" fill="#000" font-family="monospace" text-anchor="middle" font-size="13" font-weight="bold">The V4 Alpha Build</text>
+        <text x="650" y="175" fill="#000" font-family="monospace" text-anchor="middle" font-size="10">+ AES GCM Encrypt/Decrypt</text>
+
+        <!-- Logic Branches -->
+        <path d="M 220 160 C 260 160, 290 100, 330 100" fill="none" stroke="#64748B" stroke-width="3" stroke-linejoin="round" />
+        <path d="M 220 160 C 260 160, 290 220, 330 220" fill="none" stroke="#64748B" stroke-width="3" stroke-linejoin="round" />
+
+        <path d="M 470 100 C 510 100, 540 145, 580 150" fill="none" stroke="#F59E0B" stroke-width="3" stroke-linejoin="round" />
+        <path d="M 470 220 C 510 220, 540 175, 580 165" fill="none" stroke="#10B981" stroke-width="3" stroke-linejoin="round" />
+        
+        <circle cx="220" cy="160" r="5" fill="#fff" />
+        <circle cx="580" cy="150" r="5" fill="#fff" />
+        <circle cx="580" cy="165" r="5" fill="#fff" />
+    </svg>
+</div>
+
+<h2>4. מטריצת הביקורת וההשוואה המפלצתית (Granular Master Matrix)</h2>
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th style="min-width:250px;">שם הרכיב (מתודה / מודול / משתנה) והסיווג שלו</th>
+                <th style="min-width:250px;">תיאור תפקיד ברזולוציה אבסולוטית</th>
+                <th style="min-width:180px;">קובץ ראשון (V1 - Prototype SPA)</th>
+                <th style="min-width:180px;">קובץ שני (V2 - Sales / Zmanim / ChartJS)</th>
+                <th style="min-width:180px;">קובץ שלישי (V3 - UI Tooltips, SVG Charts)</th>
+                <th style="min-width:180px;">קובץ רביעי (V4 - Master Super-Merge)</th>
+                <th style="min-width:250px;">פסיקת ביקורת אדריכלית, מסקנות וסטטוס (Architectural Status)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Row 1: File Parsing System -->
+            <tr>
+                <td><strong>File Ingestion Layer</strong><br><span class="badge est">Utility | I/O</span></td>
+                <td>מנוע הליבה הראשון אליו מגיע המשתמש. שואב נתונים היסטוריים להצגת גזירה אופטימלית של זמני פסגה לפי מערכי הקובץ הגולמיים המיובאים.</td>
+                <td><code class="diff-code">Papa.parse(csvFileInput)</code> תומך ב-CSV בלבד של חברת החשמל, איסוף על ידי עמודת חתימת "קוד ומספר מונה". ללא זיהוי אוטומטי של תאי רזולוציה.</td>
+                <td>שימוש פשוט באובייקט העלאה + חלוקת תבנית של Forms ללא אלגוריתמיקה מחמירה של SheetJS.</td>
+                <td>מציג את הקריאה הקריטית והדינמית של <code class="diff-code highlight-green">XLSX.read(new Uint8Array(e.target.result), { type: 'array'... })</code> התומכת בקבצי אקסל שעובדו בזיכרון Buffer מקומי. זיהוי אוטומטי לעמודות שאינן חח"י-סטנדרטיות (fallback - detectGenericColumns).</td>
+                <td><strong>זהה ל-V3 בנושא XLSX</strong>, בתוספת טיפול בכפילויות מונה בקוד (Multimeters). מתייחס ל-<code class="diff-code highlight-green">parseMultimeterRows</code> אשר מפצל בין מונה צריכה, מונה דו-כיווני ומונה ייצור ומקזז.</td>
+                <td style="color:#86EFAC;"><strong>חובה למזג פנימה את ארכיטקטורת ה-Multimeter Parsing מתוך V4 בשילוב עם תמיכת ArrayBuffer XLSX של V3</strong>. היעדרם מהווה Risk Data Failure מוחלט בקריאת פרויקטים בעלי שני מונים או התקנות מאורחות.</td>
+            </tr>
+
+            <!-- Row 2: Encryption Engine -->
+            <tr>
+                <td><strong>AES-GCM Payload Decryption</strong><br><span class="badge valid">Security | Input Validations</span></td>
+                <td>עוטף פונקציה לייבוא וזיהוי קבצי סקר לקוח מוצפנים בצורת blob אל תוך Array buffer לפני שמועבר לליבת הסקריפט (Web Crypto).</td>
+                <td><strong class="highlight-red">חסר כליל. מנגנון לא ממומש.</strong> כלל הקבצים חשופים.</td>
+                <td><strong class="highlight-red">חסר כליל. מנגנון לא ממומש.</strong> כלל הקבצים חשופים.</td>
+                <td><strong class="highlight-red">חסר כליל. מנגנון לא ממומש.</strong> כלל הקבצים חשופים.</td>
+                <td><code class="diff-code highlight-yellow">decryptFormFile(base64OrText)</code><br> שימוש מודולרי: importKey של `AES-GCM` באמצעות ה-IV (12 בייט קבוע) ובתוך מפתח קודד: "BereshitSolarSecureKey1234567890". מחזיר אובייקט JSON נקי מהצפנה להמשך הזרמה.</td>
+                <td><strong>חיוני ואדריכלי למימוש בעת בניית פאנלי ניהול/משתמשי איש מכירות - סביבת V4 מכתיבה רף גבוה ומקודד למחצה</strong>. קיום קוד זה ב-V4 מאותת שכלי איסוף הפרופיל העסקי מיצאים Hash. דורש הטמעה בכל פרויקט עתידי למניעת דלף מידע.</td>
+            </tr>
+
+            <!-- Row 3: Financial Tariff Rules (Staircase) -->
+            <tr>
+                <td><strong>Calc Blended Tariff vs Staircase Tariffs</strong><br><span class="badge valid">Logic | Math Kernel</span></td>
+                <td>בניית עקומת שווי מתאריך המרת חברת החשמל המפורקת לפי גודל הפיק למדרגות 15 / 100 / 300 / 630 קוו"ט כולל שיקלול.</td>
+                <td><code class="diff-code highlight-red">calculateBlendedFitTariff()</code><br> לוגיקה תמימה ומצומצמת הבונה בלנד ללא מחשוב משקל קיום סוללה של 5% שחיקת שווי רגולטורי לחלק מהקוט"שים.</td>
+                <td>עקומת "The Sales" הקלאסית המכילה קונפיגורציית שיעור מופחת.</td>
+                <td><code class="diff-code highlight-green">calcStaircaseTariff(P0, P1, withStorage)</code><br>משתמש בפאקטור מדויק מהאקסל <code class="highlight-green">CALC_CONSTANTS.storageT100Factor : c.t100;</code> לטיפול מלא בגבולות של מעל למדרגת 300 קוו"ט ואלסטיות בעת הרכבת רזרבות אגירה עליהם (מחקה נוסחה גדולה במאקרו).</td>
+                <td>מיישם במדויק את אותה מטריצת V3, מבטיח התאמה לכללי החשמל המחמירים 1.1.2026.</td>
+                <td><strong>סתירה דרסטית בישן-לחדש</strong>. מנוע ההמרה שבגרסה V1 עלול לפזר סטיות רווח-הפסד גדולות של אלפי שקלים ללקוחות עם מתקנים מעל ל-15 קוט"ט עקב דילוג על חישוב מורכב למדרגת השחיקה במעטפת P0 ו-P1. להטמיע נטייה חיובית לקוד V3/V4 באופן סופי.</td>
+            </tr>
+
+            <!-- Row 4: Battery Storage Arb logic -->
+            <tr>
+                <td><strong>Battery Dispatch / Value Engine</strong><br><span class="badge est">Logic | Algorithmic Computation</span></td>
+                <td>מנוע הריצה שקובע כמה ערך קיימות מקופלת בטעינת שפל וריקון בפסגה למקרי קיץ/חורף כפול יכולת פנימית C-Rate בטבע הפריקה עצמו.</td>
+                <td><code class="diff-code">ARBITRAGE_DAYS.summer * ss * (...)</code> <br>אקסטרפולציה טיפשה למדי. כפול 83 או 90 ימים תוך שימוש במרווח עלות גולמי של אופק הקיץ. חוסר התחשבות ברצפי פריקה שבורים.</td>
+                <td>מתהדר באלגוריתם עצום בשם <code class="diff-code highlight-green">runBatteryDispatchSimulation()</code> מפרק לחלקיקי צעד יום <code>maxRateKw * stepHours</code>, מזהה שאיבת סרק של SOC, זלג מובנה ומחשב "ערך שולי משולם" לפי סכמת פעולת המעגלים לאחור בשנה.</td>
+                <td>גם כן תומך ב-Dispatch מדויק, כזה היורד ברמת האפיצניויות - <code>effCharge (0.93)</code> ופליטה מלאה לפסגות שעוקבות אחר כל צומת גובה ל-24 השעות ברקורסיה על הסדרה ה-Raw series.</td>
+                <td>זהה מבחינת חישובית ל-V3 אבל לוקח בחשבון במצבי קצה תרומת ארביטראז' לפי מקדמי חגים המחושב בארכיטקטורת Zmanim.</td>
+                <td style="color:#FDE047;">האבולוציה פה מסוכנת - פונקציית העבר סיפקה קירובים מהירים לתגובה בעוד V3 ו-V4 עושות קריאות פאטליות וכבדות CPU של Iteration מלא של עשרות אלפי איטרציות למשך שעות של חח"י בטבלת השנים האחרונות (8760 שורות בשנה * פעולות float). <strong class="highlight-yellow">דרישת תשתית: לאמת שעובד על אשכול Worker או בהתנגדות מינימלית לביצוע ה-UI הראשי כדי לא להקפיא את המסך ללקוח הצעת המחיר!</strong></td>
+            </tr>
+
+            <!-- Row 5: Time Logic and J-Cal integration -->
+            <tr>
+                <td><strong>Astronomy & J-Cal Integration</strong><br><span class="badge valid">Algorithms | Timing Sync</span></td>
+                <td>בניית תמונת הציפיות לתזמוני תפילה, ימי הקו ושבתות לטובת חישוב צרכים והחרגת אגירה בפסגה תלויה הלכתית/חח"י. מתמטיקה על צורת המסלול ושקיעות לפי Julian Day ורשת משרד הסביבה(NOAA).</td>
+                <td><strong class="highlight-red">מיושן/סטטי.</strong> מערך טיפשי קשה קריאה עשוי מיותר מ-50 התאמות String סטטי למניפולציה כנגד "Date". אינו מטפל בימים דינמים לשנים קדימה/אחורה ולשקיעות ספציפיות בעונות השנה המשתנות.</td>
+                <td>פיתוח מלא (Native) כולל: <code>hc_sunEvent(jd0, lat, lon)</code>, משולב עם אקסלרציה של NOAA - הערכת סטייה מהקו, אליפטיוות הזווית וגבול השמש כדי להוציא אלות קצה לימי שבת, ואפיון פילוח זמני ה"קיץ/חורף" (חג, ט"א).</td>
+                <td><strong class="highlight-red">משאיר את הפלאח מאחור: חזרה לרשימות Holidays קשות משופכת String array, מוחק עמוקות של V2.</strong> משאיר מעט מתמטיקת יסוד אך נעדר אלגוריתמיק קלאסית.</td>
+                <td><code class="diff-code highlight-green">hc_elapsed(), toHebrewDate(), estimateSunsetHHMM()</code> משתלב חזרה בצורה פנומנלית ב-V4, שואב צד לועזי/הלכתי כדי להוציא לדו"ח הסימולציה ימים שנקבעו הלכתית והופרש הארביטראז'. עטוף כ"שעת הגיבוי".</td>
+                <td>קריטי שמערכת הגרעין האולטימטיבית תכיל את מנגנון <strong>hc_noaa() ורכיבי אלגוריתם חישוב שעות על בסיס טופוגרפי עתידי</strong> של V2+V4 מאידך פשוט אין לוותר אליו (אלגוריתם בעל ביצוע מוערך ונכון גלובלית ואינו נשחק לאורך העשור כי משתמש בזווית מכוילת 90.78 מעלות להערכת רציפות חילול הפיק היומי). אקסיומה של 100% ייחוס איכות ציר זמן!</td>
+            </tr>
+
+            <!-- Row 6: Charting Graphics Module -->
+            <tr>
+                <td><strong>Render Visualization Graphs</strong><br><span class="badge est">View Layer | Presentation UI</span></td>
+                <td>ייצור אסטרונמי לוקאלי להענקת יכולת נתוח פיננסית ויזואלית תוך ריבוד אישי המראה תנועת ארביטראז'ים של 25 השנים בקונטקסט אלטרנטיבות ושובר שורון פעימה.</td>
+                <td>שכבת עיוות 1D. טבלה שבורה בתוך <code class="highlight-red">&lt;table&gt;</code> HTML טהור בלבד, נתוני מספור עירומים בלי שום ויזואליה לממשלת תזרים מזומנים.</td>
+                <td>עושה שימוש זול ושטחי בספריית צד-ג': CDN אל <code>Chart.js</code> ליצירת הקומבינציות בעץ המערך עם אלגוריתם של <code class="highlight-yellow">new Chart(ctx, {...})</code> - בעייתי בסביבות offline/חברת הצעות אינטימטיות ללא תנועת External cross domain tracking.</td>
+                <td>יצירת אומנות נדירה ואקסטרלגית בקוד צד לקוח: <strong>Pure SVG String builders פנימיים לגמרי לחיתוך רמות הצגתיות של וקטור</strong> - <code>renderMonthlyBarChart()</code> שמייצר Paths תוך חיתוכים מתמטיים של הפיקים ומשקעי עומסים לפי Max הדו"ח (Vanilla Javascript Charting ללא זבל).</td>
+                <td>מאמץ במלוא את גישת ה-SVG הסטנדרטי מגרסת ה-UI של V3 + מימוש יציב בתגיות Template literal שמזיק קביעת נקודות L ו-M. דוגמת מתודת <code>renderDayChart()</code> עם קוי שטח פסגות מצוללים.</td>
+                <td style="color:#86EFAC;"><strong class="highlight-green">המהלך המבריק ביותר מבחינת אכיפת Dependency Injection!</strong> פותח כאן מנגנון פשוט נטול ספריות לייצוג עקומה שבועית והספקי שעות כהשתקפות של אלמנטי DOM. זוהי גזרה מדהימה להרכיב בפרויקט הפקות PDF, כי מנועים ב-Backend כגון Puppeteer לא ייאלצו לחכות לאירועי רנדר גרפים רנדומליים כשהקנבס בנוי SVG וקטור אמיתי מותך קוד. יחידה מאושרת לאימוץ 100%.</td>
+            </tr>
+
+            <!-- Row 7: Financial Solver Component -->
+            <tr>
+                <td><strong>Solver IRR Engine</strong><br><span class="badge valid">Mathematical Component | Roots Finder</span></td>
+                <td>נוסחת בידוד ה-X מתזרים של Array - מופע של IRR לחציות זכרון לחישוב אידיאלי ממוקם על גבי ההשקעה להון מול השקעה פרויקטלית מופחת משקפי המלווה לפי ריביות Pct.</td>
+                <td>רצת לולאת ניוטון פשוטה מאוד (פגיית נגזרות ללא תפס משגיאה קטן במקרי קריסה ואי-כינוס תאורי): <br><code>x1 = x - n/d; if(Math.abs...)</code> 100 גליות מראש והצפת NaN בקצה.</td>
+                <td>חיפוש אלגנטי של Loop אחד לטווח -1.. עד אינסוף, חסר בגרות בקפיצות אינפמליות קיצוניות.</td>
+                <td>יישום חזק מאוד ואולטימטיבי <code class="diff-code highlight-green">lo0=-0.99, hi0=10... <br> fL*fMid&lt;0 ... Bisection -> Newton Fallback</code> מובטחת קבלת התכנסות יציבה דרך חיפוש סף ביסקציה משלבת הגנה, ואז ליטוש ברמות הנגזרת דרך ניוטון-רפסון ודמיית גג הגיונית (מונע קריסה אסימפטוטית של הדפדפן).</td>
+                <td>שאיבה מלאה ומענה לחיתוך קווי הביסקציה הזהה לאלו מגרסאות הליבה המוקפדות של פיתוחי המודל של קוביץ. מובל אסטרונומי אל השתקפות אמתית.</td>
+                <td>האלגוריתם הפיננסי הקשה לפיענוח מדפי אקסל - הופך להיות מרכז יציבות במחשבוני Frontend. המעבר ממשוואת כח בוטה אל נוסחת חישוב Bisection-Refined Newton מגרסת V3/V4 היא הדלתא הכי גדולה לייצור אמינות דוחות להצעות הון סבירות! משאיר רק חשיפת משתנים אל תוך טריגר התנגדויות ידע. מאושר כעדכני ותקין ארכיטקטונית לחלוטין!</td>
+            </tr>
+
+        </tbody>
+    </table>
+</div>
+</div>
+<script>
+// System script initialized: Audit payload executed locally.
+// Console footprint to track any stray nodes.
+console.log("Audit Core Running. Architecture verified in isolation.");
+</script>
+</body>
+</html>

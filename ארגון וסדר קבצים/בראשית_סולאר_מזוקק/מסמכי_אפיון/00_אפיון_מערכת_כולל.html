@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בראשית סולאר — אפיון המערכת הכוללת — בראשית סולאר</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F7F5F0; --paper-alt:#EFEBE0; --ink:#1C2530; --ink-soft:#4B5768; --ink-faint:#8592A3;
+  --primary:#1A3A5F; --primary-light:#2C5583; --primary-pale:#E8EEF4;
+  --accent:#F39C12; --accent-deep:#B9770E;
+  --success:#1E8449; --success-bg:#EAF6EE; --success-line:#B7E0C4;
+  --danger:#A9401F; --danger-bg:#FBEEE7; --danger-line:#E8C3AE;
+  --warning:#8A6D1F; --warning-bg:#FDF4E2; --warning-line:#F0DBA0;
+  --decision:#2C5583; --decision-bg:#EDF2F8; --decision-line:#C3D2E3;
+  --line:#E3DFD3; --card:#FFFFFF; --mono:'JetBrains Mono',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'Assistant',sans-serif; direction:rtl; text-align:right;
+  line-height:1.75; font-size:16.5px;
+  background-image:
+    linear-gradient(var(--paper),var(--paper)),
+    repeating-linear-gradient(180deg, transparent, transparent 39px, rgba(28,37,48,0.018) 40px);
+}
+.wrap{max-width:920px; margin:0 auto; padding:0 28px 120px;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:64px 28px 46px; background:var(--primary);
+  color:#F3F0E6; overflow:hidden;
+}
+.hero::after{
+  content:""; position:absolute; inset:auto 0 0 0; height:3px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 38%, transparent 46%, var(--accent) 46%, var(--accent) 100%);
+  opacity:.75;
+}
+.hero-arc{position:absolute; left:-40px; bottom:-70px; width:340px; height:340px; opacity:.16;}
+.hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:1;}
+.hero-eyebrow{
+  font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+.hero h1{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:2.55rem; line-height:1.22;
+  margin:0 0 16px; max-width:15ch;
+}
+.hero p.lede{font-size:1.12rem; color:#D9E2EC; max-width:60ch; margin:0 0 22px;}
+.hero-meta{display:flex; gap:28px; flex-wrap:wrap; margin-top:26px; padding-top:22px; border-top:1px solid rgba(255,255,255,.16);}
+.hero-meta div{font-size:13.5px; color:#B9C6D6;}
+.hero-meta b{display:block; color:#F3F0E6; font-size:15px; font-family:'Frank Ruhl Libre',serif; font-weight:700; margin-bottom:3px;}
+
+/* ---------- SERIES NAV ---------- */
+.series-nav{
+  display:flex; flex-wrap:wrap; gap:8px; margin:22px auto 18px; max-width:920px; position:relative; z-index:2;
+}
+.series-chip{
+  font-family:var(--mono); font-size:12px; font-weight:600; text-decoration:none;
+  color:var(--primary); background:var(--card); border:1px solid var(--line);
+  padding:6px 13px; border-radius:100px; transition:all .15s ease;
+}
+.series-chip:hover{border-color:var(--accent); color:var(--accent-deep);}
+.series-chip.current{background:var(--primary); color:#F3F0E6; border-color:var(--primary);}
+
+/* ---------- TOC ---------- */
+.toc{
+  margin:-30px auto 46px; max-width:920px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(26,58,95,.35);
+  position:relative; z-index:2;
+}
+.toc-title{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:12px; font-weight:600;}
+.toc ol{columns:2; column-gap:32px; margin:0; padding-inline-start:22px;}
+.toc li{break-inside:avoid; margin-bottom:8px; font-size:14.5px;}
+.toc a{color:var(--primary); text-decoration:none; font-weight:600;}
+.toc a:hover{color:var(--accent-deep); text-decoration:underline;}
+
+/* ---------- SECTIONS ---------- */
+section.part{margin:56px 0; scroll-margin-top:20px;}
+.part-head{display:flex; align-items:baseline; gap:16px; margin-bottom:22px; padding-bottom:14px; border-bottom:2px solid var(--primary);}
+.part-num{
+  font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:1.5rem; color:var(--accent-deep);
+  flex-shrink:0;
+}
+.part-head h2{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:1.55rem; margin:0; color:var(--primary);}
+.part-sub{color:var(--ink-soft); font-size:15px; margin:-10px 0 24px; max-width:70ch;}
+h3.sub{font-family:'Frank Ruhl Libre',serif; font-size:1.16rem; font-weight:700; color:var(--primary-light); margin:32px 0 12px;}
+p{margin:0 0 14px;}
+strong{color:var(--primary); font-weight:700;}
+ul,ol{padding-inline-start:24px; margin:0 0 16px;}
+li{margin-bottom:6px;}
+
+/* ---------- BADGES ---------- */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11.5px;
+  font-weight:600; letter-spacing:.03em; padding:3px 10px; border-radius:100px; white-space:nowrap;
+}
+.badge.success{background:var(--success-bg); color:var(--success); border:1px solid var(--success-line);}
+.badge.danger{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line);}
+.badge.warning{background:var(--warning-bg); color:var(--warning); border:1px solid var(--warning-line);}
+.badge.decision{background:var(--decision-bg); color:var(--decision); border:1px solid var(--decision-line);}
+.badge.neutral{background:var(--paper-alt); color:var(--ink-soft); border:1px solid var(--line);}
+
+/* ---------- FINDING CARDS ---------- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:20px 22px;
+  margin:16px 0; border-inline-start:4px solid var(--ink-faint);
+}
+.card.success{border-inline-start-color:var(--success);}
+.card.danger{border-inline-start-color:var(--danger);}
+.card.warning{border-inline-start-color:var(--warning);}
+.card.decision{border-inline-start-color:var(--decision);}
+.card-head{display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;}
+.card-title{font-weight:700; font-size:1.02rem; color:var(--ink);}
+.card .label{font-family:var(--mono); font-size:12px; color:var(--ink-faint); margin-bottom:2px; display:block;}
+.card p:last-child{margin-bottom:0;}
+.card code{background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em;}
+
+/* ---------- FILE LIST ---------- */
+.filelist{list-style:none; padding:0; margin:18px 0;}
+.filelist li{
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; display:flex; gap:14px; align-items:flex-start;
+}
+.filelist .fname{font-family:var(--mono); font-size:13.5px; color:var(--primary); font-weight:600; word-break:break-all;}
+.filelist .fnote{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+.filelist .ftag{flex-shrink:0; margin-top:1px;}
+
+/* ---------- TABLES ---------- */
+table{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px;}
+th{
+  background:var(--primary); color:#F3F0E6; text-align:right; padding:10px 14px; font-weight:600;
+  font-size:13px; font-family:var(--mono); letter-spacing:.02em;
+}
+td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:nth-child(even) td{background:var(--paper-alt);}
+table.compact td, table.compact th{padding:7px 12px; font-size:13.5px;}
+
+/* ---------- CODE ---------- */
+pre{
+  background:var(--primary); color:#E7EEF5; padding:18px 20px; border-radius:8px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.65; direction:ltr; text-align:left; margin:14px 0;
+}
+pre .cm{color:#8FB3D9;}
+code.inline{font-family:var(--mono); background:var(--paper-alt); padding:1px 6px; border-radius:4px; font-size:.88em; color:var(--primary-light);}
+
+/* ---------- MISC ---------- */
+.divider{height:1px; background:var(--line); margin:40px 0;}
+.callout-strip{
+  display:flex; gap:14px; align-items:center; background:var(--primary-pale); border:1px solid var(--decision-line);
+  border-radius:8px; padding:14px 18px; margin:22px 0; font-size:14.5px; color:var(--primary);
+}
+.callout-strip b{color:var(--decision);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;} .toc ol{columns:1;} .hero h1{font-size:1.9rem;}}
+footer.docfoot{
+  margin-top:70px; padding-top:26px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:13px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.kicker{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-deep); font-weight:700; margin-bottom:8px; display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <svg class="hero-arc" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="170" cy="230" r="90" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="0" y1="230" x2="340" y2="230" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="170" y1="120" x2="170" y2="140" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="90" y1="150" x2="104" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+<line x1="250" y1="150" x2="236" y2="164" stroke="#F3F0E6" stroke-width="2"/>
+</svg>
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="dot"></span>מסמך אפיון 00 מתוך 6 · בראשית סולאר</div>
+    <h1>בראשית סולאר — אפיון המערכת הכוללת</h1>
+    <p class="lede">הסינתזה המרוכזת של כל 72 הקבצים המקוריים: חמישה רכיבים, ארבע-עשרה גרסאות קוד ששרדו בדיקת-ערך, ומפת דרכים אחת קדימה.</p>
+    <div class="hero-meta"><div><b>5</b>רכיבים</div><div><b>14</b>קבצי קוד ששרדו</div><div><b>70+</b>מסמכי מקור שסונתזו</div></div>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="series-nav"><a class="series-chip current" href="00_אפיון_מערכת_כולל.html">00 · מערכת כוללת</a><a class="series-chip" href="01_אפיון_מחשבון_ניתוח_תעוז_ואגירה.html">01 · מחשבון תעו״ז ואגירה</a><a class="series-chip" href="02_אפיון_מחשבון_המלצת_מערכת.html">02 · מחשבון המלצה</a><a class="series-chip" href="03_אפיון_מחולל_הצעות_מחיר.html">03 · מחולל הצעות מחיר</a><a class="series-chip" href="04_אפיון_טופס_איסוף_נתוני_צריכה.html">04 · טופס איסוף נתונים</a><a class="series-chip" href="05_אפיון_מערכת_CRM.html">05 · מערכת CRM</a></nav>
+  <div class="toc">
+    <div class="toc-title">בתוך המסמך</div>
+    <ol><li><a href="#p1">1 · תקציר מנהלים</a></li><li><a href="#p2">2 · מפת חמשת הרכיבים</a></li><li><a href="#p3">3 · ארכיטקטורת התשתית</a></li><li><a href="#p4">4 · זרימת נתונים קצה-לקצה</a></li><li><a href="#p5">5 · שלוש בעיות האינטגרציה הקריטיות</a></li><li><a href="#p6">6 · עקרונות עסקיים-הנדסיים חוצי-מערכת</a></li><li><a href="#p7">7 · המערכת מול אפיקי השקעה אחרים</a></li><li><a href="#p8">8 · מפת דרכים מאוחדת</a></li><li><a href="#p9">9 · פערי מידע פתוחים ברמת המערכת</a></li><li><a href="#p10">10 · קבצי המערכת שנשמרו — סיכום</a></li><li><a href="#p11">11 · מקורות ומתודולוגיית האיחוד</a></li></ol>
+  </div>
+  <section class="part" id="p1">
+  <div class="part-head"><span class="part-num">01</span><h2>תקציר מנהלים</h2></div>
+  
+  
+<p>בראשית סולאר בנתה, על פני שש שיחות עבודה עם Claude ושתים-עשרה עם Gemini, מערכת תוכנה בת <strong>חמישה רכיבים</strong> שתפקידה להוביל לקוח פרטי, עסקי או מוסדי מרגע האבחון הראשוני ("כמה חשמל אתה צורך?") ועד למסמך הצעת מחיר חתום — דרך שני מחשבונים כלכליים-הנדסיים ברמת דיוק גבוהה מאוד.</p>
+<p>מסמך זה הוא <strong>הסינתזה הכוללת</strong> של הפרויקט כולו: 72 קבצים מקוריים, מתוכם 14 קבצי קוד ששרדו בדיקת-ערך ישירה (ראו חלק 10), ועשרות מסמכי אפיון, ביקורת ואימות-הנחות שצומצמו לחמישה מסמכי-רכיב ממוקדים (01–05) ומסמך-על אחד — זה שלפניכם.</p>
+<div class="callout-strip"><b>המצב הנוכחי:</b> קיים אפיון הנדסי-פיננסי בשל ומאומת ברמה גבוהה מאוד (ראו מסמך 01, חלק 10–11 — "קוד זהב" וטבלת קבועים). <strong>קיימים גם 14 קבצי קוד עובדים</strong>, אך הם עדיין <strong>ארבע-חמש אבות טיפוס נפרדים שלא אוחדו</strong> לכדי מערכת ייצור אחת. זו משימת הפיתוח המרכזית שנותרה.</div>
+
+</section><section class="part" id="p2">
+  <div class="part-head"><span class="part-num">02</span><h2>מפת חמשת הרכיבים</h2></div>
+  
+  
+<table>
+<tr><th>#</th><th>רכיב</th><th>תפקיד בשפה אחת</th><th>מסמך</th></tr>
+<tr><td>1</td><td><strong>טופס איסוף נתוני צריכה</strong></td><td>הלקוח מזין כמה ואיך הוא צורך חשמל</td><td>04</td></tr>
+<tr><td>2</td><td><strong>מחשבון המלצת מערכת</strong></td><td>תשובה מהירה: איזה גודל מערכת לקנות</td><td>02</td></tr>
+<tr><td>3</td><td><strong>מחשבון ניתוח תעו״ז ואגירה</strong></td><td>ניתוח עומק ל-25 שנה לגודל שנבחר</td><td>01</td></tr>
+<tr><td>4</td><td><strong>מחולל הצעות מחיר</strong></td><td>הופך תוצאה לחישוב למסמך שנשלח ללקוח</td><td>03</td></tr>
+<tr><td>5</td><td><strong>מערכת CRM לאיש מכירות</strong></td><td>מנהלת לקוחות ומחברת בין הכל</td><td>05</td></tr>
+</table>
+<p>חמשת הרכיבים אינם עצמאיים — הם אמורים לפעול כשרשרת אחת (ראו חלק 4), אך כרגע מחוברים חלקית בלבד (ראו חלק 5).</p>
+
+</section><section class="part" id="p3">
+  <div class="part-head"><span class="part-num">03</span><h2>ארכיטקטורת התשתית</h2></div>
+  <p class="part-sub">Google Apps Script + Google Sheets, וניתוב מרכזי אחד לכל המערכת.</p>
+  
+<p>המערכת בנויה על <strong>Google Apps Script</strong> כפלטפורמת שרת, עם <strong>Google Sheets</strong> כמסד הנתונים (טבלת לקוחות, טבלת פרויקטים, קטלוג מחירים). כל חמשת הרכיבים מוגשים מאותו פרויקט GAS יחיד, דרך פונקציית ניתוב מרכזית:</p>
+<pre>function doGet(e) {
+  const page = e.parameter.page; // 'form' | 'calculator' | 'print' | undefined
+  return renderPage(page || 'Index', e.parameter.clientId);
+}</pre>
+<p>לבחירה הזו (GAS + Sheets, ולא שרת ייעודי + מסד נתונים אמיתי) יש יתרון ברור — עלות תפעול אפסית ואינטגרציה טבעית עם Gmail/Drive של הצוות — אך גם עלות: כל דף מוגש בפועל מתת-דומיין <code class="inline">googleusercontent.com</code> נפרד, מה שיוצר את בעיית ה-Same-Origin שמתועדת בהרחבה במסמך 05, חלק 5.</p>
+
+</section><section class="part" id="p4">
+  <div class="part-head"><span class="part-num">04</span><h2>זרימת נתונים קצה-לקצה</h2></div>
+  <p class="part-sub">ממגע ראשון עם לקוח ועד הצעת מחיר חתומה.</p>
+  
+<p>זרימת עבודה מלאה, מרגע פנייה ראשונה ועד הצעת מחיר חתומה:</p>
+<ol>
+<li><strong>איש המכירות פותח את ה-CRM</strong> (מסמך 05), יוצר כרטיס לקוח חדש</li>
+<li><strong>הלקוח ממלא את טופס איסוף הנתונים</strong> (מסמך 04) — או שאיש המכירות מעלה עבורו קובץ CSV גולמי מחברת החשמל</li>
+<li><strong>מחשבון ההמלצה</strong> (מסמך 02) סורק עשרות גדלי מערכת ומציע גודל אופטימלי תוך שניות</li>
+<li>לאחר אישור הלקוח על כיוון כללי, <strong>מחשבון העומק</strong> (מסמך 01) מריץ סימולציה שעתית מלאה ל-25 שנה על הגודל שנבחר</li>
+<li><strong>מחולל הצעת המחיר</strong> (מסמך 03) אמור לקרוא את תוצאות המחשבון ולהפיק מסמך מודפס/PDF ללקוח</li>
+</ol>
+<div class="callout-strip">בפועל, החוליות 4→5 ו-1→3/4 (מסומנות באדום בחלק 5) הן החלשות ביותר בשרשרת כרגע — התוצאה עוברת בחלקה בהעתקה ידנית או בכלל לא.</div>
+
+</section><section class="part" id="p5">
+  <div class="part-head"><span class="part-num">05</span><h2>שלוש בעיות האינטגרציה הקריטיות</h2></div>
+  <p class="part-sub">הפערים שמונעים מהמערכת לפעול כשרשרת רציפה אחת.</p>
+  <p>שלוש בעיות חוזרות בכל מסמכי הביקורת, המונעות מהמערכת לפעול כשרשרת רציפה:</p><div class="card danger">
+  <div class="card-head"><div><span class="card-title">1. מנוע חישוב כפול ב-CRM</span></div><span class="badge danger">מסמך 05, חלק 4</span></div>
+  <p>ל-Index.html יש עותק מוטמע ונפרד של מנוע החישוב הפיננסי (calcView), שאינו מסתנכרן עם מחשבון העומק החיצוני. הוחלט למחוק אותו לגמרי.</p>
+</div><div class="card danger">
+  <div class="card-head"><div><span class="card-title">2. גשר localStorage שבור</span></div><span class="badge danger">מסמך 05, חלק 5</span></div>
+  <p>Same-Origin Policy חוסמת שיתוף נתונים בין דפי GAS שונים — גורם לאובדן נתונים אקראי. הפתרון שהוחלט: URL params + google.script.run.saveCustomerData.</p>
+</div><div class="card danger">
+  <div class="card-head"><div><span class="card-title">3. מחולל ההצעה לא קורא את תוצאות המחשבון</span></div><span class="badge danger">מסמך 03, חלק 7</span></div>
+  <p>גם בגרסה המתקדמת ביותר של מחולל ההצעות, השדות הכספיים (IRR/NPV/חיסכון) מוזנים כטקסט חופשי במקום להיקרא אוטומטית מתוצאות המחשבון.</p>
+</div>
+</section><section class="part" id="p6">
+  <div class="part-head"><span class="part-num">06</span><h2>עקרונות עסקיים-הנדסיים חוצי-מערכת</h2></div>
+  
+  
+<p>עשרה עקרונות עסקיים-הנדסיים שאומתו לעומק וחלים על יותר מרכיב אחד:</p>
+<table>
+<tr><th>עיקרון</th><th>מה נקבע</th></tr>
+<tr><td><strong>סוגי גג ועלות מתקן</strong></td><td>רעפים דורשים מבנה מתכת מוגבה (ייקור ~8%); גג שטוח דורש מיכל אבן/בטון לייצוב זוויתי (ייקור ~5%); אסבסט אסור להתקנה ישירה — מצריך פתרון מרחף וייקור ~12%</td></tr>
+<tr><td><strong>טופס 4 (תעודת גמר)</strong></td><td>ללא טופס 4 תקף, חח״י אינה מחברת את המערכת לרשת בשום תרחיש — שדה סינון חובה, לא הצעה</td></tr>
+<tr><td><strong>מגבלת חיבור לרשת</strong></td><td>מוגבלת לפי גודל המונה הקיים (חד-פאזי/תלת-פאזי), לא רק לפי שטח גג — עלולה לחסום גדלים "אופטימליים" תיאורטית</td></tr>
+<tr><td><strong>פרמיה אורבנית + חיוב מערכתי</strong></td><td>שני מרכיבים נפרדים שפועלים בכיוונים מנוגדים (הטבה מול חיוב) — פורטו במלואם במסמך 01, חלק 7</td></tr>
+<tr><td><strong>מימון ו-WACC</strong></td><td>עלות ההון המשוקללת (מימון בנקאי + הון עצמי) קובעת את שיעור ההיוון הנכון ל-NPV — לא קבוע גנרי אחיד לכל הלקוחות</td></tr>
+<tr><td><strong>מגזר "חשמל כשר"</strong></td><td>מוסדות דת דורשים לעיתים שהמערכת תפעל גם בשבת/חג ללא הפרת הלכה (למשל דרך שינויי לוגיקה ב"פעולת גרמא") — שיקול מכירתי ותפעולי ייחודי למגזר המוסדי-דתי</td></tr>
+<tr><td><strong>מקדם טמפרטורה</strong></td><td>הפסד תפוקה של עד 14% בשיא הקיץ הישראלי בשל התחממות הפאנלים מעל 25°C — מיושם במחשבון (מסמך 01, חלק 4)</td></tr>
+<tr><td><strong>דיני מקרקעין בבניין משותף</strong></td><td>התקנה על גג משותף (בית משותף) מצריכה הסכמת דיירים לפי דין — לא רלוונטי לבית פרטי צמוד קרקע</td></tr>
+<tr><td><strong>קיטום רשת (Curtailment)</strong></td><td>נגה רשאית לקטום 1%–3% מהתפוקה במתקנים מעל 100 קוו״ט ללא פיצוי — יש לתקשר זאת מראש ללקוח</td></tr>
+<tr><td><strong>עומס פרזיטי לקירור מצברים</strong></td><td>חדר סוללות דורש מיזוג, שצורך בעצמו 3.5%–5% מאנרגיית האגירה השנתית — לרוב מתעלמים ממנו בחישובי כדאיות</td></tr>
+</table>
+
+</section><section class="part" id="p7">
+  <div class="part-head"><span class="part-num">07</span><h2>המערכת מול אפיקי השקעה אחרים</h2></div>
+  
+  
+<p>ניתוח ברמת CFO (מפורט במלואו במסמך 01, חלק 8) ממקם מערכת סולארית+אגירה טיפוסית מול שלושה אפיקי השקעה מוכרים:</p>
+<table class="compact">
+<tr><th>אפיק</th><th>תשואה טיפוסית</th><th>תנודתיות</th><th>נזילות</th></tr>
+<tr><td>מערכת סולארית + אגירה (Equity IRR/MIRR)</td><td>11%–24%</td><td>אפסית — חוזי</td><td>נמוכה מאוד (נכס מקובע)</td></tr>
+<tr><td>מדד S&amp;P 500</td><td>8%–10% נומינלי</td><td>גבוהה</td><td>גבוהה</td></tr>
+<tr><td>נדל״ן להשכרה</td><td>2.8%–3.5% תשואת שכירות</td><td>בינונית</td><td>נמוכה מאוד</td></tr>
+</table>
+<div class="callout-strip">⚠ ה-IRR "הגולמי" (76%–88% במימון 80%) הוא <strong>אחיזת עיניים מתמטית</strong> — ראו מסמך 01, חלק 8, לגבי מדוע MIRR הוא המדד הנכון להצגה מול לקוח.</div>
+
+</section><section class="part" id="p8">
+  <div class="part-head"><span class="part-num">08</span><h2>מפת דרכים מאוחדת</h2></div>
+  <p class="part-sub">שש המשימות הפתוחות, לפי סדר עדיפות.</p>
+  <p>שש משימות פיתוח, לפי סדר עדיפות מומלץ (המבוסס על היקף הנזק העסקי של כל פער):</p><table><tr><th>#</th><th>משימה</th><th>חומרה</th><th>מסמך רלוונטי</th></tr><tr><td>1</td><td>חיווט מחדש: מחולל ההצעה יקרא בפועל את תוצאות המחשבון</td><td><span class="badge danger">danger</span></td><td>מסמך 03</td></tr><tr><td>2</td><td>החלפת גשר ה-localStorage בפרמטרי URL + google.script.run</td><td><span class="badge danger">danger</span></td><td>מסמך 05</td></tr><tr><td>3</td><td>כתיבת מודול פענוח להצפנת טופס v3.0 — בתנאי שיאותר קובץ הקוד שלו</td><td><span class="badge warning">warning</span></td><td>מסמך 04</td></tr><tr><td>4</td><td>תיקון מנוע השקיעה (NOAA/Zmanim)</td><td><span class="badge warning">warning</span></td><td>מסמך 01</td></tr><tr><td>5</td><td>פיתוח מודל Zero Export דינמי (תלוי יחס קיבולת/תפוקה)</td><td><span class="badge warning">warning</span></td><td>מסמך 01</td></tr><tr><td>6</td><td>איחוד קוד סופי: קובץ מחשבון יחיד המשלב את כל הענפים (דיספאץ' שעתי + אופטימיזציה + מס מלא + ExcelJS)</td><td><span class="badge decision">מוסכם</span></td><td>מסמך 01</td></tr></table>
+</section><section class="part" id="p9">
+  <div class="part-head"><span class="part-num">09</span><h2>פערי מידע פתוחים ברמת המערכת</h2></div>
+  
+  
+<ul class="filelist">
+<li><span class="ftag badge warning">פער חוצה-מסמכים</span>
+  <div><div class="fname">משך הפרמיה האורבנית: 15 או 17 שנה</div><div class="fnote">משפיע הן על מסמך 01 (מנוע חישוב) והן על מסמך 03 (מה שמוצג ללקוח בהצעת המחיר) — יש ליישר קו בין שני הרכיבים ברגע שיתקבל אישור.</div></div>
+</li>
+<li><span class="ftag badge warning">פער בין סבבי אימות</span>
+  <div><div class="fname">חיוב עלות מערכתית: 3–6 אג' לעומת 9.09 אג'</div><div class="fnote">הערך המדויק (9.09) אומץ בקוד זהב, אך כדאי לוודא שהוא לא הודלף כערך ישן לאף קובץ אחר במערכת.</div></div>
+</li>
+<li><span class="ftag badge danger">לא אותר קובץ קוד</span>
+  <div><div class="fname">מקור מפרט טופס v3.0 (מסמך 04)</div><div class="fnote">האם המפרט המתועד מומש אי-פעם? קריטי להבהיר לפני השקעת זמן בכתיבת מודול הפענוח שהוא דורש.</div></div>
+</li>
+</ul>
+
+</section><section class="part" id="p10">
+  <div class="part-head"><span class="part-num">10</span><h2>קבצי המערכת שנשמרו — סיכום</h2></div>
+  
+  
+<table>
+<tr><th>רכיב</th><th>קבצים שנשמרו</th><th>קבצים שהוסרו (ללא תוכן ייחודי)</th></tr>
+<tr><td>מחשבון תעו״ז ואגירה</td><td>4</td><td>3</td></tr>
+<tr><td>מחשבון המלצת מערכת</td><td>1</td><td>2</td></tr>
+<tr><td>מחולל הצעות מחיר</td><td>3</td><td>3</td></tr>
+<tr><td>טופס איסוף נתונים</td><td>5</td><td>1</td></tr>
+<tr><td>CRM (Index)</td><td>1</td><td>0</td></tr>
+<tr><td><strong>סה״כ</strong></td><td><strong>14</strong></td><td><strong>9</strong></td></tr>
+</table>
+<p style="margin-top:-6px" class="part-sub">בנוסף, גרסת ה-SPA הקלה (4 עותקים כמעט-זהים) הוסרה במלואה — תועדה כבעלת באגים ידועים (מדרגות תעריף, סיווג שעות שיא) וללא כל תוכן ייחודי מול הגרסאות שנשמרו.</p>
+
+</section><section class="part" id="p11">
+  <div class="part-head"><span class="part-num">11</span><h2>מקורות ומתודולוגיית האיחוד</h2></div>
+  
+  
+<p>מסמך זה וחמשת מסמכי-הרכיב הנלווים נבנו משילוב שלוש שיטות עבודה משלימות:</p>
+<ol>
+<li><strong>קריאה מלאה</strong> של המסמך המאוחד (שיחה 6 — עצמו סינתזה של 9 מסמכי אימות-הנחות קודמים), דוח הביקורת המקיף למחולל ההצעות, ומסמכי תכנון ממוקדים (למשל חלוקת מחשבון ההמלצה מול מחשבון הרווחיות)</li>
+<li><strong>בדיקת קוד ישירה</strong> — hash להשוואת כפילויות מדויקות, diff שורה-אחר-שורה בין כל הגרסאות בכל משפחה, וחיפוש טביעות-אצבע של פיצ׳רים (למשל: כמה פעמים מוזכר <code class="inline">gridSearch</code>, <code class="inline">AstroEngine</code>, <code class="inline">clientId</code> בכל קובץ) — כדי לוודא שההחלטה על "מה לשמור" מבוססת על תוכן אמיתי ולא רק על גודל קובץ או שם</li>
+<li><strong>אימות צולב</strong> בין התיעוד לקוד בפועל — כאשר נמצאה סתירה (למשל: מסמך תכנון טען שלולאת אופטימיזציה "צריכה להיבנות", אך בדיקת הקובץ בפועל הראתה שהיא כבר קיימת ומיושמת), הועדף תמיד <strong>מה שהקוד בפועל מראה</strong> על פני מה שתועד קודם</li>
+</ol>
+<p>המסמכים המקוריים (72 קבצים, כולל 12 מסמכי ג'מיני, 6 סטים של מסמכי שיחות קלוד, ודוחות ביקורת) נשארים זמינים כארכיון היסטורי מלא בסדרת הקבצים המסודרת שהועברה קודם לכן, למי שרוצה לרדת לפרטי הדרך שהובילה למסקנות שבמסמכים אלה.</p>
+
+</section>
+  <footer class="docfoot">
+    <span>מסמך אפיון מרוכז · בראשית סולאר · נכתב מתוך סינתזה של שיחות קלוד 1–6, 12 מסמכי ג'מיני, ודוחות ביקורת קוד</span>
+    <span>יולי 2026</span>
+  </footer>
+</div>
+</body>
+</html>
