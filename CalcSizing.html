@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>שלב 2 - המלצת גודל מערכת | בראשית סולאר</title>
+<style>
+body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:#f0f4f8; margin:0; padding:20px; color:#2f3640; }
+.container { max-width:1300px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); }
+h1 { color:#1a3a5f; text-align:center; margin-bottom:6px; }
+.stage-pill-row { display:flex; justify-content:center; gap:8px; margin-bottom:26px; }
+.stage-pill { padding:6px 16px; border-radius:100px; font-size:0.85em; font-weight:bold; background:#eef2f5; color:#7f8c8d; }
+.stage-pill.active { background:#1a3a5f; color:white; }
+.stage-pill.done { background:#27ae60; color:white; }
+.calc-section-title { border-bottom:2px solid #8e44ad; padding-bottom:10px; margin-top:30px; color:#2c3e50; font-size:1.4em; }
+.calc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-bottom:20px; }
+.calc-card { background:#f8fafc; border:1px solid #e2e8f0; padding:20px; border-radius:8px; }
+.calc-card label { display:block; font-size:0.9em; font-weight:bold; margin-top:15px; margin-bottom:5px; color:#34495e; }
+.calc-card label:first-child { margin-top:0; }
+.calc-card input, .calc-card select { width:100%; padding:10px; border:1px solid #dcdde1; border-radius:6px; box-sizing:border-box; font-family:inherit; }
+.calc-btn { background:#8e44ad; color:white; padding:15px; border:none; border-radius:6px; cursor:pointer; width:100%; font-size:1.1rem; font-weight:bold; margin-top:20px; }
+.calc-btn:hover { background:#71368a; }
+.calc-btn:disabled { background:#b0bcc4; cursor:not-allowed; }
+.calc-btn-transfer { background:#f39c12; }
+.calc-btn-transfer:hover { background:#d68910; }
+.calc-btn-secondary { background:#3498db; }
+.calc-btn-secondary:hover { background:#2980b9; }
+.info-tip { display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; border-radius:50%; background:#1a3a5f; color:white; font-size:11px; font-weight:bold; cursor:pointer; margin-left:6px; position:relative; vertical-align:middle; user-select:none; }
+.info-tip:hover, .info-tip.open { background:#f39c12; }
+.info-tip .tip-popover { display:none; position:absolute; z-index:900; top:22px; right:0; width:280px; background:#1a3a5f; color:white; padding:14px; border-radius:8px; font-size:0.8em; font-weight:normal; line-height:1.6; text-align:right; box-shadow:0 6px 20px rgba(0,0,0,0.25); }
+.info-tip.open .tip-popover { display:block; }
+.tip-popover .tip-title { font-weight:bold; color:#f39c12; margin-bottom:6px; display:block; }
+.checkbox-group { margin-bottom:15px; padding:12px; background:#fff; border:1px solid #e2e8f0; border-radius:6px; }
+.checkbox-group label { display:flex; align-items:center; font-weight:normal; margin-top:8px; cursor:pointer; }
+.checkbox-group input { width:auto; margin-left:10px; cursor:pointer; }
+.readonly-pill { display:inline-block; background:#eef2f5; color:#34495e; padding:8px 12px; border-radius:6px; font-weight:bold; }
+.readonly-pill a { color:#8e44ad; font-size:0.8em; font-weight:normal; margin-right:8px; }
+.slider-row { margin-top:15px; }
+.slider-row input[type=range] { width:100%; }
+.slider-row .slider-val { font-weight:bold; color:#1a3a5f; }
+.deferred-note { font-size:0.82em; color:#9a6d1f; background:#fdf4e2; border:1px solid #f0dba0; border-radius:6px; padding:8px 12px; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <center><h1>שלב 2: המלצת גודל מערכת</h1></center>
+    <div class="stage-pill-row">
+        <div class="stage-pill done" id="pill1">✓ 1. צריכה וייצור</div>
+        <div class="stage-pill active">2. המלצת גודל</div>
+        <div class="stage-pill">3. ניתוח פיננסי</div>
+    </div>
+    <div id="clientConnectionBanner" style="display:none; background:#f5eef8; border:1px solid #d7bde2; border-radius:8px; padding:10px 16px; margin-bottom:20px; font-size:.9em; color:#6c3483; text-align:center;"></div>
+    <div id="noStage1Warning" style="display:none; background:#fdf4e2; border:1px solid #f0dba0; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:.9em; color:#9a6d1f; text-align:center;">
+        ⚠️ ללקוח זה עדיין אין נתוני צריכה משלב 1 - ניתן להמשיך עם הזנה ידנית, אבל המלצת האגירה תהיה מוגבלת (ללא נתוני צריכה בפועל). <a href="#" onclick="goToStage1(); return false;" style="color:#9a6d1f;font-weight:bold;">← לשלב 1</a>
+    </div>
+
+    <h2 class="calc-section-title">🎯 המלצת גודל מערכת אוטומטית
+        <span class="info-tip">ⓘ<span class="tip-popover">
+            <span class="tip-title">איך זה עובד</span>
+            חיפוש גס על פני טווח גדלי פאנלים (עד מגבלת הגג/חיבור/תקציב) ואגירה (אם יש נתוני צריכה משלב 1), ממוין לפי החזר השקעה משוער. זו המלצת פתיחה בלבד - הניתוח הפיננסי המדויק (מס, תעריף מדורג, IRR) מתבצע בשלב 3.
+        </span></span>
+    </h2>
+    <div class="calc-grid">
+        <div class="calc-card">
+            <label>שטח גג פנוי (מ"ר)</label>
+            <input type="number" id="rec_roofArea">
+            <label>הספק חיבור מקסימלי (קוו"ט, אופציונלי)</label>
+            <input type="number" id="rec_connLimit" placeholder="השאר ריק אם לא ידוע">
+            <label>תקציב מקסימלי (₪, אופציונלי)</label>
+            <input type="number" id="rec_budget" placeholder="השאר ריק אם אין הגבלה">
+            <p style="font-size:0.82em; color:#7f8c8d; margin-top:10px;">יחס שטח-לייצור למערכת חדשה: <b>7.5 מ"ר לקוו"ט</b> (סטנדרד פאנלים מודרניים - קבוע, להבדיל משלב 1 ששם הוזן יחס ישן וניתן לעריכה למערכת <i>קיימת</i>).</p>
+        </div>
+    </div>
+    <button class="calc-btn" onclick="findOptimalSystemSize()">🔍 מצא גודל מערכת מומלץ</button>
+    <div id="recStatus" style="text-align:center; margin-top:8px; font-size:0.9em;"></div>
+
+    <div id="recResults" style="display:none; margin-top:20px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div class="calc-card" style="border-right:4px solid #3498db;">
+                <h3 style="margin-top:0; color:#1a3a5f;">☀️ פאנלים מומלץ</h3>
+                <div style="font-size:1.8em; font-weight:800; color:#1a3a5f;" id="rec_pv_kw">-</div>
+                <div style="font-size:0.9em; margin-top:8px;">החזר השקעה גס (מיון בלבד): <b id="rec_pv_payback">-</b></div>
+                <div style="font-size:0.9em;">עלות השקעה משוערת: <b id="rec_pv_cost">-</b></div>
+            </div>
+            <div class="calc-card" style="border-right:4px solid #8e44ad;">
+                <h3 style="margin-top:0; color:#1a3a5f;">🔋 אגירה מומלצת</h3>
+                <div style="font-size:1.8em; font-weight:800; color:#1a3a5f;" id="rec_bat_kwh">-</div>
+                <div style="font-size:0.9em; margin-top:8px;">ערך ארביטראז' גס לשנה: <b id="rec_bat_value">-</b></div>
+                <div style="font-size:0.9em;">עלות השקעה משוערת: <b id="rec_bat_cost">-</b></div>
+            </div>
+        </div>
+        <button class="calc-btn calc-btn-secondary" onclick="applyRecommendationToManualFields()">✓ החל המלצה זו על השדות הידניים למטה</button>
+        <details style="margin-top:16px; background:#fafcff; border:1px solid #dcdde1; border-radius:8px; padding:0;">
+            <summary style="cursor:pointer; padding:12px 16px; font-weight:bold; color:#2c3e50;">🔍 שקיפות מלאה - איך הגענו למספרים האלה</summary>
+            <div id="recTransparency" style="padding:6px 16px 16px; font-size:0.9em; line-height:1.8;"></div>
+        </details>
+    </div>
+
+    <h2 class="calc-section-title">☀️ נתוני גג ותשתית חשמל (ידני / לאחר החלת המלצה)</h2>
+    <div class="calc-grid">
+        <div class="calc-card">
+            <label>הספק המערכת המבוקש (קוו"ט)</label>
+            <input type="number" id="calc_targetKw" value="10" step="0.1" min="0" oninput="updateRoofAreaDisplay()">
+            <p style="font-size:0.85em; color:#7f8c8d; margin:6px 0 15px;">שטח גג נדרש (7.5 מ"ר לקוו"ט): <strong id="roofAreaDisplay">75</strong> מ"ר</p>
+            <label>כיוון אופטימלי</label>
+            <select id="azimuth"><option value="1.0">דרום (100%)</option><option value="0.88">דרום-מזרח/מערב (88%)</option><option value="0.85">מזרח/מערב (85%)</option></select>
+            <label>מקדם הצללה (0.5-1.0)</label>
+            <input type="number" id="shading" value="0.95" step="0.05" max="1" min="0.5">
+        </div>
+        <div class="calc-card">
+            <label>הספק מערכת קיימת P0 (קו"ט)</label>
+            <input type="number" id="p0" value="0">
+            <label>מגבלת רשת (Zero Export)?</label>
+            <select id="zeroExport"><option value="false">לא - ניתן להזרים לרשת</option><option value="true">כן - צריכה עצמית ואגירה בלבד</option></select>
+            <label>פרמיה אורבנית (עיר מעל 50K תושבים)</label>
+            <select id="isUrban"><option value="true">זכאי</option><option value="false">לא זכאי</option></select>
+        </div>
+    </div>
+
+    <h2 class="calc-section-title">⚡ דרישות הלכתיות וגיבוי (כוונת שימוש)
+        <span class="info-tip">ⓘ<span class="tip-popover">
+            <span class="tip-title">למה רק "כוונה" כאן?</span>
+            כמה צורכים בשבת בפועל (estShabbatLoad) נקבע בשלב 1 - זו עובדה על העבר. כאן רק מחליטים אם לגודל האגירה להתחשב בצורך הזה.
+        </span></span>
+    </h2>
+    <div class="calc-card calc-grid" style="background:#f0fff4; border-color:#9ae6b4;">
+        <div>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="useStorageShabbat"> ייעוד אגירה לשבת (גיבוי מלא ללא תלות ברשת).</label>
+                <label><input type="checkbox" id="useStorageHoliday"> ייעוד אגירה לשבת+חג (גיבוי יומיים רצופים).</label>
+            </div>
+            <label>צריכה משוערת לשבת (מקור: שלב 1)</label>
+            <input type="hidden" id="estShabbatLoadRaw" value="0">
+            <div class="readonly-pill" id="estShabbatLoadDisplay">לא הוזן בשלב 1</div>
+            <a href="#" onclick="goToStage1(); return false;" style="font-size:0.8em; color:#8e44ad; display:inline-block; margin-right:8px;">לעדכון - חזרה לשלב 1</a>
+
+            <label style="margin-top:18px;">קיבולת אגירה שמישה בפועל (קוט"ש) - 0 = ללא אגירה</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="number" id="actualBatteryKwh" value="0" step="0.1" style="flex:1;">
+                <button type="button" class="calc-btn" style="margin:0; width:auto; padding:10px 16px; white-space:nowrap; background:#f39c12;" onclick="applySuggestedBattery()">הצע גודל</button>
+            </div>
+            <label>הספק ממיר / קצב טעינה-פריקה מרבי (קוו"ט)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="number" id="inverterPowerKw" value="0" step="0.5" style="flex:1;">
+                <button type="button" class="calc-btn" style="margin:0; width:auto; padding:10px 16px; white-space:nowrap; background:#f39c12;" onclick="applySuggestedInverterPower()">חשב לפי 0.2C</button>
+            </div>
+        </div>
+        <div>
+            <label>חיסכון עלות גנרטור (₪ לקוט"ש סולר)
+                <span class="info-tip">ⓘ<span class="tip-popover">
+                    <span class="tip-title">למה עבר לכאן משלב 3?</span>
+                    כי בלעדיו לא ניתן לשקלל את "ערך הגיבוי" בתוך חיפוש גודל האגירה האופטימלי כאן. שלב 3 עדיין ישתמש בערך הזה (יילקח אוטומטית מכאן) לחישוב הרווח הכספי המלא מהגיבוי.
+                </span></span>
+            </label>
+            <input type="number" id="generatorCost" value="2.5" step="0.1">
+            <p style="font-size:0.85em; color:#7f8c8d; margin-top:15px;">משמש גם את "הצע גודל" למעלה וגם את חיפוש ההמלצה האוטומטית, כדי לתת משקל כלכלי לערך הגיבוי (לא רק לחיסכון בארביטראז').</p>
+        </div>
+    </div>
+
+    <h2 class="calc-section-title">📈 גדילת צריכה עתידית משוערת</h2>
+    <div class="calc-card slider-row">
+        <label>אחוז גדילת צריכה שנתית משוערת: <span class="slider-val" id="growthPctLabel">0%</span> לשנה</label>
+        <input type="range" id="growthPctSlider" min="0" max="8" value="0" step="0.5" oninput="document.getElementById('growthPctLabel').textContent = this.value + '%'">
+        <p style="font-size:0.85em; color:#7f8c8d; margin-top:6px;">לשימוש כשידוע שהצריכה תגדל בשנים הקרובות (הרחבת משפחה, רכב חשמלי מתוכנן, תוספת בנייה וכו').</p>
+        <div class="deferred-note">⚠️ הערה: הערך נשמר ומועבר לשלב 3, אך <b>עדיין אינו משפיע בפועל</b> על תחזית ה-25 שנה שם (זה היה מוסיף מורכבות משמעותית למודל הפיננסי הקיים ונדחה בכוונה - ר' גם הערת קוד מקבילה ב-CalcFinancial בנקודה המדויקת שבה זה יתחבר בעתיד, הכי רלוונטי לתרחישי Zero Export).</p>
+    </div>
+
+    <div style="text-align:center; margin-top:35px; padding-top:25px; border-top:2px dashed #dcdde1;">
+        <button id="saveAndContinueBtn" class="calc-btn calc-btn-transfer" style="max-width:520px; margin:0 auto;">💾 שמור המלצה + הסבר לכרטיס הלקוח, והמשך לשלב 3 - ניתוח פיננסי ←</button>
+        <p id="saveAndContinueStatus" style="text-align:center; margin-top:10px; font-size:0.9em;"></p>
+    </div>
+</div>
+<script>
+    /**
+     * =====================================================================
+     * שלב 2 - המלצת גודל מערכת (CalcSizing)
+     * =====================================================================
+     * קלט: נתוני שלב 1 (צריכה שעתית רזה + estShabbatLoad) דרך getCustomerData.
+     * פלט: עמודה 31 ("נתוני המלצת גודל (JSON)") + תמצית קריאה שמתווספת
+     * ל"הערות ניתוח" הקיים, ואז מעבר לשלב 3 עם clientId בלבד.
+     *
+     * הערה מכוונת: החיפוש כאן משתמש בהערכות פיננסיות גסות (payback פשוט,
+     * לא IRR/מס/תעריף מדורג) - זה כלי מיון-פתיחה בלבד. המנוע הפיננסי
+     * המלא והיחיד (single source of truth) הוא שלב 3 (CalcFinancial).
+     * =====================================================================
+     */
+    let urlClientId = null;
+    const MODERN_ROOF_RATIO_SQM_PER_KW = 7.5;
+    let dailyPeakMedianFromStage1 = null;
+
+    // פענוח סדרה רזה (אותו פורמט שנכתב ע"י שלב 1) בחזרה לשורות {date,hour,kwh}
+    function decodeLeanSeries(saved) {
+        if (!saved || !saved.hourly) return null;
+        const h = saved.hourly;
+        const startDate = new Date(h.start + 'T00:00:00');
+        return h.kwh.map((v, i) => {
+            const d = new Date(startDate.getTime()); d.setHours(d.getHours() + i * (h.resMin / 60));
+            return { date: new Date(d.getFullYear(), d.getMonth(), d.getDate()), hour: d.getHours(), kwh: v / h.scale };
+        });
+    }
+
+    // סיווג פסגה מפושט (ללא ניתוח חגים מדויק) - מספיק לצורך מיון גדלים; שלב 3 מבצע סיווג מדויק לחישוב הכספי הסופי
+    function isRoughPeakHour(date, hour) {
+        const day = date.getDay();
+        return day >= 0 && day <= 4 && hour >= 17 && hour < 22;
+    }
+    function computeDailyPeakMedian(rows) {
+        const dailyPeak = {};
+        rows.forEach(r => { if (isRoughPeakHour(r.date, r.hour)) { const key = r.date.toISOString().slice(0, 10); dailyPeak[key] = (dailyPeak[key] || 0) + r.kwh; } });
+        const vals = Object.values(dailyPeak).sort((a, b) => a - b);
+        return vals.length ? vals[Math.floor(vals.length / 2)] : null;
+    }
+
+    function updateRoofAreaDisplay() {
+        document.getElementById('roofAreaDisplay').textContent = ((+document.getElementById('calc_targetKw').value || 0) * MODERN_ROOF_RATIO_SQM_PER_KW).toFixed(0);
+    }
+
+    function goToStage1() {
+        const win = window.open('', '_blank');
+        google.script.run.withFailureHandler(() => { if (win) win.close(); }).withSuccessHandler(url => {
+            const target = url + '?page=consumption' + (urlClientId ? '&clientId=' + encodeURIComponent(urlClientId) : '');
+            if (win) win.location.href = target; else window.open(target, '_blank');
+        }).getWebAppUrl();
+    }
+
+    // =====================================================================
+    // חיפוש המלצת גודל (הערכה גסה, ר' הערה בראש הקובץ)
+    // =====================================================================
+    function findOptimalSystemSize() {
+        const roofArea = +document.getElementById('rec_roofArea').value || 0;
+        const connLimit = document.getElementById('rec_connLimit').value ? +document.getElementById('rec_connLimit').value : Infinity;
+        const budget = document.getElementById('rec_budget').value ? +document.getElementById('rec_budget').value : Infinity;
+        const statusEl = document.getElementById('recStatus');
+        if (!roofArea) { statusEl.innerHTML = '<span style="color:#c0392b">יש להזין שטח גג פנוי.</span>'; return; }
+
+        const maxKwByRoof = roofArea / MODERN_ROOF_RATIO_SQM_PER_KW;
+        const maxKw = Math.min(maxKwByRoof, connLimit);
+        if (maxKw < 1) { statusEl.innerHTML = '<span style="color:#c0392b">האילוצים שהוזנו לא מאפשרים אף מערכת (מינימום 1 קוו"ט).</span>'; return; }
+
+        const shadingF = +document.getElementById('shading').value || 0.95, azimuthF = +document.getElementById('azimuth').value || 1;
+        const candidates = [];
+        const stepKw = Math.max(0.5, maxKw / 20);
+        for (let kw = stepKw; kw <= maxKw + 0.001; kw += stepKw) {
+            const capexPv = kw * 2400 * 1.18;
+            if (capexPv > budget) continue;
+            const annualYield = kw * 1650 * shadingF * azimuthF;
+            const grossAnnualValue = annualYield * 0.45;
+            candidates.push({ kw, capexPv, simplePayback: capexPv / (grossAnnualValue || 1) });
+        }
+        if (!candidates.length) { statusEl.innerHTML = '<span style="color:#c0392b">לא נמצא שילוב פאנלים בתקציב שהוזן.</span>'; return; }
+        candidates.sort((a, b) => a.simplePayback - b.simplePayback);
+        const bestPv = candidates[0];
+
+        let bestBattery = { kwh: 0, capexBat: 0, annualValue: 0 };
+        const remainingBudget = isFinite(budget) ? budget - bestPv.capexPv : Infinity;
+        const backupDays = document.getElementById('useStorageHoliday').checked ? 2 : (document.getElementById('useStorageShabbat').checked ? 1 : 0);
+        const estShabbatLoad = +document.getElementById('estShabbatLoadRaw').value || 0;
+
+        if (dailyPeakMedianFromStage1 != null && remainingBudget > 0) {
+            const batCandidates = [];
+            const maxBatKwh = Math.max(dailyPeakMedianFromStage1 * 2, estShabbatLoad * (backupDays || 1) * 1.5, 20);
+            for (let bkwh = 2; bkwh <= maxBatKwh; bkwh += Math.max(1, maxBatKwh / 15)) {
+                const capexBat = bkwh * 510 * 1.18 + 52330; // כולל עלות ממיר היברידי קבועה חד-פעמית - גס, למיון בלבד
+                if (capexBat > remainingBudget) continue;
+                const arbitrageValue = Math.min(bkwh, dailyPeakMedianFromStage1) * 0.4 * 365;
+                const backupValue = (backupDays > 0 && bkwh >= estShabbatLoad * backupDays) ? estShabbatLoad * backupDays * (+document.getElementById('generatorCost').value || 0) * 50 : 0;
+                const totalAnnualValue = arbitrageValue + backupValue;
+                batCandidates.push({ kwh: bkwh, capexBat, annualValue: totalAnnualValue, score: totalAnnualValue / capexBat });
+            }
+            if (batCandidates.length) {
+                batCandidates.sort((a, b) => b.score - a.score);
+                bestBattery = batCandidates[0];
+                if (backupDays > 0 && bestBattery.kwh < estShabbatLoad * backupDays) {
+                    bestBattery = batCandidates.find(c => c.kwh >= estShabbatLoad * backupDays) || batCandidates[batCandidates.length - 1];
+                }
+            }
+        }
+
+        document.getElementById('rec_pv_kw').textContent = bestPv.kw.toFixed(1) + ' קוו"ט';
+        document.getElementById('rec_pv_payback').textContent = bestPv.simplePayback.toFixed(1) + ' שנים (גס)';
+        document.getElementById('rec_pv_cost').textContent = '₪' + Math.round(bestPv.capexPv).toLocaleString();
+        document.getElementById('rec_bat_kwh').textContent = bestBattery.kwh ? bestBattery.kwh.toFixed(1) + ' קוט"ש' : 'לא מומלצת';
+        document.getElementById('rec_bat_value').textContent = bestBattery.annualValue ? '₪' + Math.round(bestBattery.annualValue).toLocaleString() : '-';
+        document.getElementById('rec_bat_cost').textContent = bestBattery.capexBat ? '₪' + Math.round(bestBattery.capexBat).toLocaleString() : '-';
+
+        document.getElementById('recTransparency').innerHTML =
+            `<p><b>פאנלים:</b> טווח חיפוש עד ${maxKw.toFixed(1)} קוו"ט (מוגבל ע"י ${maxKwByRoof < connLimit ? 'שטח הגג' : 'מגבלת החיבור'}). נבחר הגודל עם החזר ההשקעה הגס הטוב ביותר בתוך התקציב.</p>` +
+            (dailyPeakMedianFromStage1 != null
+                ? `<p><b>אגירה:</b> מבוסס חציון צריכת שיא יומית מנתוני שלב 1 (${dailyPeakMedianFromStage1.toFixed(1)} קוט"ש/יום)${backupDays ? '. הוחל רף מינימום לגיבוי שסומן.' : '.'}</p>`
+                : `<p><b>אגירה:</b> אין נתוני צריכה משלב 1 - לא ניתנה המלצת אגירה אוטומטית. ניתן להשתמש ב"הצע גודל" בסקשן ההלכתי (מבוסס רק על צריכת שבת).</p>`) +
+            `<p style="color:#95a5a6;">כל המספרים כאן הערכה גסה למיון בלבד (ללא מס/תעריף מדורג/IRR מדויקים) - הניתוח המלא בשלב 3.</p>`;
+        document.getElementById('recResults').style.display = 'block';
+        statusEl.innerHTML = '<span style="color:#219653">✓ נמצאה המלצה.</span>';
+        window._lastRec = { pvKw: bestPv.kw, batKwh: bestBattery.kwh };
+    }
+
+    function applyRecommendationToManualFields() {
+        if (!window._lastRec) return;
+        document.getElementById('calc_targetKw').value = window._lastRec.pvKw.toFixed(1);
+        updateRoofAreaDisplay();
+        if (window._lastRec.batKwh) document.getElementById('actualBatteryKwh').value = window._lastRec.batKwh.toFixed(1);
+        alert('✓ ההמלצה הוחלה על השדות הידניים למעלה. ניתן לעדכן ידנית לפני השמירה.');
+    }
+
+    function applySuggestedBattery() {
+        const estShabbatLoad = +document.getElementById('estShabbatLoadRaw').value || 0;
+        if (!estShabbatLoad) { alert('אין נתון צריכת שבת משלב 1 (או שהוא אפס). אפשר לעדכן שם, או להזין קיבולת ידנית כאן.'); return; }
+        const days = document.getElementById('useStorageHoliday').checked ? 2 : (document.getElementById('useStorageShabbat').checked ? 1 : 0);
+        if (!days) { alert('יש לסמן "ייעוד אגירה לשבת" או "לשבת+חג" תחילה.'); return; }
+        document.getElementById('actualBatteryKwh').value = (estShabbatLoad * days).toFixed(1);
+    }
+
+    function applySuggestedInverterPower() {
+        const bat = +document.getElementById('actualBatteryKwh').value || 0;
+        if (!bat) { alert('יש להזין/להציע קודם קיבולת אגירה.'); return; }
+        document.getElementById('inverterPowerKw').value = (bat * 0.2).toFixed(1);
+    }
+
+    // =====================================================================
+    // שמירה + הסבר לכרטיס הלקוח + מעבר לשלב 3
+    // =====================================================================
+    function buildExplanationText(pvKw, batKwh, roofArea, connLimit, budget, growthPct) {
+        const parts = [`המלצת גודל מערכת (שלב 2): ${pvKw.toFixed(1)} קוו"ט פאנלים${batKwh ? ' + ' + batKwh.toFixed(1) + ' קוט"ש אגירה' : ' (ללא אגירה)'}.`];
+        parts.push(`מגבלות: שטח גג ${roofArea} מ"ר${isFinite(connLimit) ? ', מגבלת חיבור ' + connLimit + ' קוו"ט' : ''}${isFinite(budget) ? ', תקציב עד ₪' + budget.toLocaleString() : ''}.`);
+        if (growthPct > 0) parts.push(`גדילת צריכה עתידית משוערת: ${growthPct}%/שנה (טרם מיושם בתחזית הפיננסית - ר' הערה בשלב 3).`);
+        return parts.join(' ');
+    }
+
+    function saveAndContinueToStage3() {
+        const pvKw = +document.getElementById('calc_targetKw').value || 0;
+        if (!pvKw) { alert('יש להזין/להחיל המלצת הספק מערכת לפני השמירה.'); return; }
+        if (!urlClientId) urlClientId = "BS-" + Math.floor(1000 + Math.random() * 9000);
+        const clientId = urlClientId;
+        const statusEl = document.getElementById('saveAndContinueStatus');
+        const btn = document.getElementById('saveAndContinueBtn');
+        const win = window.open('', '_blank');
+        btn.disabled = true;
+        statusEl.innerHTML = '<span style="color:#7f8c8d;">שומר לשרת...</span>';
+
+        const roofArea = +document.getElementById('rec_roofArea').value || +document.getElementById('roofAreaDisplay').textContent || 0;
+        const connLimit = document.getElementById('rec_connLimit').value ? +document.getElementById('rec_connLimit').value : null;
+        const budget = document.getElementById('rec_budget').value ? +document.getElementById('rec_budget').value : null;
+        const growthPct = +document.getElementById('growthPctSlider').value || 0;
+        const batKwh = +document.getElementById('actualBatteryKwh').value || 0;
+
+        const sizingPayload = {
+            v: 1, generatedAt: new Date().toISOString(), recommendedPvKw: pvKw, recommendedBatteryKwh: batKwh,
+            roofArea, connLimit, budget, azimuth: +document.getElementById('azimuth').value, shading: +document.getElementById('shading').value,
+            p0: +document.getElementById('p0').value || 0, zeroExport: document.getElementById('zeroExport').value === 'true', isUrban: document.getElementById('isUrban').value === 'true',
+            useStorageShabbat: document.getElementById('useStorageShabbat').checked, useStorageHoliday: document.getElementById('useStorageHoliday').checked,
+            inverterPowerKw: +document.getElementById('inverterPowerKw').value || 0, generatorCost: +document.getElementById('generatorCost').value || 0,
+            growthPct: growthPct, explanationText: buildExplanationText(pvKw, batKwh, roofArea, connLimit || Infinity, budget || Infinity, growthPct)
+        };
+
+        const closeWinAndFail = err => { btn.disabled = false; if (win) win.close(); statusEl.innerHTML = '<span style="color:#c0392b;">שגיאה: ' + (err && err.message ? err.message : err) + '</span>'; };
+
+        google.script.run.withFailureHandler(closeWinAndFail).withSuccessHandler(existing => {
+            const prevNotes = (existing && existing['הערות ניתוח']) || '';
+            const startMarker = '--- המלצת שלב 2 ---', endMarker = '--- סוף המלצת שלב 2 ---';
+            const noteBlock = `${startMarker}\n${sizingPayload.explanationText}\n${endMarker}`;
+            let newNotes;
+            const startIdx = prevNotes.indexOf(startMarker);
+            if (startIdx > -1) {
+                const endIdx = prevNotes.indexOf(endMarker, startIdx);
+                newNotes = endIdx > -1 ? prevNotes.slice(0, startIdx) + noteBlock + prevNotes.slice(endIdx + endMarker.length) : prevNotes + '\n\n' + noteBlock;
+            } else {
+                newNotes = prevNotes ? prevNotes + '\n\n' + noteBlock : noteBlock;
+            }
+
+            const payload = {
+                clientId: clientId, clientName: (existing && existing['שם הלקוח']) || '', clientAddress: (existing && existing['כתובת']) || '',
+                clientContact: (existing && existing['איש קשר']) || '', clientPhone: (existing && existing['טלפון']) || '',
+                projectTitle: (existing && existing['כותרת הפרויקט']) || 'מערכת פוטו-וולטאית לייצור חשמל', quoteDate: (existing && existing['תאריך הצעה']) || '',
+                roofArea: roofArea || (existing ? existing['שטח גג'] : ''), form4: existing ? existing['טופס 4'] : '', gridQuota: existing ? existing['מכסה מחח"י'] : '',
+                powerSources: existing ? existing['מקורות חשמל (JSON)'] : [], consumers: existing ? existing['צרכנים (JSON)'] : [],
+                panelPower: pvKw, storageCapacity: batKwh || (existing ? existing['קיבולת אגירה'] : ''),
+                inverterPowerTarget: sizingPayload.inverterPowerKw || (existing ? existing['עוצמת ממיר נדרשת'] : ''),
+                batteries: existing ? existing['מצברים'] : [], inverters: existing ? existing['ממירים'] : [], panels: existing ? existing['פאנלים'] : [],
+                installation: existing ? existing['התקנה'] : [], extras: existing ? existing['תוספות'] : [],
+                systemCards: existing ? existing['רכיבי מערכת (JSON)'] : [], activeCardIndex: existing ? existing['כרטיסייה פעילה (אינדקס)'] : 0,
+                totalPrice: existing ? existing['עלות מערכת'] : '', annualSavings: existing ? existing['חיסכון שנתי'] : '',
+                roi: existing ? existing['תשואה'] : '', profit25: existing ? existing['רווח מצטבר'] : '',
+                analysisNotes: newNotes, clientImages: existing ? existing['תמונות לקוח (JSON)'] : [],
+                consumptionHourlyLean: existing ? existing['נתוני צריכה שעתיים (מערך רזה)'] : null,
+                productionHourlyLean: existing ? existing['נתוני ייצור שעתיים (מערך רזה)'] : null,
+                sizingRecommendation: sizingPayload
+            };
+
+            google.script.run.withFailureHandler(closeWinAndFail).withSuccessHandler(() => {
+                statusEl.innerHTML = '<span style="color:#219653;">✓ נשמר. עובר לשלב 3...</span>';
+                google.script.run.withFailureHandler(closeWinAndFail).withSuccessHandler(url => {
+                    const target = url + '?page=financial&clientId=' + encodeURIComponent(clientId);
+                    if (win) win.location.href = target; else window.open(target, '_blank');
+                }).getWebAppUrl();
+            }).saveCustomerData(JSON.stringify(payload));
+        }).getCustomerData(clientId);
+    }
+    document.getElementById('saveAndContinueBtn').addEventListener('click', saveAndContinueToStage3);
+
+    function prefillFromSavedSizing(s) {
+        if (s.roofArea) document.getElementById('rec_roofArea').value = s.roofArea;
+        if (s.connLimit) document.getElementById('rec_connLimit').value = s.connLimit;
+        if (s.budget) document.getElementById('rec_budget').value = s.budget;
+        if (s.recommendedPvKw) { document.getElementById('calc_targetKw').value = s.recommendedPvKw; updateRoofAreaDisplay(); }
+        if (s.recommendedBatteryKwh) document.getElementById('actualBatteryKwh').value = s.recommendedBatteryKwh;
+        if (s.azimuth != null) document.getElementById('azimuth').value = s.azimuth;
+        if (s.shading != null) document.getElementById('shading').value = s.shading;
+        if (s.p0 != null) document.getElementById('p0').value = s.p0;
+        document.getElementById('zeroExport').value = s.zeroExport ? 'true' : 'false';
+        document.getElementById('isUrban').value = s.isUrban ? 'true' : 'false';
+        document.getElementById('useStorageShabbat').checked = !!s.useStorageShabbat;
+        document.getElementById('useStorageHoliday').checked = !!s.useStorageHoliday;
+        if (s.inverterPowerKw) document.getElementById('inverterPowerKw').value = s.inverterPowerKw;
+        if (s.generatorCost != null) document.getElementById('generatorCost').value = s.generatorCost;
+        if (s.growthPct != null) { document.getElementById('growthPctSlider').value = s.growthPct; document.getElementById('growthPctLabel').textContent = s.growthPct + '%'; }
+    }
+
+    function readUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('clientId');
+        if (!clientId) { document.getElementById('noStage1Warning').style.display = 'block'; return; }
+        urlClientId = clientId;
+        document.getElementById('clientConnectionBanner').style.display = 'block';
+        document.getElementById('clientConnectionBanner').textContent = `🔗 מחובר ללקוח מזהה: ${clientId}`;
+        google.script.run.withFailureHandler(() => {}).withSuccessHandler(existing => {
+            if (!existing) return;
+            if (existing['שטח גג']) document.getElementById('rec_roofArea').value = existing['שטח גג'];
+
+            const stage1 = existing['נתוני צריכה שעתיים (מערך רזה)'];
+            if (stage1 && stage1.hourly) {
+                const rows = decodeLeanSeries(stage1);
+                dailyPeakMedianFromStage1 = computeDailyPeakMedian(rows);
+                const shabbatMeta = stage1.meta && stage1.meta.shabbat;
+                if (shabbatMeta && shabbatMeta.estimatedLoadKwh) {
+                    document.getElementById('estShabbatLoadRaw').value = shabbatMeta.estimatedLoadKwh;
+                    document.getElementById('estShabbatLoadDisplay').textContent = (+shabbatMeta.estimatedLoadKwh).toFixed(1) + ' קוט"ש';
+                }
+            } else {
+                document.getElementById('noStage1Warning').style.display = 'block';
+            }
+
+            if (existing['נתוני המלצת גודל (JSON)']) prefillFromSavedSizing(existing['נתוני המלצת גודל (JSON)']);
+        }).getCustomerData(clientId);
+    }
+
+    window.onload = () => { readUrlParams(); };
+</script>
+</body>
+</html>
