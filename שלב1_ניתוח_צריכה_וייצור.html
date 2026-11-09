@@ -208,6 +208,14 @@
                 </label>
                 <select id="propertyTypeSelect"></select>
                 <p id="propertyTypeDesc" style="font-size:0.85em; color:#7f8c8d; margin-top:8px;"></p>
+                <label style="margin-top:12px;">נתח פסגה בעונת המעבר (%) - אופציונלי
+                    <span class="info-tip">ⓘ<span class="tip-popover">
+                        <span class="tip-title">מה זה?</span>
+                        בטבלת ההתפלגות מוגדר נתח פסגה לחורף ולקיץ בלבד; למעבר אין יעד, ולכן הנתח שנגזר ממנו יכול לצאת נמוך בהרבה. ריק = ללא יעד (התנהגות ברירת המחדל). הזנת ערך (1-99) מכווצת את סדרת המעבר ליעד הזה.
+                    </span></span>
+                </label>
+                <input type="number" id="annualTransitionPeakPct" min="1" max="99" step="1" placeholder="ריק = ללא יעד (כמו עד היום)">
+                <p id="transitionPeakHint" style="font-size:0.8em; color:#7f8c8d; margin:4px 0 0;"></p>
                 <button id="synthesizeAnnualBtn" class="calc-btn" style="margin-top:15px;">🔄 המר לדו"ח דמוי דו"ח חח"י</button>
             </div>
 
@@ -251,6 +259,15 @@
             <label><input type="checkbox" id="ignoreMissingShabbat"> התעלם מנתוני צריכה בשבתות בדו"ח (במידה והופעל גנרטור בעבר - נתוני שבת בקובץ אינם אמינים).</label>
             <p style="font-size:0.8em; color:#7f8c8d; margin:2px 0 0;">בחורף שעות הפסגה חלות גם בשבת, ולכן ימי שישי/שבת/חג בחורף יוחרגו מסטטיסטיקת הפסגה (הם נשארים בטבלאות). חל על קובץ המדידה (CSV / דו"ח חח"י) בלבד - לא על הערכות (JSON / מטריצה / סוג נכס). חל על ניתוח חדש - לאחר שינוי הסימון יש ללחוץ שוב על כפתור הניתוח.</p>
             <p id="shabbatExcludeNote" style="display:none; font-size:0.85em; color:#2980b9; margin:4px 0 0;"></p>
+        </div>
+        <div style="margin-top:12px; padding:10px 12px; background:#fff; border:1px dashed #9ae6b4; border-radius:6px;">
+            <label style="margin-top:0; font-size:0.9em;">מקור רשימת החגים לסיווג שעות פסגה/שפל</label>
+            <select id="holidayListMode" onchange="onHolidayModeChange()">
+                <option value="hardcoded">רשימה קשיחה מקורית (ברירת מחדל)</option>
+                <option value="derived_eve">נגזרת מהלוח העברי: יום טוב + ערב חג</option>
+                <option value="derived_only">נגזרת מהלוח העברי: יום טוב בלבד (ללא ערבי חג)</option>
+            </select>
+            <p id="holidayModeNote" style="font-size:0.8em; color:#7f8c8d; margin:6px 0 0;"></p>
         </div>
         <label>צריכה משוערת לשבת (קוט"ש) - לחישוב נפח סוללה נדרש בשלב הבא</label>
         <input type="number" id="estShabbatLoad" value="15">
@@ -561,10 +578,12 @@
             version: 1, stage: 1, savedAt: new Date().toISOString(),
             client: { id: getStageClientId(), name: _txt('topClientName'), address: _txt('topClientAddress'), phone: _txt('topClientPhone'), date: _txt('topClientDate') },
             primarySource: primary,
+            holidayListMode: holidayListMode,
             sources: active.map(k => ({
                 key: k, label: dataSources[k].label, weight: DATA_SOURCE_WEIGHTS[k], peakDayKwh: seasonObj(dataSources[k]),
                 sampleDays: { winter: dataSources[k].winter.sampleDays, summer: dataSources[k].summer.sampleDays, transition: dataSources[k].transition.sampleDays },
-                shabbatIgnored: !!dataSources[k].shabbatIgnored
+                shabbatIgnored: !!dataSources[k].shabbatIgnored,
+                transitionPeakPct: dataSources[k].transitionPeakPct == null ? null : dataSources[k].transitionPeakPct
             })),
             combinedPeakDayKwh: seasonObj(comb),
             sourceDisagreements: getSourceDisagreements().map(d => ({ season: d.season, low: d.loKey, high: d.hiKey, ratio: _r2(d.ratio) })),
@@ -605,6 +624,11 @@
         // החרגת השבת נקבעת בזמן הניתוח - אם הסימון שונה מאז, הנתונים אינם משקפים את הסימון הנוכחי
         if (dataSources.csv && !!dataSources.csv.shabbatIgnored !== document.getElementById('ignoreMissingShabbat').checked) {
             show(bad('הסימון "התעלם מנתוני שבת" שונה מאז ניתוח הקובץ. יש ללחוץ שוב על "נתח קובץ" כדי שהסטטיסטיקה תשקף את הסימון הנוכחי, ורק אז לשמור.'));
+            return { ok: false };
+        }
+        const staleHoliday = Object.keys(dataSources).filter(k => dataSources[k] && dataSources[k].holidayMode !== holidayListMode);
+        if (staleHoliday.length) {
+            show(bad('מקור רשימת החגים שונה מאז הניתוח של: ' + staleHoliday.map(k => _esc(dataSources[k].label)).join(', ') + '. יש ללחוץ שוב על כפתור הניתוח של כל מקור כדי שהסטטיסטיקה תשקף את הבחירה הנוכחית, ורק אז לשמור.'));
             return { ok: false };
         }
         let payload;
@@ -667,6 +691,22 @@
         return { derived, listed };
     }
 
+    function updateHolidayModeNote() {
+        const el = document.getElementById('holidayModeNote'); if (!el) return;
+        const y = new Date().getFullYear();
+        const derived = holidayCoverageForYear(y).derived; // ימי חג+ערב לפי הלוח העברי (לא תלוי במצב הנבחר)
+        const hard = knownHolidays.filter(x => x.startsWith(String(y))).length;
+        el.textContent = `הרשימה הקשיחה מכסה ${hard} מתוך ${derived} ימי חג/ערב חג בשנת ${y}. הבחירה חלה על ניתוח חדש - לאחר שינוי יש ללחוץ שוב על כפתור הניתוח של כל מקור, והיא עוברת לשלבים הבאים.`
+            + (holidayListMode === 'hardcoded' ? '' : ` מצב פעיל: ${HOLIDAY_MODE_LABELS[holidayListMode]}.`);
+    }
+    function onHolidayModeChange() {
+        setHolidayListMode(document.getElementById('holidayListMode').value);
+        window._s1_tree = null; // הטבלה ההיררכית נבנתה לפי המצב הקודם
+        const cont = document.getElementById('stage1TableContainer');
+        if (cont) { cont.style.display = 'none'; cont.innerHTML = ''; }
+        updateHolidayModeNote();
+    }
+
     function buildStage1EnrichedSheets() {
         if (!window._s1_tree) buildStage1Table();
         const years = window._s1_tree;
@@ -712,11 +752,12 @@
         add('שם לקוח', _txt('topClientName')); add('כתובת', _txt('topClientAddress')); add('טלפון', _txt('topClientPhone'));
         add('מזהה לקוח (מה-URL)', getStageClientId() || ''); add('תאריך ייצוא', new Date().toLocaleString('he-IL'));
         add('מקור מוביל לטבלאות', primary ? dataSources[primary].label : '');
-        active.forEach(k => { const d = dataSources[k]; add(`מקור: ${d.label} (משקל ${DATA_SOURCE_WEIGHTS[k]})`, `ליום פסגה טיפוסי - חורף ${r2(d.winter.trimmed)} | קיץ ${r2(d.summer.trimmed)} | מעבר ${r2(d.transition.trimmed)} קוט"ש`); });
+        active.forEach(k => { const d = dataSources[k]; add(`מקור: ${d.label} (משקל ${DATA_SOURCE_WEIGHTS[k]})`, `ליום פסגה טיפוסי - חורף ${r2(d.winter.trimmed)} | קיץ ${r2(d.summer.trimmed)} | מעבר ${r2(d.transition.trimmed)} קוט"ש` + (d.transitionPeakPct != null ? ` | נתח פסגה במעבר שהוזן ידנית: ${d.transitionPeakPct}%` : '')); });
         if (active.length > 1) { const c = combineAllDataSources(); add('אומדן משולב (ממוצע משוקלל)', `חורף ${r2(c.winter.trimmed)} | קיץ ${r2(c.summer.trimmed)} | מעבר ${r2(c.transition.trimmed)} קוט"ש ליום פסגה`); }
         const seasonHe = { winter: 'חורף', summer: 'קיץ', transition: 'מעבר' };
         getSourceDisagreements().forEach(d => add('⚠️ סתירה בין מקורות', `${seasonHe[d.season]}: ${dataSources[d.loKey].label} = ${r2(d.loVal)} מול ${dataSources[d.hiKey].label} = ${r2(d.hiVal)} (פי ${r2(d.ratio)})`));
         add('החרגת שבת בחורף (קובץ CSV)', dataSources.csv && dataSources.csv.shabbatIgnored ? `כן - הוחרגו ${dataSources.csv.excludedShabbatWinterDays} ימי שישי/שבת/חג מסטטיסטיקת הפסגה` : 'לא');
+        add('מקור רשימת החגים בסיווג התעריף', HOLIDAY_MODE_LABELS[holidayListMode]);
         add('צריכה משוערת לשבת (קוט"ש)', _num('estShabbatLoad'));
         add('הספק מערכת קיימת (קוו"ט)', _num('existingProductionKw'));
         const series = primary ? dataSources[primary].rawSeries : [];
@@ -1023,9 +1064,34 @@
     const knownHolidays = [
         "2020-09-18", "2020-09-19", "2020-09-20", "2020-09-27", "2020-09-28", "2021-09-06", "2021-09-07", "2021-09-08", "2021-09-15", "2021-09-16", "2021-09-20", "2021-09-21", "2021-09-27", "2021-09-28", "2022-06-04", "2022-06-05", "2022-09-25", "2022-09-26", "2022-09-27", "2023-09-15", "2023-09-16", "2023-09-17", "2023-09-24", "2023-09-25", "2023-09-29", "2023-09-30", "2024-06-11", "2024-06-12", "2025-06-01", "2025-06-02", "2025-09-22", "2025-09-23", "2025-09-24", "2026-09-11", "2026-09-12", "2026-09-13", "2026-09-20", "2026-09-21", "2026-09-25", "2026-09-26", "2027-06-10", "2027-06-11", "2028-09-20", "2028-09-21", "2028-09-22", "2028-09-29", "2028-09-30", "2029-09-09", "2029-09-10", "2029-09-11", "2029-09-18", "2029-09-19", "2029-09-23", "2029-09-24", "2029-09-30", "2030-06-06", "2030-06-07", "2030-09-27", "2030-09-28", "2030-09-29"
     ];
+    // ====================================================================
+    // מקור רשימת החגים לסיווג שעות פסגה/שפל. נקבע בשלב 1 ועובר לשלבים הבאים, כדי שהסיווג יהיה זהה בכולם.
+    //   hardcoded    = הרשימה הקשיחה המקורית (ברירת מחדל; חלקית - ראה knownHolidays)
+    //   derived_eve  = יום טוב + ערב חג, לפי הלוח העברי (אותו כלל שרשומות הרשימה המקורית מקיימות)
+    //   derived_only = יום טוב בלבד, ללא ערבי חג
+    // ====================================================================
+    let holidayListMode = 'hardcoded';
+    const HOLIDAY_MODE_LABELS = {
+        hardcoded: 'רשימה קשיחה מקורית (חלקית)',
+        derived_eve: 'נגזרת מהלוח העברי: יום טוב + ערב חג',
+        derived_only: 'נגזרת מהלוח העברי: יום טוב בלבד'
+    };
+    const _holidayCache = new Map();
+    function setHolidayListMode(mode) {
+        if (!HOLIDAY_MODE_LABELS[mode]) throw new Error('מצב רשימת חגים לא מוכר: ' + mode);
+        holidayListMode = mode; _holidayCache.clear();
+    }
     function isKnownHoliday(dateObj) {
         const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-        return knownHolidays.includes(dateStr);
+        if (holidayListMode === 'hardcoded') return knownHolidays.includes(dateStr);
+        const key = holidayListMode + dateStr;
+        let v = _holidayCache.get(key);
+        if (v === undefined) {
+            const next = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + 1);
+            v = !!getYomTovName(new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate())) || (holidayListMode === 'derived_eve' && !!getYomTovName(next));
+            _holidayCache.set(key, v);
+        }
+        return v;
     }
 
     // מחזיר { season: 'winter'|'summer'|'transition', isPeak: bool }
@@ -1092,7 +1158,7 @@
         return { season, isPeak, isWeekday, weight: seasonShare * peakShare * dayShare };
     }
 
-    function synthesizeFromAnnualTotal(annualTotalKwh, propertyType, year) {
+    function synthesizeFromAnnualTotal(annualTotalKwh, propertyType, year, transitionPeakShare) {
         const distRow = CONSUMPTION_DISTRIBUTION[propertyType];
         if (!distRow) return [];
 
@@ -1116,13 +1182,17 @@
                     group.forEach(h => h.weight *= scale);
                 }
             });
-            ['winter', 'summer'].forEach(season => {
+            // חורף וקיץ מכוילים לפי טבלת ההתפלגות. מעבר מצטרף לכיול רק אם הוזן נתח פסגה ידני - אחרת בלי יעד, כפי שהיה תמיד.
+            const peakCalibSeasons = (transitionPeakShare === null || transitionPeakShare === undefined) ? ['winter', 'summer'] : ['winter', 'summer', 'transition'];
+            peakCalibSeasons.forEach(season => {
                 const seasonGroup = hours.filter(h => h.season === season);
                 const seasonTotal = seasonGroup.reduce((s, h) => s + h.weight, 0) || 1;
                 [true, false].forEach(isPeak => {
                     const subGroup = seasonGroup.filter(h => h.isPeak === isPeak);
                     const currentShare = subGroup.reduce((s, h) => s + h.weight, 0) / seasonTotal;
-                    const target = isPeak ? distRow[season === 'winter' ? 'peakWinter' : 'peakSummer'] : distRow[season === 'winter' ? 'offpeakWinter' : 'offpeakSummer'];
+                    const target = (season === 'transition')
+                        ? (isPeak ? transitionPeakShare : 1 - transitionPeakShare)
+                        : (isPeak ? distRow[season === 'winter' ? 'peakWinter' : 'peakSummer'] : distRow[season === 'winter' ? 'offpeakWinter' : 'offpeakSummer']);
                     if (currentShare > 0) {
                         const scale = target / currentShare;
                         subGroup.forEach(h => h.weight *= scale);
@@ -1709,6 +1779,7 @@
                 transition: { trimmed: statsTransition.trimmedKwh, sampleDays: peakKwhTransition.length },
                 rawSeries: globalRawSeries.slice(), // עותק - כדי שמקור אחר לא ידרוס אותו בהמשך
                 shabbatIgnored: skipShabbatInWinter, excludedShabbatWinterDays, // מה הוחל בניתוח זה (לבדיקת התאמה בשמירה)
+                holidayMode: holidayListMode,
                 label: DATA_SOURCE_LABELS[sourceType] || sourceType
             };
             renderDataSourcesSummary();
@@ -1884,7 +1955,15 @@
             return;
         }
         const year = new Date().getFullYear();
-        const series = synthesizeFromAnnualTotal(annualKwh, propType, year);
+        // נתח פסגה במעבר (אופציונלי): ריק = ללא יעד (התנהגות ברירת המחדל). חייב להיות בין 1 ל-99.
+        const tpRaw = document.getElementById('annualTransitionPeakPct').value.trim();
+        let transitionPeakShare = null;
+        if (tpRaw !== '') {
+            const tp = parseFloat(tpRaw);
+            if (!(tp >= 1 && tp <= 99)) { errEl.textContent = 'נתח פסגה במעבר חייב להיות בין 1 ל-99 (אחוזים), או ריק.'; errEl.style.display = 'block'; return; }
+            transitionPeakShare = tp / 100;
+        }
+        const series = synthesizeFromAnnualTotal(annualKwh, propType, year, transitionPeakShare);
 
         let hourlyAggregation = {}, dailyAggregation = {}, dailyTouAggregation = {};
         globalRawSeries = [];
@@ -1907,6 +1986,7 @@
 
         errEl.style.display = 'none';
         renderReports(hourlyAggregation, dailyAggregation, dailyTouAggregation, 'annual');
+        if (dataSources.annual) dataSources.annual.transitionPeakPct = transitionPeakShare === null ? null : _r2(transitionPeakShare * 100);
         document.getElementById('reportsContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
@@ -1956,7 +2036,16 @@
     document.getElementById('topClientDate').valueAsDate = new Date();
     onConsumptionModeChange();
     onProductionModeChange();
+    function updateTransitionPeakHint() {
+        const el = document.getElementById('transitionPeakHint'), sel = document.getElementById('propertyTypeSelect');
+        if (!el || !sel || !CONSUMPTION_DISTRIBUTION[sel.value]) return;
+        const d = CONSUMPTION_DISTRIBUTION[sel.value];
+        el.textContent = `יעדי הטבלה לסוג נכס זה: פסגה בחורף ${Math.round(d.peakWinter * 100)}%, בקיץ ${Math.round(d.peakSummer * 100)}%. במעבר אין יעד.`;
+    }
+    document.getElementById('propertyTypeSelect').addEventListener('change', updateTransitionPeakHint);
     initTooltips();
+    updateHolidayModeNote();
+    updateTransitionPeakHint();
 </script>
 </body>
 </html>
