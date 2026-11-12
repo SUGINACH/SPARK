@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בראשית סולאר - דמו</title>
+</head>
+<body style="font-family:Heebo,Arial,sans-serif;padding:24px;background:#F0F3F8;color:#12283F">
+<p id="msg">טוען את מערכת הדמו...</p>
+<noscript>נדרש JavaScript. <a href="crm.html">למערכת (CRM)</a></noscript>
+<script>
+/* נתב: מחקה את doGet של Apps Script. ?page=consumption|sizing|finance|print, ברירת מחדל: CRM */
+(function () {
+  var p = new URLSearchParams(location.search);
+  var page = p.get('page') || 'crm';
+  var map = { crm: 'crm.html', consumption: 'consumption.html', sizing: 'sizing.html', finance: 'finance.html', print: 'print.html', calculator: 'crm.html' };
+  if (page === 'form') {
+    document.getElementById('msg').innerHTML = 'טופס הלקוח (<code>form</code>) אינו כלול בדמו: הוא מצפין עם המפתח הציבורי של הפריסה האמיתית, ופענוח דורש את המפתח הפרטי. <a href="crm.html">חזרה ל-CRM</a>';
+    return;
+  }
+  location.replace((map[page] || 'crm.html') + location.search + location.hash);
+})();
+</script>
+</body>
+</html>
