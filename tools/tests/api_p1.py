@@ -1,0 +1,30 @@
+from api_common import *
+def phase(page):
+    step('1. router -> crm.html; customers come from the (fake) Apps Script API')
+    page.goto(BASE + 'index.html'); page.wait_for_url('**/crm.html**')
+    page.wait_for_function("typeof globalCustomers !== 'undefined' && globalCustomers.length >= 2")
+    print('   mode:', page.evaluate('bsDemo.config()'), '| bar mode text:', page.inner_text('#bsdemo-mode'))
+    print('   customers:', page.evaluate("globalCustomers.map(c => c['ID (מזהה)'] + ' ' + c['שם הלקוח'])"))
+    page.evaluate("selectCustomer('BS-1001')")
+    print('   stage buttons:', page.eval_on_selector_all('#stageButtonsContainer button', 'e => e.map(x => x.textContent)'))
+    step('2. stage 1: upload the 15-minute CSV (70,080 rows)')
+    page.goto(BASE + 'index.html?page=consumption&clientId=BS-1001'); page.wait_for_url('**/consumption.html**')
+    page.wait_for_function("typeof clientIdS1 !== 'undefined' && clientIdS1 === 'BS-1001'")
+    page.set_input_files('#csvFileInput', FS + 'samples/sample_iec_15min_2y.csv'); page.click('#processCsvBtn')
+    page.wait_for_function("typeof sourceResults !== 'undefined' && sourceResults.iec")
+    print('   YoY:', [l.strip()[:150] for l in page.inner_text('#filePreviewPanel').split('\n') if 'השוואה' in l])
+    step('3. second source (form JSON), unify')
+    page.set_input_files('#csvFileInput', FS + 'samples/sample_form_billing.json'); page.click('#processCsvBtn'); page.wait_for_function("sourceResults.json")
+    page.click('#unifyBtn'); page.wait_for_function("window._unifiedResult !== undefined")
+    print('   unified sources:', page.evaluate('window._unifiedResult.sourcesUsed'), '| confidence', page.evaluate('window._unifiedResult.confidence'))
+    step('4. save and continue (POST saveConsumptionAnalysis through the API)')
+    page.click('button[onclick*="saveAndContinueToStage2"]'); page.wait_for_url('**/sizing.html**')
+    page.wait_for_function("document.getElementById('loadedFromStage1Banner').innerText.includes('נטענו')")
+    h, r = row(); raw = r[h.index('נתוני צריכה מועשרים (JSON)')]; ca = json.loads(raw)
+    print('   server sheet column 30:', len(raw), 'chars | hours', ca['hoursCount'], '| startISO', ca['startISO'], '| sources', ca['sources'])
+    lg = server_log()
+    acts = {}
+    for e in lg['log']:
+        if e['m'] == 'POST': acts[e['action']] = acts.get(e['action'], 0) + 1
+    print('   server saw POSTs by action:', acts, '| OPTIONS preflights:', sum(1 for e in lg['log'] if e['m'] == 'OPTIONS'), '| content-types:', sorted({e['ct'] for e in lg['log'] if e['m'] == 'POST'}), '| write locks taken:', lg['stats']['locks'])
+run(phase, reset=True)
