@@ -1477,6 +1477,11 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
     function saveAndContinueToStage3() {
         if (!clientIdS2) { alert('לא נמצא מזהה לקוח. יש לפתוח את הדף הזה מתוך כרטיס לקוח קיים.'); return; }
         const statusEl = document.getElementById('continueStatus');
+        // D15: אין שמירה והמשך לשלב 3 בלי המלצה בפועל (הספק פאנלים חיובי)
+        if ((parseFloat(document.getElementById('calc_targetKw').value) || 0) <= 0) {
+            statusEl.innerHTML = '<span style="color:#c0392b">⚠️ אין עדיין הספק מומלץ. יש להריץ \u201Cמצא גודל מומלץ\u201D (או לקבוע גודל) לפני השמירה.</span>';
+            return;
+        }
         statusEl.textContent = 'שומר...';
         const sizingRecommendation = {
             recommendedPanelsKw: parseFloat(document.getElementById('calc_targetKw').value) || 0,

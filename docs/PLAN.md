@@ -14,8 +14,8 @@
 | # | משימה | סטטוס |
 |---|---|---|
 | 0.1 | ענף `integration` מ-`Blue_Demo` | ✅ |
-| 0.2 | העלאת התכנית | 🟡 |
-| 0.3 | בדיקת בסיס: `tools/lint_undefined.py` על כל הדפים | ⬜ |
+| 0.2 | העלאת התכנית | ✅ |
+| 0.3 | בדיקת בסיס: `tools/lint_undefined.py`. נמצא: `SystemSizing.html` ו-`FinancialModel.html` (שמות ישנים, מקור הבנייה) עדיין עם `detectStepHours`, `fmtDateInput`, `globalRawSeries`, `globalHourlySimResult`, `updateRoofAreaDisplay` לא מוגדרים. סונכרנו מדפי האתר המתוקנים. הלינט נקי בכל הדפים | ✅ |
 
 ## שלב 1: ניקיון (ללא שינוי התנהגות)
 | # | משימה | סטטוס |
@@ -28,7 +28,7 @@
 | # | משימה | מקור | סטטוס |
 |---|---|---|---|
 | 2.1 | D14: `validateBeforeSave`, `ensureClientId`, `pullLatestFromServer`, `safeParseJsonField` ב-CRM | Gold/Index | ⬜ |
-| 2.2 | D15: אימות `calc_targetKw > 0` לפני שמירה בשלב 2 | חדש | ⬜ |
+| 2.2 | D15: אימות `calc_targetKw > 0` לפני שמירה בשלב 2 (ב-`sizing.html` ו-`SystemSizing.html`). נבדק בלינט בלבד, לא הורץ בדפדפן | חדש | 🟡 |
 | 2.3 | D5: מילוי שבתות חסרות | Green/שלב 2 | ⬜ |
 | 2.4 | D6: הערכת ייצור עבר משטח גג | Red/שלב 1 | ⬜ |
 | 2.5 | כלכלת אגירה והסבר המלצה (`getBatteryEconomics`, `buildRecommendationExplanation`) | Red/שלב 2 | ⬜ |

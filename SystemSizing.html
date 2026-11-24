@@ -378,6 +378,11 @@
 
     // יחס שטח גג לפאנלים מודרניים (החלטה H4): 5.5 מ"ר לקוו"ט. קבוע יחיד לשימוש כל הלוגיקה והתצוגה.
     const ROOF_M2_PER_KWP_NEW = 5.5;
+
+    // מצב משותף של הדף. הוכרז במפורש (D23): קודם נוצר כמשתנה גלובלי משתמע רק בהשמה, וקריאה לפני ההשמה
+    // (למשל לחיצה על סימולציה בלי נתוני שלב 1) זרקה ReferenceError במקום להציג הודעה ידידותית.
+    let globalRawSeries = null;          // סדרת הצריכה השעתית מעמודה 30 (נטענת ב-bootstrapStage2)
+    let globalHourlySimResult = null;    // תוצאת סימולציית האגירה האחרונה
     const CALC_CONSTANTS = {
         staircase: { p15: 15, p100: 100, p300: 300, p630: 630, t15: 0.48, t100: 0.3936, t300: 0.3437, t630: 0.2844, disc: 1 },
         storageT100Factor: 0.95, // "מחשבון כולל אגירה" מפעיל הנחה של 5% על מדרגת 15-100 קוו"ט כשיש אגירה
@@ -660,6 +665,30 @@
         }
         return { winter: days.winter.size, summer: days.summer.size, transition: days.transition.size };
     }
+    // מזהה את רזולוציית הנתונים בפועל (שעתי / 15 דק') לפי המרווח השכיח בין שורות עוקבות.
+    // הועתק משלב 1 (D23): סימולציית האגירה קוראת לו, והוא לא הועבר בפיצול. הסדרה השמורה בגיליון שעתית, ולכן בפועל מחזיר 1.
+    function detectStepHours(series) {
+        if (series.length < 2) return 1;
+        const gapCounts = {};
+        for (let i = 1; i < Math.min(series.length, 500); i++) {
+            const gapMin = Math.round((series[i].date - series[i - 1].date) / 60000);
+            if (gapMin > 0) gapCounts[gapMin] = (gapCounts[gapMin] || 0) + 1;
+        }
+        let bestGap = 60, bestCount = 0;
+        for (const g in gapCounts) {
+            if (gapCounts[g] > bestCount) { bestCount = gapCounts[g]; bestGap = parseInt(g); }
+        }
+        return bestGap / 60;
+    }
+
+    // תצוגת שטח הגג הנדרש להספק הפאנלים שנבחר (D4): קוו"ט × יחס מ"ר לקוו"ט. היחידה (מ"ר) כבר בתווית שבדף.
+    function updateRoofAreaDisplay() {
+        const el = document.getElementById('roofAreaDisplay');
+        if (!el) return;
+        const kw = parseFloat(document.getElementById('calc_targetKw').value) || 0;
+        el.textContent = kw > 0 ? (kw * ROOF_M2_PER_KWP_NEW).toFixed(0) : '-';
+    }
+
     function runBatteryDispatchSimulation(series, stepHours, batteryUsableKwh, rangeStart, rangeEnd, maxRateKwOverride) {
         const batteryNominalKwh = batteryUsableKwh > 0 ? batteryUsableKwh / CALC_CONSTANTS.battery.dod : 0;
         const reserveKwh = batteryNominalKwh - batteryUsableKwh;
@@ -1444,6 +1473,11 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
     function saveAndContinueToStage3() {
         if (!clientIdS2) { alert('לא נמצא מזהה לקוח. יש לפתוח את הדף הזה מתוך כרטיס לקוח קיים.'); return; }
         const statusEl = document.getElementById('continueStatus');
+        // D15: אין שמירה והמשך לשלב 3 בלי המלצה בפועל (הספק פאנלים חיובי)
+        if ((parseFloat(document.getElementById('calc_targetKw').value) || 0) <= 0) {
+            statusEl.innerHTML = '<span style="color:#c0392b">⚠️ אין עדיין הספק מומלץ. יש להריץ \u201Cמצא גודל מומלץ\u201D (או לקבוע גודל) לפני השמירה.</span>';
+            return;
+        }
         statusEl.textContent = 'שומר...';
         const sizingRecommendation = {
             recommendedPanelsKw: parseFloat(document.getElementById('calc_targetKw').value) || 0,
