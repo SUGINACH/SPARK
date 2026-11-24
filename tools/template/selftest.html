@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בדיקת מערכת עצמית</title>
+<script src="config.js"></script>
+<script src="seed-data.js"></script>
+<script src="fake-sheets.js"></script>
+<script src="gas-shim.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  body { font-family: Heebo, Arial, sans-serif; background: #F0F3F8; color: #12283F; margin: 0; padding: 24px; }
+  h1 { margin: 0 0 4px; font-size: 24px; }
+  .muted { color: #5b6b7c; font-size: 13px; margin-bottom: 14px; max-width: 900px; line-height: 1.6; }
+  .card { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(18,40,63,.08); margin-bottom: 14px; max-width: 1100px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  select, button { font: 14px Heebo, Arial, sans-serif; padding: 8px 12px; border-radius: 10px; border: 1px solid #ccd; background: #fff; }
+  button.primary { background: #1E8449; color: #fff; border: 0; cursor: pointer; padding: 10px 22px; border-radius: 999px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  table { border-collapse: collapse; width: 100%; max-width: 1100px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(18,40,63,.08); }
+  th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid #eef1f6; font-size: 14px; vertical-align: top; }
+  th { background: #12283F; color: #fff; font-weight: 600; }
+  td.st { font-size: 18px; text-align: center; width: 60px; }
+  td.ms { color: #5b6b7c; white-space: nowrap; width: 90px; }
+  td.detail { color: #33475b; font-size: 13px; word-break: break-word; }
+  #summary { font-weight: 700; margin: 10px 0; }
+  .warnbox { background: #FFF4DB; border-right: 4px solid #F39C12; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>בדיקת מערכת עצמית</h1>
+<div class="muted">הדף מריץ את כל הפונקציות והחיבורים מול השרת שאליו האתר מחובר: טעינת כל הדפים, חיבור, הרשאות, קריאה וכתיבה של כל עמודות הלקוח, וייצוא Excel (קטן ובגודל מלא).
+  הכתיבה מתבצעת <b>רק ללקוח הבדיקה שנבחר</b> (עמודות 20-23, 29-31 ושורת הלקוח עצמה, ללא שינוי). נתונים קיימים בעמודות 29-31 נשמרים ומוחזרים בסוף. אם הלקוח היה ריק שם, יישארו בו נתוני דוגמה תקינים.
+  בסיום אפשר ללחוץ "העתק דוח" ולהדביק אותו בשיחה.</div>
+<div class="card">
+  <div id="env" class="muted" style="margin:0 0 10px"></div>
+  <div class="row">
+    <label>לקוח בדיקה: <select id="cust"><option value="">טוען...</option></select></label>
+    <label><input type="checkbox" id="full" checked> כולל ייצוא בגודל קובץ דו-שנתי (כ-3MB)</label>
+    <button class="primary" id="run" disabled>הרץ את כל הבדיקות</button>
+    <button id="copy" disabled>העתק דוח</button>
+  </div>
+  <div id="warn" class="warnbox" style="display:none"></div>
+</div>
+<div id="summary"></div>
+<table id="res"><thead><tr><th>#</th><th>בדיקה</th><th>סטטוס</th><th>זמן</th><th>פרטים</th></tr></thead><tbody></tbody></table>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var rpc = function (name) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (res, rej) { var r = google.script.run.withSuccessHandler(res).withFailureHandler(rej); r[name].apply(r, args); });
+  };
+  var results = [], customers = [];
+  var cfg = function () { return window.bsDemo.config(); };
+  var ok = function (d) { return { status: '✅', detail: d || '' }; };
+  var warn = function (d) { return { status: '🟡', detail: d || '' }; };
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function addRow(n, title, status, ms, detail) {
+    results.push({ n: n, title: title, status: status, ms: ms, detail: detail });
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + n + '</td><td>' + esc(title) + '</td><td class="st">' + status + '</td><td class="ms">' + (ms == null ? '' : ms + ' ms') + '</td><td class="detail">' + esc(detail) + '</td>';
+    $('res').tBodies[0].appendChild(tr);
+    var c = { '✅': 0, '🟡': 0, '🔴': 0 }; results.forEach(function (r) { c[r.status] = (c[r.status] || 0) + 1; });
+    $('summary').textContent = '✅ ' + c['✅'] + '   🟡 ' + c['🟡'] + '   🔴 ' + c['🔴'] + '   (' + results.length + ' בדיקות)';
+  }
+  var counter = 0;
+  async function T(title, fn) {
+    var t0 = performance.now(), n = ++counter;
+    try { var r = await fn(); addRow(n, title, r.status || '✅', Math.round(performance.now() - t0), r.detail || ''); }
+    catch (e) { addRow(n, title, '🔴', Math.round(performance.now() - t0), (e && e.message) || String(e)); }
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+  // ---------- יצירת payload ייצוא (אותו מבנה כמו buildExcelPayload) ----------
+  var DOW = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function makeExcelPayload(days) {
+    var seasonNames = ['חורף', 'מעבר', 'קיץ'], seasons = seasonNames.map(function (n) { return { name: n, kwh: { offpeak: 0, peak: 0 }, payment: { offpeak: 0, peak: 0 }, days: [] }; });
+    var annualC = { offpeak: 0, peak: 0 }, annualP = { offpeak: 0, peak: 0 }, hourlyRows = [], dailyRows = [], peakDays = [];
+    var start = new Date(2025, 9, 1);
+    for (var d = 0; d < days; d++) {
+      var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + d), ds = pad(dt.getDate()) + '/' + pad(dt.getMonth() + 1) + '/' + dt.getFullYear();
+      var s = seasons[Math.min(2, Math.floor(d * 3 / days))], hours = [], dk = { offpeak: 0, peak: 0 }, dp = { offpeak: 0, peak: 0 };
+      for (var h = 0; h < 24; h++) {
+        var peak = h >= 17 && h <= 21, kwh = +(0.4 + (peak ? 0.9 : 0.2)).toFixed(3), pay = +(kwh * (peak ? 0.98 : 0.40)).toFixed(4), kind = peak ? 'peak' : 'offpeak';
+        dk[kind] += kwh; dp[kind] += pay;
+        hours.push({ hourLabel: pad(h) + ':00 (' + (peak ? 'פסגה' : 'שפל') + ')', kwh: kwh, payment: pay, tariffType: peak ? 'פסגה' : 'שפל', hebrewDate: h < 19 ? 'א׳ תשרי ה׳תשפ״ו' : 'ב׳ תשרי ה׳תשפ״ו', productionKwh: null });
+        hourlyRows.push([ds + ' ' + pad(h) + ':00', DOW[dt.getDay()], kwh]);
+      }
+      var g1 = { kwh: { offpeak: 0, peak: 0 }, payment: { offpeak: 0, peak: 0 } }, g2 = { kwh: { offpeak: 0, peak: 0 }, payment: { offpeak: 0, peak: 0 } };
+      hours.forEach(function (x, i) { var g = i < 19 ? g1 : g2, k = x.tariffType === 'פסגה' ? 'peak' : 'offpeak'; g.kwh[k] += x.kwh; g.payment[k] += x.payment; });
+      s.days.push({ date: ds, dayOfWeek: DOW[dt.getDay()], kwh: dk, payment: dp, hebrewGroups: { 'א׳ תשרי ה׳תשפ״ו': g1, 'ב׳ תשרי ה׳תשפ״ו': g2 }, hours: hours });
+      ['offpeak', 'peak'].forEach(function (k) { s.kwh[k] += dk[k]; s.payment[k] += dp[k]; annualC[k] += dk[k]; annualP[k] += dp[k]; });
+      dailyRows.push([ds, DOW[dt.getDay()], +(dk.offpeak + dk.peak).toFixed(3), +dk.offpeak.toFixed(3), +dk.peak.toFixed(3)]);
+      peakDays.push([ds, DOW[dt.getDay()], +dk.peak.toFixed(3), +dp.peak.toFixed(2)]);
+    }
+    // שנה קודמת בגיליונות השעתי/יומי (הקובץ האמיתי דו-שנתי: 17,544 שורות שעתיות), כדי שגודל ה-payload יהיה ריאליסטי
+    for (var e = days; e >= 1; e--) {
+      var pd = new Date(start.getFullYear(), start.getMonth(), start.getDate() - e), pds = pad(pd.getDate()) + '/' + pad(pd.getMonth() + 1) + '/' + pd.getFullYear();
+      for (var hh = 0; hh < 24; hh++) hourlyRows.unshift([pds + ' ' + pad(23 - hh) + ':00', DOW[pd.getDay()], 0.6]);
+      dailyRows.unshift([pds, DOW[pd.getDay()], 14.4, 4.8, 4.5]);
+    }
+    return JSON.stringify({
+      clientName: 'בדיקה_עצמית', hasProduction: false, hourlyRows: hourlyRows, dailyRows: dailyRows, peakDays: peakDays, stats: null, sources: [],
+      propertyType: null, propertyTypeLabel: null, shabbat: { estLoadKwh: null, upliftPct: 0 },
+      monsterTable: { yearLabel: 'שנה אחרונה', annualCons: annualC, annualPay: annualP, seasons: seasons.filter(function (x) { return x.days.length; }), hasProduction: false },
+      tariffStructure: [{ season: 'חורף', dayType: 'כל ימות השבוע', hourRange: '17:00-21:59', tariffType: 'פסגה', rate: 0.98 }, { season: 'חורף', dayType: 'כל ימות השבוע', hourRange: 'שאר השעות', tariffType: 'שפל', rate: 0.4 }]
+    });
+  }
+  function checkWorkbook(res, minMerges) {
+    if (!res || !res.ok) throw new Error('השרת החזיר: ' + JSON.stringify(res).slice(0, 200));
+    if (typeof XLSX === 'undefined') throw new Error('ספריית SheetJS לא נטענה (אין אינטרנט/CDN חסום), לא ניתן לאמת את הקובץ');
+    var wb = XLSX.read(res.base64, { type: 'base64' }), names = wb.SheetNames, monster = wb.Sheets['פירוט שנתי מלא'];
+    if (!monster) throw new Error('הגיליון "פירוט שנתי מלא" חסר בקובץ. גיליונות: ' + names.join(', '));
+    var merges = (monster['!merges'] || []).length;
+    if (merges < minMerges) throw new Error('מעט מדי מיזוגים בטבלה הראשית: ' + merges);
+    return { sheets: names.length, merges: merges, kb: Math.round(res.base64.length * 0.75 / 1024) };
+  }
+
+  // ---------- הבדיקות ----------
+  async function runAll() {
+    var id = $('cust').value, cust = customers.filter(function (c) { return c['ID (מזהה)'] === id; })[0];
+    if (!cust) return;
+    if (!confirm('הבדיקות יכתבו נתוני בדיקה ללקוח "' + cust['שם הלקוח'] + '" (' + id + ') בעמודות 20-23 ו-29-31, ויחזירו את הקיים בסוף. להמשיך?')) return;
+    $('run').disabled = true; $('copy').disabled = true; $('res').tBodies[0].innerHTML = ''; results = []; counter = 0; $('summary').textContent = 'רץ...';
+    var isViewer = cfg().role === 'viewer', api = cfg().mode === 'api', snap = null;
+    var samples = {};
+
+    await T('טעינת קבצי האתר', async function () {
+      var files = ['index.html', 'crm.html', 'consumption.html', 'sizing.html', 'finance.html', 'print.html', 'config.js', 'gas-shim.js', 'seed-data.js', 'fake-sheets.js', 'samples/selftest_analysis.json', 'samples/selftest_recommendation.json', 'samples/selftest_calc.json'];
+      var optional = ['server-local.js'], bad = [], soft = [];
+      for (var f of files) { try { var r = await fetch(f, { cache: 'no-store' }); if (!r.ok) bad.push(f + ' (' + r.status + ')'); } catch (e) { bad.push(f); } }
+      for (var o of optional) { try { var r2 = await fetch(o, { cache: 'no-store' }); if (!r2.ok) soft.push(o + ' (' + r2.status + ')'); } catch (e) { soft.push(o); } }
+      if (bad.length) throw new Error('חסרים בשרת האתר: ' + bad.join(', '));
+      return soft.length ? warn('כל הקבצים קיימים, חוץ מ-' + soft.join(', ') + ' (נדרש למצב דמו ולייצוא "בדפדפן" בלבד)') : ok(files.length + optional.length + ' קבצים נטענו');
+    });
+
+    await T('טעינת הדפים בפועל (iframe) והפונקציות המרכזיות בהם', async function () {
+      var checks = [
+        ['crm.html', function (w) { return typeof w.selectCustomer === 'function' && w.eval("typeof globalCustomers !== 'undefined' && globalCustomers.length > 0"); }, 'selectCustomer + רשימת לקוחות'],
+        ['consumption.html', function (w) { return typeof w.exportToExcel === 'function' && typeof w.saveAndContinueToStage2 === 'function'; }, 'exportToExcel, saveAndContinueToStage2'],
+        ['sizing.html', function (w) { return typeof w.findOptimalSystemSize === 'function' && typeof w.detectStepHours === 'function' && typeof w.updateRoofAreaDisplay === 'function'; }, 'findOptimalSystemSize, detectStepHours, updateRoofAreaDisplay'],
+        ['finance.html', function (w) { return typeof w.runFinancialModel === 'function' && typeof w.fmtDateInput === 'function'; }, 'runFinancialModel, fmtDateInput'],
+        ['print.html', function (w) { return w.document.body.innerText.length > 300; }, 'גוף ההצעה נטען']
+      ], bad = [];
+      for (var c of checks) {
+        var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;left:-9999px;width:1200px;height:800px;border:0';
+        fr.src = c[0] + '?clientId=' + encodeURIComponent(id);
+        var loaded = new Promise(function (res) { fr.onload = res; setTimeout(res, 25000); });
+        document.body.appendChild(fr); await loaded; await sleep(2500);
+        var pass = false; try { pass = c[1](fr.contentWindow); } catch (e) { pass = false; }
+        if (!pass) bad.push(c[0] + ' (' + c[2] + ')');
+        fr.remove();
+      }
+      if (bad.length) throw new Error('נכשלו: ' + bad.join('; '));
+      return ok(checks.length + ' דפים נטענו והפונקציות המרכזיות בהם קיימות');
+    });
+
+    await T('חיבור לשרת (ping)', async function () {
+      var t = performance.now(), r = await rpc('ping');
+      return ok('שרת ' + r.service + ' גרסה ' + r.version + (r.login ? ' | כניסה: סיסמה' + (r.login.google ? ' + Google' : '') : '') + ' | מצב ' + cfg().mode);
+    });
+    await T('זהות והרשאה (whoami)', async function () {
+      if (!api) return warn('מצב דמו: אין כניסת משתמשים');
+      var r = await rpc('whoami');
+      return ok('משתמש ' + r.username + ', תפקיד ' + r.role + ', כניסה ' + r.method);
+    });
+    var init;
+    await T('קריאת כל הלקוחות והמחירון (getInitialData)', async function () {
+      init = await rpc('getInitialData');
+      var size = JSON.stringify(init).length;
+      var msg = init.customers.length + ' לקוחות, ' + init.catalog.length + ' פריטי מחירון, ' + Math.round(size / 1024) + ' KB';
+      return size > 5 * 1024 * 1024 ? warn(msg + ' (גדול: כדאי לצמצם, משימה T22)') : ok(msg);
+    });
+    await T('קריאת לקוח הבדיקה (getCustomerData)', async function () {
+      snap = await rpc('getCustomerData', id);
+      if (!snap) throw new Error('הלקוח לא נמצא');
+      var has = ['נתוני חישוב גולמיים (JSON)', 'נתוני צריכה מועשרים (JSON)', 'המלצת גודל מערכת (JSON)', 'נתוני ייצור מועשרים (JSON)'].map(function (k) { return k.split(' (')[0].slice(0, 14) + ': ' + (snap[k] && Object.keys(snap[k] || {}).length ? 'יש' : 'ריק'); });
+      return ok('נמצא: ' + snap['שם הלקוח'] + ' | ' + has.join(' | '));
+    });
+
+    var pre = snap || {};
+    async function loadSamples() {
+      for (var n of ['analysis', 'recommendation', 'calc']) samples[n] = await (await fetch('samples/selftest_' + n + '.json', { cache: 'no-store' })).json();
+    }
+    await loadSamples();
+    function expectForbidden(e) { return e && e.code === 'forbidden'; }
+    // getCustomerData מחזיר חלק מעמודות ה-JSON כמחרוזת (למשל 'תמונות לקוח'); ה-CRM שולח לשרת מערכים, לכן ממירים לפני השמירה (אחרת הערך מקודד פעמיים)
+    function pj(v) { if (typeof v === 'string') { try { return JSON.parse(v); } catch (e) { return []; } } return v || []; }
+
+    await T('שמירת שורת לקוח מלאה ללא שינוי (עמודה 29 ו-30-32 נשמרות)', async function () {
+      var p = { clientId: pre['ID (מזהה)'], clientName: pre['שם הלקוח'], clientAddress: pre['כתובת'], clientContact: pre['איש קשר'], clientPhone: pre['טלפון'], projectTitle: pre['כותרת הפרויקט'],
+        quoteDate: pre['תאריך הצעה'], roofArea: pre['שטח גג'], form4: pre['טופס 4'], gridQuota: pre['מכסה מחח"י'], powerSources: pj(pre['מקורות חשמל (JSON)']), consumers: pj(pre['צרכנים (JSON)']),
+        panelPower: pre['הספק פאנלים'], storageCapacity: pre['קיבולת אגירה'], batteries: pj(pre['מצברים']), inverters: pj(pre['ממירים']), panels: pj(pre['פאנלים']), installation: pj(pre['התקנה']), extras: pj(pre['תוספות']),
+        totalPrice: pre['עלות מערכת'], annualSavings: pre['חיסכון שנתי'], roi: pre['תשואה'], profit25: pre['רווח מצטבר'], analysisNotes: pre['הערות ניתוח'], clientImages: pj(pre['תמונות לקוח (JSON)']),
+        systemCards: pj(pre['רכיבי מערכת (JSON)']), activeCardIndex: pre['כרטיסייה פעילה (אינדקס)'], inverterPowerTarget: pre['עוצמת ממיר נדרשת'] };
+      try { var r = await rpc('saveCustomerData', JSON.stringify(p)); }
+      catch (e) { if (isViewer && expectForbidden(e)) return ok('נחסם כמצופה: תפקיד צפייה בלבד'); throw e; }
+      if (isViewer) throw new Error('משתמש צפייה בלבד הצליח לכתוב!');
+      var after = await rpc('getCustomerData', id), diffs = [];
+      Object.keys(pre).forEach(function (k) { if (!same(pre[k], after[k]) && String(pre[k]) !== String(after[k])) diffs.push(k); });
+      if (diffs.length) throw new Error('שדות ששונו בשמירה ללא שינוי: ' + diffs.join(', '));
+      return ok('כל ' + Object.keys(pre).length + ' השדות זהים אחרי השמירה');
+    });
+    await T('שמירה וקריאה: ניתוח צריכה (עמודה 30)', async function () {
+      try { var r = await rpc('saveConsumptionAnalysis', JSON.stringify({ clientId: id, consumptionAnalysis: samples.analysis })); }
+      catch (e) { if (isViewer && expectForbidden(e)) return ok('נחסם כמצופה: צפייה בלבד'); throw e; }
+      if (!r.ok) throw new Error(r.message);
+      var back = (await rpc('getCustomerData', id))['נתוני צריכה מועשרים (JSON)'];
+      if (!same(back, samples.analysis)) throw new Error('הנתון שנקרא חזרה שונה מהנתון שנשמר');
+      return ok(JSON.stringify(samples.analysis).length + ' תווים נשמרו ונקראו זהים');
+    });
+    await T('שמירה וקריאה: המלצת גודל (עמודה 31)', async function () {
+      try { var r = await rpc('saveSizingRecommendation', JSON.stringify({ clientId: id, sizingRecommendation: samples.recommendation })); }
+      catch (e) { if (isViewer && expectForbidden(e)) return ok('נחסם כמצופה: צפייה בלבד'); throw e; }
+      if (!r.ok) throw new Error(r.message);
+      var back = (await rpc('getCustomerData', id))['המלצת גודל מערכת (JSON)'];
+      if (!same(back, samples.recommendation)) throw new Error('הנתון שנקרא חזרה שונה');
+      return ok('נשמר ונקרא זהה');
+    });
+    await T('שמירה וקריאה: תוצאות פיננסיות (עמודות 20-23 ו-29)', async function () {
+      try { var r = await rpc('updateCalculatorResults', JSON.stringify(Object.assign({ clientId: id }, samples.calc))); }
+      catch (e) { if (isViewer && expectForbidden(e)) return ok('נחסם כמצופה: צפייה בלבד'); throw e; }
+      if (!r.ok) throw new Error(r.message);
+      var back = await rpc('getCustomerData', id);
+      if (!same(back['נתוני חישוב גולמיים (JSON)'], samples.calc.rawCalculatorData)) throw new Error('עמודה 29 שונה אחרי השמירה');
+      return ok('עמודה 29 נשמרה ונקראה זהה');
+    });
+    await T('ייצוא Excel קטן (30 ימים)', async function () {
+      var t = performance.now(), r = await rpc('generateConsumptionExcelReport', makeExcelPayload(30)), w = checkWorkbook(r, 30);
+      return ok(w.sheets + ' גיליונות, ' + w.merges + ' מיזוגים, ' + w.kb + ' KB, ' + Math.round(performance.now() - t) + ' ms' + (r.warning ? ' | אזהרת שרת: ' + r.warning : ''));
+    });
+    if ($('full').checked) await T('ייצוא Excel בגודל מלא (דו-שנתי, בדיקת מגבלות)', async function () {
+      var payload = makeExcelPayload(365), t = performance.now(), r = await rpc('generateConsumptionExcelReport', payload), sec = (performance.now() - t) / 1000, w = checkWorkbook(r, 1000);
+      var d = 'נשלחו ' + (payload.length / 1048576).toFixed(1) + ' MB, התקבלו ' + w.kb + ' KB, ' + w.sheets + ' גיליונות, ' + w.merges + ' מיזוגים, ' + sec.toFixed(1) + ' שניות' + (r.warning ? ' | אזהרת שרת: ' + r.warning : '');
+      return (sec > 90 || r.warning) ? warn(d + ' (קרוב למגבלת 6 דקות / מיזוג חלקי)') : ok(d);
+    });
+    await T('פעולה לא מוכרת נדחית', async function () {
+      try { await rpc('doesNotExist'); } catch (e) { return (e.code === 'unknown_action' || /לא מוכרת|לא קיימת/.test(e.message)) ? ok(e.message) : warn('נדחתה אך בהודעה לא צפויה: ' + e.message); }
+      throw new Error('פעולה לא קיימת התקבלה!');
+    });
+    await T('אסימון שגוי נדחה בשרת', async function () {
+      if (!api) return warn('מצב דמו: לא רלוונטי');
+      var r = await (await fetch(cfg().url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getInitialData', token: 'x'.repeat(64) }) })).json();
+      return (!r.ok && (r.code === 'session_expired' || r.code === 'unauthorized')) ? ok('נדחה: ' + r.code) : (function () { throw new Error('השרת לא דחה אסימון שגוי: ' + JSON.stringify(r).slice(0, 120)); })();
+    });
+    await T('פעולה לא מאומתת נדחית בשרת (בלי אסימון ובלי מפתח)', async function () {
+      if (!api) return warn('מצב דמו: לא רלוונטי');
+      var r = await (await fetch(cfg().url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getInitialData' }) })).json();
+      return (!r.ok && r.code === 'unauthorized') ? ok('נדחה: unauthorized') : (function () { throw new Error('השרת החזיר נתונים בלי אימות! ' + JSON.stringify(r).slice(0, 120)); })();
+    });
+    await T('אכיפת "צפייה בלבד" בשרת', async function () {
+      if (!api || !isViewer) return warn('לא רלוונטי (תפקיד: ' + (cfg().role || 'לא ידוע') + '). לבדיקה: להיכנס כמשתמש צפייה בלבד ולהריץ שוב');
+      var a = JSON.parse(sessionStorage.getItem('bs:token')), r = await (await fetch(cfg().url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveCustomerData', token: a.token, args: ['{}'] }) })).json();
+      return (!r.ok && r.code === 'forbidden') ? ok('השרת דחה כתיבה: forbidden') : (function () { throw new Error('השרת לא חסם כתיבה של צפייה בלבד: ' + JSON.stringify(r).slice(0, 120)); })();
+    });
+
+    // שחזור נתונים קיימים של לקוח הבדיקה (אם היו)
+    await T('שחזור נתונים קיימים של לקוח הבדיקה', async function () {
+      if (isViewer) return warn('צפייה בלבד: לא נכתב דבר');
+      var restored = [], kept = [];
+      var a30 = pre['נתוני צריכה מועשרים (JSON)'], a31 = pre['המלצת גודל מערכת (JSON)'], a29 = pre['נתוני חישוב גולמיים (JSON)'], a32 = pre['נתוני ייצור מועשרים (JSON)'];
+      var has = function (o) { return o && typeof o === 'object' && Object.keys(o).length > 0; };
+      if (has(a30)) { await rpc('saveConsumptionAnalysis', JSON.stringify({ clientId: id, consumptionAnalysis: a30, productionSeries: has(a32) ? a32 : undefined })); restored.push('30'); } else kept.push('30');
+      if (has(a31)) { await rpc('saveSizingRecommendation', JSON.stringify({ clientId: id, sizingRecommendation: a31 })); restored.push('31'); } else kept.push('31');
+      if (has(a29)) { await rpc('updateCalculatorResults', JSON.stringify({ clientId: id, totalPrice: pre['עלות מערכת'], annualSavings: pre['חיסכון שנתי'], roi: pre['תשואה'], profit25: pre['רווח מצטבר'], rawCalculatorData: a29 })); restored.push('29, 20-23'); } else kept.push('29, 20-23');
+      return ok((restored.length ? 'שוחזרו עמודות ' + restored.join(' | ') : 'לא היו נתונים קודמים') + (kept.length ? '. עמודות ' + kept.join(' | ') + ' נשארו עם נתוני דוגמה תקינים (אפשר לפתוח שלבים 2-3 עליהם)' : ''));
+    });
+    $('run').disabled = false; $('copy').disabled = false;
+  }
+
+  function report() {
+    var c = cfg(), lines = ['## דוח בדיקת מערכת עצמית', '', '- תאריך: ' + new Date().toLocaleString('he-IL'), '- מצב: ' + c.mode + (c.mode === 'api' ? ' | משתמש: ' + (c.user || '-') + ' | תפקיד: ' + (c.role || '-') + ' | ייצוא: ' + c.exportMode : ''),
+      '- סיכום: ' + $('summary').textContent, '', '| # | בדיקה | סטטוס | זמן | פרטים |', '|---|---|---|---|---|'];
+    results.forEach(function (r) { lines.push('| ' + r.n + ' | ' + r.title + ' | ' + r.status + ' | ' + (r.ms == null ? '' : r.ms + ' ms') + ' | ' + String(r.detail).replace(/\|/g, '/').replace(/\n/g, ' ') + ' |'); });
+    return lines.join('\n');
+  }
+  $('copy').onclick = function () {
+    var t = report();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { $('copy').textContent = 'הועתק ✓'; }, function () {
+      var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); $('copy').textContent = 'הועתק ✓';
+    });
+    setTimeout(function () { $('copy').textContent = 'העתק דוח'; }, 2500);
+  };
+  $('run').onclick = runAll;
+
+  // ---------- אתחול: סביבה ורשימת לקוחות ----------
+  (async function init() {
+    var c = cfg();
+    $('env').textContent = 'מצב: ' + (c.mode === 'api' ? 'מחובר ל-Google Sheets' : 'דמו (נתונים בדפדפן)') + (c.mode === 'api' ? ' | כתובת: ' + c.url.replace(/^(https?:\/\/[^\/]+\/macros\/s\/)(.{6}).*(\/exec)$/, '$1$2...$3') : '');
+    try {
+      var data = await rpc('getInitialData'); customers = data.customers || [];
+      c = cfg();
+      $('env').textContent += ' | משתמש: ' + (c.user || (c.hasKey ? 'מפתח שירות' : '-')) + (c.role ? ' (' + (c.role === 'viewer' ? 'צפייה בלבד' : 'עריכה') + ')' : '');
+      var sel = $('cust'); sel.innerHTML = '<option value="">בחרו לקוח בדיקה...</option>';
+      customers.forEach(function (x) { var o = document.createElement('option'); o.value = x['ID (מזהה)']; o.textContent = x['שם הלקוח'] + ' (' + x['ID (מזהה)'] + ')'; sel.appendChild(o); });
+      var pref = customers.filter(function (x) { return /דוגמ[אה]|דמו/.test(x['שם הלקוח'] || ''); })[0];
+      if (pref) { sel.value = pref['ID (מזהה)']; $('run').disabled = false; }
+      else { var w = $('warn'); w.style.display = 'block'; w.textContent = 'לא נמצא לקוח בשם "דוגמא". בחרו לקוח בדיקה מהרשימה (או צרו אחד ב-CRM). הבדיקות יכתבו אליו נתוני בדיקה.'; }
+      sel.onchange = function () { $('run').disabled = !sel.value; };
+    } catch (e) {
+      $('env').textContent += ' | שגיאה בטעינת רשימת הלקוחות: ' + e.message;
+    }
+  })();
+})();
+</script>
+</body>
+</html>

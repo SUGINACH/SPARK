@@ -334,6 +334,14 @@
 
     // יחס שטח גג לפאנלים מודרניים (החלטה H4): 5.5 מ"ר לקוו"ט. קבוע יחיד לשימוש כל הלוגיקה והתצוגה.
     const ROOF_M2_PER_KWP_NEW = 5.5;
+
+    // תאריך בפורמט YYYY-MM-DD (D23: הוצא מהמחשבון המקורי ולא הועבר בפיצול). נחוץ להערת מקור הסימולציה בדוח הסופי.
+    // מקבל Date או מחרוזת תאריך (אחרי סריאליזציה ל-JSON).
+    function fmtDateInput(d) {
+        const dt = d instanceof Date ? d : new Date(d);
+        if (isNaN(dt.getTime())) return '';
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    }
     const CALC_CONSTANTS = {
         staircase: { p15: 15, p100: 100, p300: 300, p630: 630, t15: 0.48, t100: 0.3936, t300: 0.3437, t630: 0.2844, disc: 1 },
         storageT100Factor: 0.95, // "מחשבון כולל אגירה" מפעיל הנחה של 5% על מדרגת 15-100 קוו"ט כשיש אגירה

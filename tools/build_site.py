@@ -30,8 +30,13 @@ def main(src, out):
     gs = os.path.join(src, 'Code.gs')
     if not os.path.exists(gs): raise SystemExit('חסר קובץ מקור: ' + gs)
     shutil.copy(gs, os.path.join(out, 'apps-script', 'Code.gs'))
-    for f in ['index.html'] + SHIM_TAGS + ['README.md']:
+    # server-local.js: אותו Code.gs, בשורש האתר (כך לא תלוי בהעלאת התיקייה apps-script). משמש מצב דמו וייצוא "בדפדפן".
+    shutil.copy(gs, os.path.join(out, 'server-local.js'))
+    for f in ['index.html'] + SHIM_TAGS + ['selftest.html', 'README.md']:
         shutil.copy(os.path.join(TEMPLATE, f), os.path.join(out, f))
+    os.makedirs(os.path.join(out, 'samples'), exist_ok=True)
+    for f in os.listdir(os.path.join(TEMPLATE, 'samples')):
+        shutil.copy(os.path.join(TEMPLATE, 'samples', f), os.path.join(out, 'samples', f))
     sys.path.insert(0, HERE)
     import make_samples
     os.makedirs(os.path.join(out, 'samples'), exist_ok=True)

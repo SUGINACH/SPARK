@@ -1,0 +1,32 @@
+from api_common import *
+def phase(page):
+    step('stage 2 (customer with data): recommend, apply, then run the hourly battery simulation')
+    page.goto(BASE + 'index.html?page=sizing&clientId=BS-1001'); page.wait_for_url('**/sizing.html**')
+    page.wait_for_function("document.getElementById('loadedFromStage1Banner').innerText.includes('נטענו')")
+    page.fill('#rec_roofArea', '120'); page.click('#findSizeBtn')
+    page.wait_for_function("document.getElementById('recResults').style.display !== 'none'")
+    page.click('button[onclick*="applyRecommendationToManualFields"]')
+    print('   roofAreaDisplay:', page.inner_text('#roofAreaDisplay'), '| calc_targetKw:', page.input_value('#calc_targetKw'), '| actualBatteryKwh:', page.input_value('#actualBatteryKwh'), '| sim button disabled:', page.is_disabled('#runHourlySimBtn'))
+    page.click('#runHourlySimBtn')
+    page.wait_for_function("document.getElementById('hourlySimResults').style.display === 'block' || document.getElementById('hourlySimError').style.display === 'block'", timeout=120000)
+    err = page.inner_text('#hourlySimError') if page.is_visible('#hourlySimError') else ''
+    ok = page.is_visible('#hourlySimResults')
+    print('   simulation results shown:', ok, '| error message:', repr(err))
+    if ok:
+        rows = page.eval_on_selector_all('#hourlySimSummaryTable tbody tr', 'e => e.map(r => r.innerText.replace(/\\s+/g, " ").trim())')
+        print('   summary rows:', rows[:4])
+        page.click('button[onclick*="applySimResultsToCalculator"]'); page.wait_for_timeout(300)
+        print('   after "set as basis":', page.evaluate("document.getElementById('hourlySimResults').innerText.includes('נקבע') || document.getElementById('hourlySimResults').innerText.includes('✅')"))
+        step('continue to stage 3 and render the final report')
+        page.click('button[onclick*="saveAndContinueToStage3"]'); page.wait_for_url('**/finance.html**')
+        page.wait_for_function("getComputedStyle(document.getElementById('calc_results')).display !== 'none'")
+        page.evaluate("renderFinalReport()")
+        txt = page.inner_text('#finalReportOutput')
+        print('   final report rendered:', 'שטח גג נדרש' in txt, '| fmtDateInput(Date):', page.evaluate("fmtDateInput(new Date(2025, 0, 5))"), '| fmtDateInput(ISO string):', page.evaluate("fmtDateInput('2025-03-09T10:00:00')"), '| invalid ->', repr(page.evaluate("fmtDateInput('not a date')")))
+    step('stage 2 for a customer WITHOUT stage-1 data: pressing the simulation must not crash')
+    page.goto(BASE + 'index.html?page=sizing&clientId=BS-1002'); page.wait_for_url('**/sizing.html**'); page.wait_for_timeout(1500)
+    n0 = len(problems)
+    page.evaluate("(() => { const b = document.getElementById('runHourlySimBtn'); b.disabled = false; b.click(); })()"); page.wait_for_timeout(800)
+    msg = page.inner_text('#hourlySimError') if page.is_visible('#hourlySimError') else ''
+    print('   friendly message shown:', repr(msg[:90]), '| new page errors:', problems[n0:])
+run(phase)

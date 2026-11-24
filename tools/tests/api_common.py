@@ -1,7 +1,7 @@
 import subprocess, time, json, os, shutil, urllib.request
 from playwright.sync_api import sync_playwright
 W = os.environ.get('BS_WORK', '/home/claude/work')            # תיקייה שמכילה את תיקיית האתר ואת node_deps
-SITE_DIR_NAME = os.environ.get('BS_SITE', 'site_out')        # שם תיקיית האתר בתוך W
+SITE_DIR_NAME = os.environ.get('BS_SITE', 'site')        # שם תיקיית האתר בתוך W
 PORT_S, PORT_A = 8972, 8971
 BASE = f'http://localhost:{PORT_S}/{SITE_DIR_NAME}/'
 API_URL = f'http://localhost:{PORT_A}/exec'
@@ -21,7 +21,7 @@ def row(cid='BS-1001'):
     return h, r
 def server_log():
     return json.load(urllib.request.urlopen(f'http://localhost:{PORT_A}/__log'))
-def run(phase, reset=False, preset_cfg=True, key='TESTKEY', prompt_answer=None):
+def run(phase, reset=False, preset_cfg=True, key='TESTKEY', prompt_answer=None, with_key=True, google=False):
     if reset:
         for p in (PROFILE,):
             if os.path.exists(p): shutil.rmtree(p)
@@ -33,14 +33,17 @@ def run(phase, reset=False, preset_cfg=True, key='TESTKEY', prompt_answer=None):
     try:
         with sync_playwright() as p:
             ctx = p.chromium.launch_persistent_context(PROFILE, headless=True, accept_downloads=True)
+            GSI_STUB = "window.google = window.google || {}; window.google.accounts = { id: { initialize: function (cfg) { window.__gsiCb = cfg.callback; }, renderButton: function (el) { el.innerHTML = '<button id=\"fake-gsi\">Google</button>'; el.firstChild.onclick = function () { window.__gsiCb({ credential: window.__nextCred }); }; } } };"
             def route(r):
                 u = r.request.url
+                if google and u.endswith('/config.js'): return r.fulfill(body="window.BS_CONFIG = { API_URL: '', EXPORT_MODE: '', GOOGLE_CLIENT_ID: 'TEST-CLIENT-ID' };", content_type='application/javascript')
+                if google and u.startswith('https://accounts.google.com/gsi/client'): return r.fulfill(body=GSI_STUB, content_type='application/javascript')
                 if u in ROUTES: return r.fulfill(path=ROUTES[u], content_type='application/javascript')
                 if 'fonts.g' in u: return r.abort()
                 return r.continue_()
             ctx.route('**/*', route)
             if preset_cfg:
-                ctx.add_init_script("if (!localStorage.getItem('bs:api')) localStorage.setItem('bs:api', JSON.stringify({url: '%s', key: '%s', exportMode: 'server'}));" % (API_URL, key))
+                ctx.add_init_script("(function () { try { var c = JSON.parse(localStorage.getItem('bs:api') || '{}') || {}; if (!c.url) localStorage.setItem('bs:api', JSON.stringify({url: '%s', %s exportMode: 'server'})); } catch (e) {} })();" % (API_URL, ("key: '%s'," % key) if with_key else ''))
             page = ctx.pages[0] if ctx.pages else ctx.new_page(); page.set_default_timeout(240000)
             page.on('pageerror', lambda e: problems.append('PAGEERROR ' + page.url.split('/')[-1][:30] + ': ' + str(e)[:200]))
             page.on('console', lambda m: m.type == 'error' and 'Failed to load resource' not in m.text and problems.append('CONSOLE ' + page.url.split('/')[-1][:30] + ': ' + m.text[:200]))
