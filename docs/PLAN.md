@@ -27,7 +27,7 @@
 ## שלב 2: חסרים שיש להם קוד בענפים אחרים
 | # | משימה | מקור | סטטוס |
 |---|---|---|---|
-| 2.1 | D14: `validateBeforeSave`, `ensureClientId`, `pullLatestFromServer`, `safeParseJsonField` ב-CRM | Gold/Index | ⬜ |
+| 2.1 | D14 ב-`Index.html` וב-`crm.html`: קריאת `?clientId` בטעינה, רענון כפתורי השלבים בחזרה ללשונית (`refreshStageStatus` דרך `getCustomerData`), `validateBeforeSave` (שם וטלפון חובה, כמו ב-Gold), `savedClientIds`. נבדק: לינט נקי, האימות עובד ב-jsdom. **לא נבדק בהרצה:** טעינה לפי `?clientId` ורענון השלבים. לא הועברו: `ensureClientId`, `safeParseJsonField` (לא נדרשו) | Gold/Index | 🟡 |
 | 2.2 | D15: אימות `calc_targetKw > 0` לפני שמירה בשלב 2 (ב-`sizing.html` ו-`SystemSizing.html`). נבדק בלינט בלבד, לא הורץ בדפדפן | חדש | 🟡 |
 | 2.3 | D5: מילוי שבתות חסרות | Green/שלב 2 | ⬜ |
 | 2.4 | D6: הערכת ייצור עבר משטח גג | Red/שלב 1 | ⬜ |

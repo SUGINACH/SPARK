@@ -349,6 +349,12 @@
                     refreshImageDropdowns();
                     resetToNewCustomer();
 
+                    // D14: פתיחה מקישור (למשל חזרה משלב 3) עם ?clientId=... טוענת ישירות את הלקוח
+                    try {
+                        const qsId = (new URLSearchParams(window.location.search).get('clientId') || '').trim();
+                        if (qsId && isClientSaved(qsId)) selectCustomer(qsId);
+                    } catch (e) { /* פרמטר לא תקין: ממשיכים כלקוח חדש */ }
+
                     document.getElementById('loader').classList.add('hidden');
                     document.getElementById('appRoot').classList.remove('hidden');
                 } catch (e) {
@@ -433,9 +439,52 @@
         if (statusLine) statusLine.textContent = status;
     }
 
+    // מזהים שנשמרו בסשן הזה (עוד לא הגיעו ל-globalCustomers שנטען פעם אחת בתחילת הטעינה)
+    const savedClientIds = new Set();
+
     // בדיקה האם ה-ID הנוכחי שייך ללקוח ששמור בפועל בשיטס (ולא רק ל-ID שהוקצה אוטומטית בטרם שמירה)
     function isClientSaved(clientId) {
-        return globalCustomers.some(cust => String(cust['ID (מזהה)']).trim() === String(clientId).trim());
+        const id = String(clientId || '').trim();
+        if (!id) return false;
+        if (savedClientIds.has(id)) return true;
+        return globalCustomers.some(cust => String(cust['ID (מזהה)']).trim() === id);
+    }
+
+    // D14: רענון מצב השלבים של הלקוח הנוכחי (עמודות 29/30/31) בלי לדרוס שדות שהמשתמש עורך.
+    // getCustomerData מחזיר שדות JSON כמערכים/אובייקטים (ריק = []), ולכן ממירים ל"יש תוכן / אין תוכן".
+    let lastStageRefresh = 0;
+    function refreshStageStatus() {
+        const id = (document.getElementById('clientId') || {}).value;
+        if (!id || !isClientSaved(id)) return;
+        const now = Date.now();
+        if (now - lastStageRefresh < 5000) return;
+        lastStageRefresh = now;
+        google.script.run.withFailureHandler(function () { /* רענון שקט: נכשל = נשארים עם המצב הקיים */ })
+            .withSuccessHandler(function (rec) {
+                if (!rec) return;
+                const has = v => Array.isArray(v) ? v.length > 0 : !!(v && typeof v === 'object' && Object.keys(v).length);
+                const marker = {};
+                ['נתוני צריכה מועשרים (JSON)', 'המלצת גודל מערכת (JSON)', 'נתוני חישוב גולמיים (JSON)'].forEach(function (k) {
+                    marker[k] = has(rec[k]) ? '1' : '';
+                });
+                const row = globalCustomers.find(c => String(c['ID (מזהה)']).trim() === String(id).trim());
+                if (row) Object.assign(row, marker);
+                renderStageButtons(marker);
+            }).getCustomerData(id);
+    }
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') refreshStageStatus(); });
+    window.addEventListener('focus', refreshStageStatus);
+
+    // D14: אימות לפני שמירה (משוחזר מ-Gold): שם הלקוח וטלפון חובה
+    function validateBeforeSave() {
+        const missing = [];
+        if (!document.getElementById('clientName').value.trim()) missing.push('שם הלקוח');
+        if (!document.getElementById('clientPhone').value.trim()) missing.push('טלפון');
+        if (missing.length) {
+            alert('לפני השמירה יש למלא: ' + missing.join(', '));
+            return false;
+        }
+        return true;
     }
 
     // הוספת הלינק לטופס
@@ -1019,6 +1068,7 @@
     }
 
     function saveDataToSheet(isNew = false) {
+        if (!validateBeforeSave()) return;
         if (isNew || !document.getElementById('clientId').value) {
             document.getElementById('clientId').value = "BS-" + Math.floor(1000 + Math.random() * 9000);
         }
@@ -1071,7 +1121,7 @@
             rawCalculatorData: lastCalculatorRawData // עמודה 29 (חדשה): מארז IRR/NPV/הנחות-יסוד גולמי, לשימוש עמוד ההדפסה גם ללא localStorage
         };
 
-        google.script.run.withFailureHandler(showServerError).withSuccessHandler(msg => alert(msg)).saveCustomerData(JSON.stringify(payload));
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(msg => { savedClientIds.add(String(payload.clientId).trim()); alert(msg); }).saveCustomerData(JSON.stringify(payload));
     }
 
     function handleSearch(val) {
