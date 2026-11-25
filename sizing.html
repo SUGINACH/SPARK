@@ -1005,7 +1005,7 @@
     }
     function applySuggestedBattery() {
         const dod = CALC_CONSTANTS.battery.dod;
-        const shabbatLoad = parseFloat(document.getElementById('estShabbatLoad').value) || 0;
+        const shabbatLoad = (parseFloat(document.getElementById('estShabbatLoad').value) || 0) * shabbatGrowthFactor();
         const useHoliday = document.getElementById('useStorageHoliday').checked;
         const useShabbat = document.getElementById('useStorageShabbat').checked;
         const targetKw = parseFloat(document.getElementById('calc_targetKw').value) || 0;
@@ -1197,7 +1197,7 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
             isUrban: document.getElementById('isUrban').value === 'true',
             useStorageShabbat: document.getElementById('useStorageShabbat').checked,
             useStorageHoliday: document.getElementById('useStorageHoliday').checked,
-            estShabbatLoad: parseFloat(document.getElementById('estShabbatLoad').value) || 0,
+            estShabbatLoad: (parseFloat(document.getElementById('estShabbatLoad').value) || 0) * shabbatGrowthFactor(),
             genCost: parseFloat(document.getElementById('generatorCost').value) || 0,
             taxStatus: document.getElementById('taxStatus').value,
             capexPV: parseFloat(document.getElementById('capexPV').value) || 0,
@@ -1369,12 +1369,29 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
     // ========================================================================
     // חדש: סליידר גדילת צריכה עתידית
     // ========================================================================
+    // D3 (T8 / Q-C): גדילת הצריכה משפיעה על המלצת שלב 2. הסדרה השעתית מוגדלת בגורם (1+g)^(H/2), כלומר הגדילה הממוצעת
+    // על פני אופק של H שנים (H בלוח ההגדרות, ברירת מחדל 10). סדרת הבסיס (stage1ConsumptionSeries) נשארת ללא שינוי.
+    function getGrowthFactor() {
+        const g = (parseFloat(document.getElementById('futureGrowthSlider').value) || 0) / 100;
+        return Math.pow(1 + g, BS_SETTINGS.get('growth.horizonYears') / 2);
+    }
+    // צריכת השבת (בסיס לגודל הסוללה) גדלה באותו גורם, אלא אם כובה בלוח ההגדרות
+    function shabbatGrowthFactor() { return BS_SETTINGS.get('growth.applyToShabbatLoad') ? getGrowthFactor() : 1; }
+    function applyFutureGrowthToSeries() {
+        if (!stage1ConsumptionSeries) return;
+        const f = getGrowthFactor();
+        globalRawSeries = (f === 1) ? stage1ConsumptionSeries : stage1ConsumptionSeries.map(p => ({ date: p.date, kwh: p.kwh * f }));
+    }
+
     function onFutureGrowthChange() {
         const pct = parseFloat(document.getElementById('futureGrowthSlider').value) || 0;
         document.getElementById('futureGrowthValue').textContent = pct + '%/שנה';
         const resultEl = document.getElementById('futureGrowthResult');
-        if (pct === 0) { resultEl.textContent = 'ללא תוספת - המערכת מתוכננת לפי הצריכה הנוכחית בלבד.'; return; }
-        resultEl.innerHTML = `בשיעור גדילה זה, לאחר 10 שנים הצריכה השנתית צפויה לגדול פי ${(Math.pow(1 + pct / 100, 10)).toFixed(2)} מהיום. משפיע כרגע רק על גודל המערכת/הסוללה המומלצים בשלב זה. <span style="color:#e67e22;">⚠️ טרם משפיע על תחזית ה-25 שנה בשלב 3 (החלטה נדחתה בכוונה - ר' תיעוד בקוד).</span>`;
+        applyFutureGrowthToSeries();
+        const staleNote = lastRecommendation ? ' <span style="color:#c0392b;">ההמלצה שהוצגה חושבה לפני השינוי: יש להריץ מחדש "מצא גודל מומלץ".</span>' : '';
+        if (pct === 0) { resultEl.innerHTML = 'ללא תוספת - המערכת מתוכננת לפי הצריכה הנוכחית בלבד.' + staleNote; return; }
+        const H = BS_SETTINGS.get('growth.horizonYears');
+        resultEl.innerHTML = `בשיעור גדילה זה, לאחר ${H} שנים הצריכה השנתית צפויה לגדול פי ${(Math.pow(1 + pct / 100, H)).toFixed(2)} מהיום. ההמלצה (גודל פאנלים וסוללה) מחושבת על צריכה מוגדלת פי <strong>${getGrowthFactor().toFixed(3)}</strong> (גדילה ממוצעת לאורך האופק). <span style="color:#e67e22;">⚠️ לא משפיע על תחזית ה-25 שנה בשלב 3 (החלטה A12/Q-C).</span> ${BS_SETTINGS.get('growth.applyToShabbatLoad') ? 'צריכת השבת שבבסיס גיבוי הסוללה מוגדלת באותו גורם.' : 'צריכת השבת שהוזנה אינה מוגדלת (לפי לוח ההגדרות).'}` + staleNote;
     }
     // TODO (הוחלט להשהות): אם/כשיוחלט להחיל את גדילת הצריכה גם על המודל הפיננסי ב-
     // FinancialModel.html, יש להעביר את futureGrowthPct הלאה (כבר נשמר בעמודה 31 למטה)
@@ -1395,6 +1412,7 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
                 if (c1 && c1.valuesB64) {
                     stage1ConsumptionSeries = unpackB64ToHourlySeries(c1.valuesB64, c1.refYear, c1.startISO, c1.scale);
                     globalRawSeries = stage1ConsumptionSeries;
+                    applyFutureGrowthToSeries();
                     document.getElementById('estShabbatLoad').value = c1.estShabbatLoad || 15;
                     document.getElementById('loadedFromStage1Banner').style.display = 'block';
                     document.getElementById('loadedFromStage1Banner').innerHTML = `✓ נטענו ${stage1ConsumptionSeries.length.toLocaleString()} שעות ניתוח צריכה משלב 1 (רמת ביטחון: ${({high:'גבוהה',medium:'בינונית',low:'נמוכה'}[c1.confidence]||c1.confidence)}).`;
@@ -1463,6 +1481,7 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
             recommendedBatteryKwh: parseFloat(document.getElementById('actualBatteryKwh').value) || 0,
             recommendedInverterKw: parseFloat(document.getElementById('inverterPowerKw').value) || 0,
             futureGrowthPct: parseFloat(document.getElementById('futureGrowthSlider').value) || 0,
+            futureGrowthFactor: getGrowthFactor(),
             useStorageShabbat: document.getElementById('useStorageShabbat').checked,
             useStorageHoliday: document.getElementById('useStorageHoliday').checked,
             generatorCost: parseFloat(document.getElementById('generatorCost').value) || 0,
