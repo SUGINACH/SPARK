@@ -998,8 +998,22 @@
     // מונים בלבד (דו-כיווני+ייצור) מאותו אתר מייצרים תוצאה זהה עד כדי
     // רעש-מדידה טבעי (<0.05 קוט"ש), בכל אחת מ-288 הנקודות שנבדקו.
     // ====================================================================
+    // D20: מספר מקובץ חח"י. נקודה = עשרונית. פסיק לבדו (בלי נקודה) הוא עשרוני כשיש אחריו בדיוק 1-2 ספרות ("1,5" = 1.5),
+    // ואחרת מפריד אלפים ("1,234" = 1234, "1,234.5" = 1234.5). counter.decimalComma סופר כמה ערכים נקראו כפסיק עשרוני.
+    // קודם נמחק כל פסיק, כך ש-"1,5" נקרא 15 (שגיאה פי 10).
+    function parseKwhNumber(raw, counter) {
+        const s = String(raw === undefined || raw === null ? '' : raw).replace(/["\s]/g, '');
+        if (s === '') return NaN;
+        if (s.indexOf('.') === -1 && /^-?\d+,\d{1,2}$/.test(s)) {
+            if (counter) counter.decimalComma++;
+            return parseFloat(s.replace(',', '.'));
+        }
+        return parseFloat(s.replace(/,/g, ''));
+    }
+
     function parseMultimeterRows(data, dataStartIndex) {
         const buckets = new Map();
+        const numInfo = { decimalComma: 0 };
 
         for (let i = dataStartIndex; i < data.length; i++) {
             const row = data[i];
@@ -1009,8 +1023,8 @@
             const valStr = row[4], feedStr = row[5];
             if (!dateStr || !timeStr || valStr === undefined || valStr === '') continue;
 
-            const val = parseFloat(valStr.toString().replace(/[",]/g, ''));
-            const feed = feedStr !== undefined && feedStr !== '' ? parseFloat(feedStr.toString().replace(/[",]/g, '')) : 0;
+            const val = parseKwhNumber(valStr, numInfo);
+            const feed = feedStr !== undefined && feedStr !== '' ? parseKwhNumber(feedStr, numInfo) : 0;
             if (isNaN(val)) continue;
 
             const dateObj = parseIsraelDate(dateStr, timeStr);
@@ -1054,7 +1068,7 @@
         });
 
         points.sort((a, b) => a.date - b.date);
-        return { points, hasMultipleMeterTypes, totalProduction };
+        return { points, hasMultipleMeterTypes, totalProduction, decimalCommaCount: numInfo.decimalComma };
     }
 
     function handleParsedRows(data, errEl) {
@@ -1150,7 +1164,7 @@
         try { updatePastProductionNote(); } catch (e) { /* הערה בלבד */ }
         }
 
-        showFilePreview(parsed.points, { fileKind: 'iec', hasMultipleMeterTypes: parsed.hasMultipleMeterTypes, totalProduction: parsed.totalProduction, meterType: cMeterType });
+        showFilePreview(parsed.points, { fileKind: 'iec', hasMultipleMeterTypes: parsed.hasMultipleMeterTypes, totalProduction: parsed.totalProduction, meterType: cMeterType, decimalCommaCount: parsed.decimalCommaCount });
         renderReports(hourlyAggregation, dailyAggregation, dailyTouAggregation);
     }
 
@@ -1171,6 +1185,9 @@
 
         if (meta.fileKind === 'iec') {
             html += `<li>סוג מונה שזוהה בכותרת הקובץ: <b>${meta.meterType || 'לא זוהה'}</b></li>`;
+            if (meta.decimalCommaCount > 0) {
+                html += `<li style="color:#8a6d3b;">⚠️ ${meta.decimalCommaCount.toLocaleString()} ערכים בקובץ כתובים עם פסיק עשרוני (למשל 1,5) ונקראו כמספר עשרוני (1.5). אם בקובץ הזה הפסיק הוא מפריד אלפים, יש לבדוק את הנתונים לפני שמסתמכים עליהם.</li>`;
+            }
             if (meta.hasMultipleMeterTypes) {
                 html += `<li>⚙️ זוהו <b>מספר מונים</b> לאותו חותם-זמן (למשל דו-כיווני + ייצור נפרד, או כמה מוני-ייצור זהים) - הצריכה שוחזרה אוטומטית לפי: <span class="mono">משיכה מרשת + מקסימום(0, ייצור−הזרמה)</span>. מוני-ייצור כפולים לאותו זמן מוצגים כממוצע (לא סכום), בהנחה שהם קריאות כפולות של אותו מונה בפועל.</li>`;
             } else {
@@ -1249,7 +1266,7 @@
         for (let i = dataStartIndex; i < data.length; i++) {
             const row = data[i];
             if (!row || row.length < 5) continue;
-            const v = parseFloat((row[4] || '').toString().replace(/[",]/g, ''));
+            const v = parseKwhNumber(row[4]);
             if (!isNaN(v) && v > peak) peak = v;
         }
         return peak;
