@@ -404,6 +404,7 @@
                 <span id="shabbatUpliftValue" style="font-family:'JetBrains Mono',monospace; font-weight:700; min-width:52px; text-align:left;">0%</span>
             </div>
             <p id="shabbatUpliftResult" style="font-size:0.85em; color:#7f8c8d; margin-top:6px;"></p>
+            <div id="shabbatFillNote" style="display:none; font-size:0.85em; background:#fff6e0; color:#8a6d3b; padding:8px 12px; border-radius:8px; margin-top:8px;"></div>
         </div>
     </div>
 
@@ -1929,11 +1930,111 @@
         }
         let missing = 0;
         for (let i = 0; i < total; i++) if (!seen[i]) missing++;
-        return { sums, missingHours: missing };
+        return { sums, seen, missingHours: missing };
     }
 
     // קנה-מידה כך שהערך השעתי המקסימלי ייכנס ל-Uint16 בלי חיתוך שקט:
     // 1000 = וואט-שעה שלם (עד 65.5 קוט"ש/שעה), 100 = 10 וואט-שעה (עד 655), ואז 10 ו-1.
+    // ========================================================================
+    // D5 (T7 / S3): מילוי שבתות חסרות, בעותק השמור בלבד (החלטה Q-B).
+    // לכל שעה חסרה בתוך חלון שבת הלכתי: ערך אותה שעה ביממה, בממוצע ששת ימי החול שקדמו לאותה שבת
+    // (בלי שעות שבת, ימי חג/חריגה ושעות חסרות), כפול (1 + אחוז הסליידר / 100) לכל שעה בנפרד.
+    // אם בשבוע שקדם אין נתון לאותה שעה: נפילה לממוצע אותה שעה בכל ימי החול שבחלון. אם אין כלל, השעה נשארת ללא מילוי ונספרת.
+    // העבודה על הרשת השעתית עצמה, כך שהיחידות עקביות גם כשהקובץ המקורי ברבע שעה.
+    // ========================================================================
+    function fillMissingShabbatHours(grid, gridStart, nDays, exceptionDateStrs, pct) {
+        const total = nDays * 24, y = gridStart.getFullYear(), mo = gridStart.getMonth(), d0 = gridStart.getDate();
+        const hourDate = i => new Date(y, mo, d0 + Math.floor(i / 24), i % 24, 30);   // אמצע השעה
+        const idxOfDate = dt => {
+            const dayStartMs = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+            return Math.round((dayStartMs - gridStart.getTime()) / 86400000) * 24 + dt.getHours();
+        };
+        const winCache = new Map();
+        const winOf = dt => {
+            const k = dt.toDateString();
+            if (!winCache.has(k)) winCache.set(k, getHalachicShabbatWindow(dt));
+            return winCache.get(k);
+        };
+        const inShabbat = new Array(total).fill(false), satOfHour = new Array(total).fill(null);
+        for (let i = 0; i < total; i++) {
+            const dt = hourDate(i), w = winOf(dt);
+            if (dt >= w.start && dt <= w.end) { inShabbat[i] = true; satOfHour[i] = w; }
+        }
+        const usable = new Array(total);
+        for (let i = 0; i < total; i++) usable[i] = grid.seen[i] && !inShabbat[i] && !exceptionDateStrs.has(hourDate(i).toDateString());
+
+        let globalAvg = null;
+        const getGlobalAvg = () => {
+            if (globalAvg) return globalAvg;
+            const s = new Array(24).fill(0), n = new Array(24).fill(0);
+            for (let i = 0; i < total; i++) if (usable[i]) { s[i % 24] += grid.sums[i]; n[i % 24]++; }
+            globalAvg = s.map((v, h) => (n[h] ? v / n[h] : null));
+            return globalAvg;
+        };
+        const profileCache = new Map();
+        const profileFor = w => {
+            const key = w.saturday.toDateString();
+            if (profileCache.has(key)) return profileCache.get(key);
+            const endIdx = Math.min(total, idxOfDate(w.start)), begIdx = Math.max(0, idxOfDate(w.start) - 6 * 24);
+            const s = new Array(24).fill(0), n = new Array(24).fill(0);
+            for (let j = begIdx; j < endIdx; j++) if (usable[j]) { s[j % 24] += grid.sums[j]; n[j % 24]++; }
+            const prof = s.map((v, h) => (n[h] ? v / n[h] : null));
+            profileCache.set(key, prof);
+            return prof;
+        };
+
+        const factor = 1 + (pct || 0) / 100;
+        const touched = new Set(), ranges = [];
+        let filled = 0, unfilled = 0;
+        for (let i = 0; i < total; i++) {
+            if (!inShabbat[i] || grid.seen[i]) continue;
+            const h = i % 24;
+            let base = profileFor(satOfHour[i])[h];
+            if (base == null) base = getGlobalAvg()[h];
+            if (base == null) { unfilled++; continue; }
+            grid.sums[i] = base * factor;
+            filled++; touched.add(satOfHour[i].saturday.toDateString());
+            const last = ranges[ranges.length - 1];
+            if (last && last[0] + last[1] === i) last[1]++; else ranges.push([i, 1]);
+        }
+        return { filledHours: filled, shabbats: touched.size, unfilledHours: unfilled, ranges };
+    }
+
+    // בונה את העותק השמור (חלון שנה אחרונה + רשת שעתית), ואם סומנה "להתעלם משבתות חסרות" ממלא בו את השבתות החסרות.
+    // משמש גם את התצוגה המקדימה וגם את השמירה, כדי שהספירה שמוצגת תהיה בדיוק מה שנשמר.
+    function computeShabbatFillPlan() {
+        const fullSeries = window._unifiedResult && window._unifiedResult.finalSeries;
+        if (!fullSeries || !fullSeries.length) return null;
+        let overallMin = fullSeries[0].date, overallMax = fullSeries[0].date;
+        for (const p of fullSeries) { if (p.date < overallMin) overallMin = p.date; if (p.date > overallMax) overallMax = p.date; }
+        const win = getTrailingYearDayWindow(overallMin, overallMax);
+        const seriesInWindow = fullSeries.filter(p => p.date >= win.start && p.date < win.endExcl);
+        const grid = aggregateToHourlyGrid(seriesInWindow, win.start, win.nDays);
+        const enabled = document.getElementById('ignoreMissingShabbat').checked;
+        const pct = parseFloat(document.getElementById('shabbatUpliftSlider').value) || 0;
+        let stats = null;
+        if (enabled) {
+            const exc = new Set(detectExceptionDays(fullSeries).map(e => e.date.toDateString()));
+            stats = fillMissingShabbatHours(grid, win.start, win.nDays, exc, pct);
+        }
+        return { fullSeries, win, seriesInWindow, grid, enabled, pct, stats };
+    }
+
+    function updateShabbatFillPreview() {
+        const el = document.getElementById('shabbatFillNote');
+        if (!el) return;
+        if (!document.getElementById('ignoreMissingShabbat').checked) { el.style.display = 'none'; return; }
+        el.style.display = 'block';
+        const plan = computeShabbatFillPlan();
+        if (!plan) { el.textContent = 'יש לאחד את המקורות כדי לראות כמה שעות שבת חסרות יושלמו.'; return; }
+        const s = plan.stats;
+        el.innerHTML = s.filledHours
+            ? `<strong>${s.filledHours}</strong> שעות שבת חסרות יושלמו (ב-${s.shabbats} שבתות), לפי פרופיל ששת ימי החול שקדמו × (1 + ${plan.pct}%).` +
+              (s.unfilledHours ? ` ${s.unfilledHours} שעות נוספות יישארו ללא מילוי (אין נתוני חול להשוואה).` : '') +
+              ' המילוי חל על העותק שנשמר לשלב 2 בלבד (שנה אחרונה), לא על התצוגה ולא על קובץ ה-Excel.'
+            : 'לא נמצאו שעות שבת חסרות בשנה האחרונה, אין מה להשלים.' + (s.unfilledHours ? ` (${s.unfilledHours} שעות חסרות ללא נתוני חול להשוואה)` : '');
+    }
+
     function chooseScale(kwhArray) {
         let mx = 0;
         for (let i = 0; i < kwhArray.length; i++) if (kwhArray[i] > mx) mx = kwhArray[i];
@@ -2059,6 +2160,7 @@
         renderReports(hourlyAggregation, dailyAggregation, dailyTouAggregation);
 
         window._unifiedResult = { finalSeries, confidence, sourcesUsed: active.map(([k]) => k) };
+        try { updateShabbatFillPreview(); } catch (e) { /* תצוגה מקדימה בלבד */ }
         const statusEl = document.getElementById('unifyExplain');
         let msg = '✓ אוחדו ' + active.length + ' מקור/ות (' + active.map(([k]) => SOURCE_LABELS[k]).join(', ') + '). רמת ביטחון: ' + ({high:'גבוהה',medium:'בינונית',low:'נמוכה'}[confidence]) + '.';
         if (warnings.length) msg += ' ⚠️ ' + warnings.join(' | ');
@@ -2171,6 +2273,7 @@
     }
 
     function onShabbatUpliftChange() {
+        updateShabbatFillPreview();
         const pct = parseFloat(document.getElementById('shabbatUpliftSlider').value) || 0;
         document.getElementById('shabbatUpliftValue').textContent = pct + '%';
         const resultEl = document.getElementById('shabbatUpliftResult');
@@ -2202,6 +2305,7 @@
     function onIgnoreMissingShabbatToggle() {
         const checked = document.getElementById('ignoreMissingShabbat').checked;
         document.getElementById('estShabbatSection').style.display = checked ? 'block' : 'none';
+        updateShabbatFillPreview();
     }
 
     // ========================================================================
@@ -2321,12 +2425,8 @@
         // חשוב: החיתוך לשנה אחרונה והצבירה לשעות חלים *רק* על מה שנשמר בתא בגיליון (שם יש תקרה של
         // 50,000 תווים). התצוגה בדף וקובץ ה-Excel ממשיכים להשתמש בסדרה המלאה (window._unifiedResult.finalSeries)
         // ללא שינוי: היא לא נערכת כאן, רק נגזר ממנה עותק לשמירה.
-        const fullSeries = window._unifiedResult.finalSeries;
-        let overallMin = fullSeries[0].date, overallMax = fullSeries[0].date;
-        for (const p of fullSeries) { if (p.date < overallMin) overallMin = p.date; if (p.date > overallMax) overallMax = p.date; }
-        const win = getTrailingYearDayWindow(overallMin, overallMax);
-        const seriesInWindow = fullSeries.filter(p => p.date >= win.start && p.date < win.endExcl);
-        const grid = aggregateToHourlyGrid(seriesInWindow, win.start, win.nDays);
+        const plan = computeShabbatFillPlan();   // כולל מילוי שבתות חסרות (D5) כשסומנה "להתעלם משבתות חסרות"
+        const fullSeries = plan.fullSeries, win = plan.win, grid = plan.grid;
         const scale = chooseScale(grid.sums);
         const pad2 = n => String(n).padStart(2, '0');
         const startISO = `${win.start.getFullYear()}-${pad2(win.start.getMonth() + 1)}-${pad2(win.start.getDate())}`;
@@ -2342,6 +2442,8 @@
             sources: window._unifiedResult.sourcesUsed,
             confidence: window._unifiedResult.confidence,
             ignoreMissingShabbat: document.getElementById('ignoreMissingShabbat').checked,
+            // D5: שעות שבת שהושלמו בעותק השמור (ranges = [אינדקס שעה מתחילת החלון, אורך]), כדי שיהיה ניתן לסמן ולספור אותן
+            shabbatFill: plan.stats ? { enabled: true, pct: plan.pct, filledHours: plan.stats.filledHours, shabbats: plan.stats.shabbats, unfilledHours: plan.stats.unfilledHours, ranges: plan.stats.ranges } : { enabled: false },
             estShabbatLoad: parseFloat(document.getElementById('estShabbatLoad').value) || null,
             shabbatUpliftPct: parseFloat(document.getElementById('shabbatUpliftSlider').value) || 0,
             existingProductionKw: parseFloat(document.getElementById('existingProductionKw').value) || 0,
@@ -2407,7 +2509,7 @@
                         window._unifiedResult = { finalSeries: series, confidence: existing.confidence || 'high', sourcesUsed: existing.sources || [] };
                         if (existing.shabbatUpliftPct) { document.getElementById('shabbatUpliftSlider').value = existing.shabbatUpliftPct; onShabbatUpliftChange(); }
                         if (existing.estShabbatLoad) document.getElementById('estShabbatLoad').value = existing.estShabbatLoad;
-                        if (existing.ignoreMissingShabbat) document.getElementById('ignoreMissingShabbat').checked = true;
+                        if (existing.ignoreMissingShabbat) { document.getElementById('ignoreMissingShabbat').checked = true; onIgnoreMissingShabbatToggle(); }
                         onIgnoreMissingShabbatToggle();
                         if (existing.existingProductionKw) { document.getElementById('existingProductionKw').value = existing.existingProductionKw; document.getElementById('productionModeSelect').value = 'existing'; onProductionModeChange(); }
                         if (existing.existingRoofRatio) document.getElementById('existingRoofRatio').value = existing.existingRoofRatio;
