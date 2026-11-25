@@ -1,6 +1,6 @@
 /* בראשית סולאר: לוח הגדרות משותף.
  * כל ערך משוער / ממוצע / ניתן לשינוי שהיה קבוע בקוד הדפים מוגדר כאן, עם ברירת מחדל זהה לערך שהיה בקוד.
- * הדפים קוראים את הערכים דרך BS_SETTINGS (get / calcConstants / propertyTypes / knownHolidays).
+ * הדפים קוראים את הערכים דרך BS_SETTINGS (get / calcConstants / propertyTypes / extraHolidays).
  * שינויים נשמרים בדפדפן (localStorage) ובשרת (גיליון "הגדרות מערכת", דרך getAppSettings/saveAppSettings) כשהשרת תומך.
  * חישובים נטענים בעת פתיחת הדף, לכן אחרי שמירה יש לרענן.
  * הקובץ נטען אחרי gas-shim.js ולפני סקריפטי הדף. */
@@ -19,9 +19,7 @@
         'עסק קמעונאי (סופרמרקט/פארם)': { label: 'עסק קמעונאי (סופרמרקט/פארם)', desc: 'שעות פעילות ארוכות מאד (22:00). חללי קירור מסחריים כבדים בקיץ. שביתה בסופי שבוע (כשר).', winter: 0.30, summer: 0.45, transition: 0.25, sunHours: 0.50, offpeakWinter: 0.75, peakWinter: 0.25, offpeakSummer: 0.70, peakSummer: 0.30, weekday: 0.85, weekend: 0.15 },
         'עסק תעשייתי (משמרת יום)': { label: 'עסק תעשייתי (משמרת יום)', desc: 'מנועים ומדחסים בפעילות יום, אדישות יחסית לאקלים אך עם צורכי קירור מכונות. סיום לפני שעות פסגה.', winter: 0.32, summer: 0.38, transition: 0.30, sunHours: 0.80, offpeakWinter: 0.90, peakWinter: 0.10, offpeakSummer: 0.85, peakSummer: 0.15, weekday: 0.95, weekend: 0.05 }
     };
-  var DEF_HOLIDAYS = [
-        "2020-09-18", "2020-09-19", "2020-09-20", "2020-09-27", "2020-09-28", "2021-09-06", "2021-09-07", "2021-09-08", "2021-09-15", "2021-09-16", "2021-09-20", "2021-09-21", "2021-09-27", "2021-09-28", "2022-06-04", "2022-06-05", "2022-09-25", "2022-09-26", "2022-09-27", "2023-09-15", "2023-09-16", "2023-09-17", "2023-09-24", "2023-09-25", "2023-09-29", "2023-09-30", "2024-06-11", "2024-06-12", "2025-06-01", "2025-06-02", "2025-09-22", "2025-09-23", "2025-09-24", "2026-09-11", "2026-09-12", "2026-09-13", "2026-09-20", "2026-09-21", "2026-09-25", "2026-09-26", "2027-06-10", "2027-06-11", "2028-09-20", "2028-09-21", "2028-09-22", "2028-09-29", "2028-09-30", "2029-09-09", "2029-09-10", "2029-09-11", "2029-09-18", "2029-09-19", "2029-09-23", "2029-09-24", "2029-09-30", "2030-06-06", "2030-06-07", "2030-09-27", "2030-09-28", "2030-09-29"
-    ];
+  var DEF_EXTRA_HOLIDAYS = [];
 
   var GROUPS = [
     ['tariff', 'תעריפים ומדרגות'],
@@ -29,6 +27,7 @@
     ['storage', 'אגירה, ממיר וחיפוש גודל'],
     ['fin', 'כלכלה ומיסוי'],
     ['analysis', 'ניתוח צריכה, יום עברי ומיקום'],
+    ['holidays', 'חגים וימים מיוחדים (נגזרים מהלוח העברי)'],
     ['crm', 'הערכה גסה בהצעת המחיר']
   ];
   var CALC_ROOTS = ['staircase', 'storageT100Factor', 'tou', 'compTariff', 'transitionCompFromSource', 'urbanPremium', 'urbanPremiumYears',
@@ -124,6 +123,29 @@
   f('location.lat', 'analysis', 'קו רוחב לחישוב שקיעה', 32.0853, '°', 'ברירת מחדל: תל אביב, לכל הלקוחות (D22)');
   f('location.lon', 'analysis', 'קו אורך לחישוב שקיעה', 34.7818, '°');
 
+  // ---- חגים (D21) ----
+  // שלוש הבחנות: (1) כל יום מיוחד, גם בלי איסור מלאכה: לזיהוי צריכה חריגה. (2) חגים האסורים במלאכה (יום טוב) בלבד:
+  // להשלמת נתונים חסרים ולגיבוי גנרטור/אגירה בשבתות וחגים. (3) לתעו"ז: רק חגים בחודשים שבהם יום חג משנה את סיווג פסגה/שפל.
+  // רשימת הימים המיוחדים (שאינם יום טוב) שנחשבים בהבחנה 1. כל אחד ניתן לכיבוי.
+  var MINOR_HOLIDAYS = [
+    ['erev_rh', 'ערב ראש השנה'], ['tzom_gedalia', 'צום גדליה'], ['erev_yk', 'ערב יום כיפור'], ['erev_sukkot', 'ערב סוכות'],
+    ['chol_sukkot', 'חול המועד סוכות'], ['hanukkah', 'חנוכה'], ['tevet10', 'עשרה בטבת'], ['tu_bishvat', 'ט"ו בשבט'],
+    ['ta_esther', 'תענית אסתר'], ['purim', 'פורים'], ['shushan', 'שושן פורים'], ['erev_pesach', 'ערב פסח'],
+    ['chol_pesach', 'חול המועד פסח'], ['yom_hashoah', 'יום השואה'], ['yom_hazikaron', 'יום הזיכרון'],
+    ['yom_haatzmaut', 'יום העצמאות'], ['lag_baomer', 'ל"ג בעומר'], ['yom_yerushalayim', 'יום ירושלים'],
+    ['erev_shavuot', 'ערב שבועות'], ['tzom_tammuz', 'י"ז בתמוז'], ['tisha_bav', 'תשעה באב'], ['tu_bav', 'ט"ו באב']
+  ];
+  MINOR_HOLIDAYS.forEach(function (h, i) {
+    f('holiday.on.' + h[0], 'holidays', 'לזהות כיום חריג (הבחנה 1): ' + h[1], 1, '1=כן, 0=לא',
+      i === 0 ? 'ימי יום טוב (ר"ה, יוה"כ, סוכות, שמיני עצרת, פסח, שביעי של פסח, שבועות) תמיד נחשבים, ואינם ניתנים לכיבוי.' : '');
+  });
+  var TOU_HOLIDAY_MONTHS = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0];   // ינואר..דצמבר: 1 = חג משנה את סיווג פסגה/שפל
+  MONTH_NAMES.forEach(function (n, i) {
+    f('touHoliday.month' + (i < 9 ? '0' : '') + (i + 1), 'holidays', 'תעו"ז: חג נחשב יום שפל (כמו שבת) בחודש ' + n, TOU_HOLIDAY_MONTHS[i], '1=כן, 0=לא',
+      i === 0 ? 'ברירת המחדל משקפת את מה שמוטמע ומאומת מול לוח הרשות: בחורף (דצמבר-פברואר) פסגה בכל יום בשבוע, ללא יוצא מן הכלל; בשאר החודשים חג = שפל. אם הרגולציה משתנה, יש לעדכן כאן.' : '');
+  });
+  f('touHoliday.scopeAll', 'holidays', 'תעו"ז: להתייחס לכל יום מיוחד (ולא רק ליום טוב) כחג', 0, '1=כן, 0=רק יום טוב', 'ברירת מחדל: רק חגים האסורים במלאכה.');
+
   // ---- CRM ----
   f('crm.roughTariff', 'crm', 'תעריף ממוצע להערכה גסה', 0.55, KWH, 'חיסכון גס = הספק × תפוקה שנתית × תעריף. מוצג רק עד שיש נתוני מחשבון אמיתיים.');
 
@@ -163,7 +185,7 @@
     return out;
   }
   function propertyTypes() { return clone(state.tables.propertyTypes || DEF_PROPERTY_TYPES); }
-  function knownHolidays() { return clone(state.tables.knownHolidays || DEF_HOLIDAYS); }
+  function extraHolidays() { return clone(state.tables.extraHolidays || DEF_EXTRA_HOLIDAYS); }
 
   // ---------------- סנכרון עם השרת ----------------
   function hasServer() { return !!(window.google && google.script && google.script.run); }
@@ -268,7 +290,7 @@
 
   function buildPanel() {
     if (panel) panel.remove();
-    draft = { values: clone(state.values), tables: { propertyTypes: propertyTypes(), knownHolidays: knownHolidays() } };
+    draft = { values: clone(state.values), tables: { propertyTypes: propertyTypes(), extraHolidays: extraHolidays() } };
     var body = mk('div', { cls: 'bs-body' });
     body.appendChild(mk('p', { text: 'ערכים משוערים וממוצעים שמשפיעים על החישובים. שורה צהובה = שונה מברירת המחדל. השינויים נכנסים לתוקף אחרי שמירה ורענון הדף.' }));
     GROUPS.forEach(function (g) {
@@ -310,11 +332,11 @@
     tdet.appendChild(mk('p', { style: 'padding:0 12px;font-size:12px;color:#6b7785', text: 'בכל שורה: חורף+קיץ+מעבר = 1, שפל+פסגה = 1 לכל עונה, ימי חול+סופ"ש = 1. סטייה תוצג כאזהרה בשמירה.' }));
     body.appendChild(tdet);
     // חגים
-    var hdet = mk('details', null, [mk('summary', { text: 'ימי חג/חריגה ידועים (תאריך בכל שורה, YYYY-MM-DD)' })]);
-    var ta = mk('textarea', { rows: '10' }); ta.value = draft.tables.knownHolidays.join('\n');
-    ta.oninput = function () { draft.tables.knownHolidays = ta.value.split(/\s+/).filter(Boolean); };
+    var hdet = mk('details', null, [mk('summary', { text: 'תאריכים נוספים שייחשבו ימים מיוחדים (תאריך בכל שורה, YYYY-MM-DD)' })]);
+    var ta = mk('textarea', { rows: '6' }); ta.value = draft.tables.extraHolidays.join('\n');
+    ta.oninput = function () { draft.tables.extraHolidays = ta.value.split(/\s+/).filter(Boolean); };
     hdet.appendChild(mk('div', { style: 'padding:6px 12px' }, [ta]));
-    hdet.appendChild(mk('p', { style: 'padding:0 12px;font-size:12px;color:#6b7785', text: 'הרשימה הקיימת מכסה בעיקר יוני וספטמבר (D21). אפשר להוסיף כאן חגים נוספים.' }));
+    hdet.appendChild(mk('p', { style: 'padding:0 12px;font-size:12px;color:#6b7785', text: 'החגים עצמם נגזרים אוטומטית מהלוח העברי לכל שנה. כאן מוסיפים רק ימים חד-פעמיים (למשל אירוע משפחתי שהשפיע על הצריכה). הם נספרים כיום חריג (הבחנה 1) בלבד.' }));
     body.appendChild(hdet);
 
     statusEl = mk('div', { id: 'bsSetStatus' });
@@ -341,7 +363,7 @@
       chk(r.offpeakSummer + r.peakSummer, 'שפל+פסגה בקיץ');
       chk(r.weekday + r.weekend, 'ימי חול+סופ"ש');
     });
-    var badDates = draft.tables.knownHolidays.filter(function (d) { return !/^\d{4}-\d{2}-\d{2}$/.test(d) || isNaN(new Date(d + 'T00:00:00').getTime()); });
+    var badDates = draft.tables.extraHolidays.filter(function (d) { return !/^\d{4}-\d{2}-\d{2}$/.test(d) || isNaN(new Date(d + 'T00:00:00').getTime()); });
     return { warns: warns, badDates: badDates };
   }
   function onSave() {
@@ -350,8 +372,8 @@
     var next = emptyState();
     next.values = clone(draft.values);
     if (JSON.stringify(draft.tables.propertyTypes) !== JSON.stringify(DEF_PROPERTY_TYPES)) next.tables.propertyTypes = clone(draft.tables.propertyTypes);
-    var hol = draft.tables.knownHolidays.slice().sort();
-    if (JSON.stringify(hol) !== JSON.stringify(DEF_HOLIDAYS.slice().sort())) next.tables.knownHolidays = hol;
+    var hol = draft.tables.extraHolidays.slice().sort();
+    if (JSON.stringify(hol) !== JSON.stringify(DEF_EXTRA_HOLIDAYS.slice().sort())) next.tables.extraHolidays = hol;
     next.updatedAt = Date.now();
     state = next; persistLocal();
     document.getElementById('bsSetBtn').classList.toggle('bs-dirty', hasOverrides());
@@ -403,7 +425,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
   window.BS_SETTINGS = {
-    get: get, saveValues: saveValues, calcConstants: calcConstants, propertyTypes: propertyTypes, knownHolidays: knownHolidays,
-    openPanel: openPanel, fields: FIELDS, defaults: { propertyTypes: DEF_PROPERTY_TYPES, knownHolidays: DEF_HOLIDAYS }
+    get: get, saveValues: saveValues, calcConstants: calcConstants, propertyTypes: propertyTypes, extraHolidays: extraHolidays, minorHolidays: MINOR_HOLIDAYS,
+    openPanel: openPanel, fields: FIELDS, defaults: { propertyTypes: DEF_PROPERTY_TYPES, extraHolidays: DEF_EXTRA_HOLIDAYS }
   };
 })();

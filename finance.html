@@ -6,6 +6,7 @@
 <script src="fake-sheets.js"></script>
 <script src="gas-shim.js"></script>
 <script src="settings.js"></script>
+<script src="holidays.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שלב 3 - מודל פיננסי - בראשית סולאר</title>
@@ -586,13 +587,7 @@
         return null;
     }
 
-    // רשימת חגים ידועה (מרוכזת סביב חגי תשרי בעיקר) - שימוש בהערכה, לא מקיפה לכל השנה.
-    // לכיסוי מלא ומדויק יותר של כל חגי ישראל בכל עונה מומלץ לשלב עתידית API כמו Hebcal.
-    const knownHolidays = BS_SETTINGS.knownHolidays();
-    function isKnownHoliday(dateObj) {
-        const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-        return knownHolidays.includes(dateStr);
-    }
+    // D21: חגים נגזרים מהלוח העברי (holidays.js). בסיווג תעו"ז: רק חגים בחודשים שבהם חג משנה פסגה/שפל (הגדרות), ראו BS_HOLIDAYS.isTouHoliday.
 
     // מחזיר { season: 'winter'|'summer'|'transition', isPeak: bool }
     function classifyHour(dateObj) {
@@ -608,9 +603,9 @@
         if (season === 'winter') {
             isPeak = (hour >= 17 && hour < 22); // כל ימות השבוע, ללא יוצא מן הכלל
         } else if (season === 'summer') {
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
         } else { // transition
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
         }
         return { season, isPeak };
     }

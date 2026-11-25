@@ -35,7 +35,7 @@ console.log('✅ תאריך לא תקין חוסם שמירה');
 ta.value=orig+'\n2031-01-01'; ta.dispatchEvent(new w.Event('input')); save.click();
 const saved=JSON.parse(w.localStorage.getItem('bs_settings_v1'));
 assert.strictEqual(saved.values['roof.m2PerKwpNew'],6.2); assert.strictEqual(saved.values['vatRate'],0.17);
-assert.strictEqual(Object.keys(saved.values).length,2,'only changed values stored'); assert(saved.tables.knownHolidays.includes('2031-01-01'));
+assert.strictEqual(Object.keys(saved.values).length,2,'only changed values stored'); assert(saved.tables.extraHolidays.includes('2031-01-01'));
 assert(!saved.tables.propertyTypes,'unchanged table not stored');
 assert.strictEqual(JSON.parse(serverDoc).values.vatRate,0.17,'pushed to server');
 assert(/נשמר בדפדפן ובשרת/.test(doc.getElementById('bsSetStatus').textContent));

@@ -6,6 +6,7 @@
 <script src="fake-sheets.js"></script>
 <script src="gas-shim.js"></script>
 <script src="settings.js"></script>
+<script src="holidays.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שלב 1 - ניתוח והעשרת נתוני צריכה - בראשית סולאר</title>
@@ -391,7 +392,7 @@
         <div class="calc-card">
             <h3 style="margin-top:0; color:#1a3a5f;">מצב עבר (עיבוד הקובץ)</h3>
             <div class="checkbox-group">
-                <label><input type="checkbox" id="ignoreMissingShabbat" onchange="onIgnoreMissingShabbatToggle()"> להתעלם משבתות חסרות בקובץ (לא לחשב אותן כצריכה אפסית)</label>
+                <label><input type="checkbox" id="ignoreMissingShabbat" onchange="onIgnoreMissingShabbatToggle()"> להתעלם משבתות וחגים חסרים בקובץ (לא לחשב אותם כצריכה אפסית)</label>
             </div>
             <p style="font-size:0.82em; color:#7f8c8d; margin-top:8px;">"שבת" לעניין זה מוגדרת הלכתית - מ-20 דקות לפני שקיעת יום שישי ועד 40 דקות אחרי שקיעת יום שבת (לא "יום שבת" גרגוריאני 00:00-23:59).</p>
         </div>
@@ -745,13 +746,7 @@
         return null;
     }
 
-    // רשימת חגים ידועה (מרוכזת סביב חגי תשרי בעיקר) - שימוש בהערכה, לא מקיפה לכל השנה.
-    // לכיסוי מלא ומדויק יותר של כל חגי ישראל בכל עונה מומלץ לשלב עתידית API כמו Hebcal.
-    const knownHolidays = BS_SETTINGS.knownHolidays();
-    function isKnownHoliday(dateObj) {
-        const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-        return knownHolidays.includes(dateStr);
-    }
+    // D21: חגים נגזרים מהלוח העברי (holidays.js). בסיווג תעו"ז: רק חגים בחודשים שבהם חג משנה פסגה/שפל (הגדרות), ראו BS_HOLIDAYS.isTouHoliday.
 
     // מחזיר { season: 'winter'|'summer'|'transition', isPeak: bool }
     function classifyHour(dateObj) {
@@ -767,9 +762,9 @@
         if (season === 'winter') {
             isPeak = (hour >= 17 && hour < 22); // כל ימות השבוע, ללא יוצא מן הכלל
         } else if (season === 'summer') {
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
         } else { // transition
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
         }
         return { season, isPeak };
     }
@@ -1494,16 +1489,8 @@
     const HEBREW_DAY_EXIT_OFFSET_MIN = BS_SETTINGS.get('hebrewDay.exitOffsetMin');
 
     // יום טוב (בישראל) לפי התאריך העברי של היום עצמו: ר"ה 1-2 תשרי, יוה"כ 10, סוכות 15, שמחת תורה 22, פסח 15 ו-21 ניסן, שבועות 6 סיוון.
-    // נגזר מהתאריך העברי (לא מ-knownHolidays: הטבלה הקשיחה מכסה רק יוני וספטמבר, ראו D21). חול המועד אינו קדוש.
-    function isYomTovHebrew(d) {
-        const hd = toHebrewDate(d);
-        const nisan = hc_isLeap(hd.year) ? 8 : 7; // מניין תשרי=1; בשנה מעוברת יש אדר ב׳ לפני ניסן
-        const sivan = nisan + 2;
-        if (hd.month === 1) return [1, 2, 10, 15, 22].includes(hd.day);
-        if (hd.month === nisan) return [15, 21].includes(hd.day);
-        if (hd.month === sivan) return hd.day === 6;
-        return false;
-    }
+    // נגזר מהתאריך העברי דרך holidays.js (הבחנה 2: חגים האסורים במלאכה). חול המועד אינו קדוש.
+    function isYomTovHebrew(d) { return BS_HOLIDAYS.isYomTov(d); }
     function isSacredDay(d) { return d.getDay() === 6 || isYomTovHebrew(d); }
 
     // היסט (בדקות) ביחס לשקיעה לגבול "יום עברי" ביום גרגוריאני D:
@@ -2065,9 +2052,9 @@
     // קנה-מידה כך שהערך השעתי המקסימלי ייכנס ל-Uint16 בלי חיתוך שקט:
     // 1000 = וואט-שעה שלם (עד 65.5 קוט"ש/שעה), 100 = 10 וואט-שעה (עד 655), ואז 10 ו-1.
     // ========================================================================
-    // D5 (T7 / S3): מילוי שבתות חסרות, בעותק השמור בלבד (החלטה Q-B).
-    // לכל שעה חסרה בתוך חלון שבת הלכתי: ערך אותה שעה ביממה, בממוצע ששת ימי החול שקדמו לאותה שבת
-    // (בלי שעות שבת, ימי חג/חריגה ושעות חסרות), כפול (1 + אחוז הסליידר / 100) לכל שעה בנפרד.
+    // D5 (T7 / S3) + D21 (הבחנה 2): מילוי שבתות וימי יום טוב חסרים, בעותק השמור בלבד (החלטה Q-B).
+    // לכל שעה חסרה בתוך חלון קדושה (שבת או יום טוב, ראו getHolyWindow): ערך אותה שעה ביממה, בממוצע ששת ימי החול שקדמו לאותה שבת
+    // (בלי שעות שבת/יום טוב, ימי חג/חריגה ושעות חסרות), כפול (1 + אחוז הסליידר / 100) לכל שעה בנפרד.
     // אם בשבוע שקדם אין נתון לאותה שעה: נפילה לממוצע אותה שעה בכל ימי החול שבחלון. אם אין כלל, השעה נשארת ללא מילוי ונספרת.
     // העבודה על הרשת השעתית עצמה, כך שהיחידות עקביות גם כשהקובץ המקורי ברבע שעה.
     // ========================================================================
@@ -2081,13 +2068,13 @@
         const winCache = new Map();
         const winOf = dt => {
             const k = dt.toDateString();
-            if (!winCache.has(k)) winCache.set(k, getHalachicShabbatWindow(dt));
+            if (!winCache.has(k)) winCache.set(k, getHolyWindow(dt));
             return winCache.get(k);
         };
         const inShabbat = new Array(total).fill(false), satOfHour = new Array(total).fill(null);
         for (let i = 0; i < total; i++) {
             const dt = hourDate(i), w = winOf(dt);
-            if (dt >= w.start && dt <= w.end) { inShabbat[i] = true; satOfHour[i] = w; }
+            if (w && dt >= w.start && dt <= w.end) { inShabbat[i] = true; satOfHour[i] = w; }
         }
         const usable = new Array(total);
         for (let i = 0; i < total; i++) usable[i] = grid.seen[i] && !inShabbat[i] && !exceptionDateStrs.has(hourDate(i).toDateString());
@@ -2102,7 +2089,7 @@
         };
         const profileCache = new Map();
         const profileFor = w => {
-            const key = w.saturday.toDateString();
+            const key = w.key;
             if (profileCache.has(key)) return profileCache.get(key);
             const endIdx = Math.min(total, idxOfDate(w.start)), begIdx = Math.max(0, idxOfDate(w.start) - 6 * 24);
             const s = new Array(24).fill(0), n = new Array(24).fill(0);
@@ -2122,7 +2109,7 @@
             if (base == null) base = getGlobalAvg()[h];
             if (base == null) { unfilled++; continue; }
             grid.sums[i] = base * factor;
-            filled++; touched.add(satOfHour[i].saturday.toDateString());
+            filled++; touched.add(satOfHour[i].key);
             const last = ranges[ranges.length - 1];
             if (last && last[0] + last[1] === i) last[1]++; else ranges.push([i, 1]);
         }
@@ -2158,10 +2145,10 @@
         if (!plan) { el.textContent = 'יש לאחד את המקורות כדי לראות כמה שעות שבת חסרות יושלמו.'; return; }
         const s = plan.stats;
         el.innerHTML = s.filledHours
-            ? `<strong>${s.filledHours}</strong> שעות שבת חסרות יושלמו (ב-${s.shabbats} שבתות), לפי פרופיל ששת ימי החול שקדמו × (1 + ${plan.pct}%).` +
+            ? `<strong>${s.filledHours}</strong> שעות שבת/חג חסרות יושלמו (ב-${s.shabbats} שבתות וחגים), לפי פרופיל ששת ימי החול שקדמו × (1 + ${plan.pct}%).` +
               (s.unfilledHours ? ` ${s.unfilledHours} שעות נוספות יישארו ללא מילוי (אין נתוני חול להשוואה).` : '') +
               ' המילוי חל על העותק שנשמר לשלב 2 בלבד (שנה אחרונה), לא על התצוגה ולא על קובץ ה-Excel.'
-            : 'לא נמצאו שעות שבת חסרות בשנה האחרונה, אין מה להשלים.' + (s.unfilledHours ? ` (${s.unfilledHours} שעות חסרות ללא נתוני חול להשוואה)` : '');
+            : 'לא נמצאו שעות שבת/חג חסרות בשנה האחרונה, אין מה להשלים.' + (s.unfilledHours ? ` (${s.unfilledHours} שעות חסרות ללא נתוני חול להשוואה)` : '');
     }
 
     function chooseScale(kwhArray) {
@@ -2328,6 +2315,37 @@
         return dateObj >= start && dateObj <= end;
     }
 
+    // D21 (הבחנה 2): חלון "קדושה" כללי: שבת או יום טוב. ימים קדושים רצופים (שבת+יום טוב, ר"ה יומיים וכו') מאוחדים לחלון אחד,
+    // מ(שקיעת ערב היום הקדוש הראשון - 20 דק') עד (שקיעת היום הקדוש האחרון + 40 דק'), כמו חלון השבת הרגיל.
+    // מחזיר את החלון שהיום של dt שייך אליו (יום קדוש, או ערב שלפני יום קדוש), או null. התאם עם dt >= start && dt <= end.
+    function getHolyWindow(dt) {
+        const D = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+        const next = new Date(D.getFullYear(), D.getMonth(), D.getDate() + 1);
+        let first;
+        if (isSacredDay(D)) {
+            first = D;
+            for (;;) {
+                const prev = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 1);
+                if (!isSacredDay(prev)) break;
+                first = prev;
+            }
+        } else if (isSacredDay(next)) {
+            first = next;
+        } else {
+            return null;
+        }
+        let last = first;
+        for (;;) {
+            const nx = new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1);
+            if (!isSacredDay(nx)) break;
+            last = nx;
+        }
+        const eve = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 1);
+        const start = new Date(eve.getFullYear(), eve.getMonth(), eve.getDate(), 0, getSunsetMinutesOfDay(eve) - 20);
+        const end = new Date(last.getFullYear(), last.getMonth(), last.getDate(), 0, getSunsetMinutesOfDay(last) + 40);
+        return { start, end, first, last, key: first.toDateString() };
+    }
+
     // מחשב, עבור כל שבת שנמצאה בסדרה, את פרופיל הצריכה השעתי של ששת ימי החול
     // שקדמו לה (לא ממוצע שנתי כללי) - ומחזיר גם את הצריכה בפועל בשבת (אם קיימת בנתונים).
     function computeWeeklyShabbatProfiles(series) {
@@ -2381,7 +2399,7 @@
 
         // א. חגים ידועים שנפלו על יום חול (לא שבת עצמה - זו כבר מטופלת בנפרד)
         days.forEach(d => {
-            if (d.dow !== 6 && isKnownHoliday(d.date)) exceptions.push({ date: d.date, reason: 'חג', total: d.total });
+            if (d.dow !== 6 && BS_HOLIDAYS.isAnyHoliday(d.date)) exceptions.push({ date: d.date, reason: 'חג: ' + BS_HOLIDAYS.names(d.date), total: d.total });
         });
 
         // ב. חריגות סטטיסטיות - לפי קבוצת (יום-בשבוע), משווים לחציון+MAD (עמיד יותר לחריגים מסטיית תקן רגילה)

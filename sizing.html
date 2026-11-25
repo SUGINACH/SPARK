@@ -6,6 +6,7 @@
 <script src="fake-sheets.js"></script>
 <script src="gas-shim.js"></script>
 <script src="settings.js"></script>
+<script src="holidays.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שלב 2 - המלצת גודל מערכת - בראשית סולאר</title>
@@ -179,6 +180,17 @@
                 <strong>ייעוד האגירה:</strong><br>
                 <label><input type="checkbox" id="useStorageShabbat"> ייעוד אגירה לשבת (גיבוי מלא ללא תלות ברשת).</label>
                 <label><input type="checkbox" id="useStorageHoliday"> ייעוד אגירה לשבת+חג (גיבוי יומיים רצופים).</label>
+                <div id="holyChainNote" style="font-size:0.82em; color:#8a6d3b; background:#fff6e0; border-radius:6px; padding:6px 10px; margin:4px 0 8px;"></div>
+                <script>
+                (function () {
+                    try {
+                        const c = BS_HOLIDAYS.longestHolyChain(new Date().getFullYear(), 10), f = BS_SETTINGS.get('storage.factorHoliday');
+                        document.getElementById('holyChainNote').textContent =
+                            'לפי הלוח העברי, הרצף הקדוש הארוך ביותר ב-10 השנים הקרובות הוא ' + c.days + ' ימים רצופים (' + c.from + ' עד ' + c.to + '). ' +
+                            'המכפיל הנוכחי לגיבוי שבת+חג (' + f + ') מכסה בערך יומיים' + (c.days > 2 ? '; לגיבוי של ' + c.days + ' ימים נדרש כ-' + (c.days * 1.1).toFixed(1) + '. אפשר לעדכן בלוח ההגדרות ⚙️.' : '.');
+                    } catch (e) { /* הערה בלבד */ }
+                })();
+                </script>
             </div>
             <label>קיבולת אגירה שמישה בפועל (קוט"ש) - 0 = ללא אגירה</label>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -597,13 +609,7 @@
         return null;
     }
 
-    // רשימת חגים ידועה (מרוכזת סביב חגי תשרי בעיקר) - שימוש בהערכה, לא מקיפה לכל השנה.
-    // לכיסוי מלא ומדויק יותר של כל חגי ישראל בכל עונה מומלץ לשלב עתידית API כמו Hebcal.
-    const knownHolidays = BS_SETTINGS.knownHolidays();
-    function isKnownHoliday(dateObj) {
-        const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-        return knownHolidays.includes(dateStr);
-    }
+    // D21: חגים נגזרים מהלוח העברי (holidays.js). בסיווג תעו"ז: רק חגים בחודשים שבהם חג משנה פסגה/שפל (הגדרות), ראו BS_HOLIDAYS.isTouHoliday.
 
     // מחזיר { season: 'winter'|'summer'|'transition', isPeak: bool }
     function classifyHour(dateObj) {
@@ -619,9 +625,9 @@
         if (season === 'winter') {
             isPeak = (hour >= 17 && hour < 22); // כל ימות השבוע, ללא יוצא מן הכלל
         } else if (season === 'summer') {
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 23);
         } else { // transition
-            if (wday !== 5 && wday !== 6 && !isKnownHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
+            if (wday !== 5 && wday !== 6 && !BS_HOLIDAYS.isTouHoliday(dateObj)) isPeak = (hour >= 17 && hour < 22);
         }
         return { season, isPeak };
     }
