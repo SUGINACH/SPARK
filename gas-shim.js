@@ -18,7 +18,7 @@
   var CFG_KEY = 'bs:api', TOKEN_KEY = 'bs:token';
   var DEMO_PREFIX = 'bsdemo:';
   var SHEETS_KEY = DEMO_PREFIX + 'sheets:v1';
-  var WRITE_ACTIONS = ['saveCustomerData', 'updateCalculatorResults', 'saveConsumptionAnalysis', 'saveSizingRecommendation'];
+  var WRITE_ACTIONS = ['saveCustomerData', 'updateCalculatorResults', 'saveConsumptionAnalysis', 'saveSizingRecommendation', 'saveAppSettings'];
   var ROLE_LABEL = { editor: 'עריכה', viewer: 'צפייה בלבד' };
 
   // ---------------------------------------------------------------------------------------------

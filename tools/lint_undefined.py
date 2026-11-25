@@ -15,7 +15,7 @@ for path in sorted(glob.glob(os.path.join(src, '*.html'))):
     js = '\n'.join((s.string or s.get_text()) for s in soup.find_all('script') if not s.get('src'))
     if not js.strip(): continue
     with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as f: f.write(js); tmp = f.name
-    r = subprocess.run([eslint, '--no-eslintrc', '--env', 'browser,es2021', '--parser-options', 'ecmaVersion:2022', '--global', 'google,XLSX,Papa,Chart,BS_SEED,BSFake',
+    r = subprocess.run([eslint, '--no-eslintrc', '--env', 'browser,es2021', '--parser-options', 'ecmaVersion:2022', '--global', 'google,XLSX,Papa,Chart,BS_SEED,BSFake,BS_SETTINGS',
                         '--rule', '{"no-undef":"error"}', '-f', 'unix', tmp], capture_output=True, text=True)
     os.unlink(tmp)
     lines = [l for l in r.stdout.split('\n') if 'is not defined' in l]

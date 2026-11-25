@@ -37,10 +37,12 @@ const API_ACTIONS_ = {
   updateCalculatorResults: updateCalculatorResults,
   saveConsumptionAnalysis: saveConsumptionAnalysis,
   saveSizingRecommendation: saveSizingRecommendation,
-  generateConsumptionExcelReport: generateConsumptionExcelReport
+  generateConsumptionExcelReport: generateConsumptionExcelReport,
+  getAppSettings: getAppSettings,
+  saveAppSettings: saveAppSettings
 };
 // פעולות כתיבה לגיליון הלקוחות: מבוצעות תחת נעילה כדי למנוע כתיבות מקבילות (מכשירים/משתמשים) על אותה שורה.
-const WRITE_ACTIONS_ = ['saveCustomerData', 'updateCalculatorResults', 'saveConsumptionAnalysis', 'saveSizingRecommendation'];
+const WRITE_ACTIONS_ = ['saveCustomerData', 'updateCalculatorResults', 'saveConsumptionAnalysis', 'saveSizingRecommendation', 'saveAppSettings'];
 
 /** מפתח הגישה: Script Property בשם BS_API_KEY (נפילה ל-MOBILE_API_KEY הישן, תאימות לאפליקציית המובייל). */
 function getApiKey_() {
@@ -93,7 +95,7 @@ function doPost(e) {
 // ===================== כניסה והרשאות =====================
 const AUTH_ = { SHEET: 'משתמשים', ROUNDS: 100, SESSION_TTL_S: 21600, MAX_FAILS: 5, LOCK_S: 900, MIN_PASSWORD: 10, USERS_CACHE_S: 60 };
 const USER_HEADERS_ = ['שם משתמש', 'אימייל Google', 'תפקיד', 'salt', 'hash', 'פעיל', 'נוצר'];
-const READ_ACTIONS_ = ['ping', 'getInitialData', 'getCustomerData', 'generateConsumptionExcelReport'];   // viewer מורשה רק לאלה (כולל ייצוא: קובץ זמני שנמחק)
+const READ_ACTIONS_ = ['ping', 'getInitialData', 'getCustomerData', 'generateConsumptionExcelReport', 'getAppSettings'];   // viewer מורשה רק לאלה (כולל ייצוא: קובץ זמני שנמחק)
 
 function cache_() { return CacheService.getScriptCache(); }
 function authFail_(code, error) { return { ok: false, code: code, error: error }; }
@@ -1046,4 +1048,34 @@ function setGoogleClientId_oneTime() {
   if (id === 'CHANGE-ME') throw new Error('הדביקו את ה-Client ID בפונקציה setGoogleClientId_oneTime לפני ההרצה.');
   PropertiesService.getScriptProperties().setProperty('BS_GOOGLE_CLIENT_ID', id);
   Logger.log('BS_GOOGLE_CLIENT_ID הוגדר');
+}
+
+// ===================== הגדרות מערכת (לוח ההגדרות באתר) =====================
+// ערכי החישוב המשוערים/הממוצעים שניתנים לשינוי. נשמרים כ-JSON בתא יחיד בגיליון "הגדרות מערכת" (שורה 2, עמודה A),
+// כך שכל המשתמשים והמכשירים רואים אותם. קריאה: כל משתמש. כתיבה: editor בלבד (נאכף ב-doPost).
+const SETTINGS_SHEET_ = 'הגדרות מערכת';
+const SETTINGS_MAX_CHARS_ = 45000;   // תקרת תא בגיליון: 50,000 תווים
+
+/** מחזיר את מחרוזת ה-JSON של ההגדרות, או מחרוזת ריקה כשטרם נשמרו הגדרות. */
+function getAppSettings() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SETTINGS_SHEET_);
+  if (!sh || sh.getLastRow() < 2) return '';
+  return String(sh.getRange(2, 1).getValue() || '');
+}
+
+/** שומר את ההגדרות (מחרוזת JSON של אובייקט). מאמת מבנה וגודל לפני כתיבה. */
+function saveAppSettings(json) {
+  const text = String(json || '');
+  if (text.length > SETTINGS_MAX_CHARS_) throw new Error('ההגדרות גדולות מדי לשמירה בתא (' + text.length + ' תווים)');
+  let obj;
+  try { obj = JSON.parse(text); } catch (e) { throw new Error('ההגדרות אינן JSON תקין'); }
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('מבנה ההגדרות אינו תקין');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SETTINGS_SHEET_);
+  if (!sh) sh = ss.insertSheet(SETTINGS_SHEET_);
+  const savedAt = new Date().toISOString();
+  sh.getRange(1, 1, 1, 2).setValues([['הגדרות (JSON)', 'עודכן']]);
+  sh.getRange(2, 1).setValue(text);
+  sh.getRange(2, 2).setValue(savedAt);
+  return { ok: true, savedAt: savedAt };
 }

@@ -5,6 +5,7 @@
 <script src="seed-data.js"></script>
 <script src="fake-sheets.js"></script>
 <script src="gas-shim.js"></script>
+<script src="settings.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת הצעות מחיר וניתוח אנרגטי - בראשית סולאר</title>
@@ -1057,7 +1058,7 @@
         // הערכה גסה — רק אם עדיין לא נמשכו נתונים אמיתיים מהמחשבון/משמורת קודמת (ר' calculatorDataPulled)
         if (!calculatorDataPulled) {
             const kwp = parseFloat(document.getElementById('panelPower').value) || 0;
-            const annualSave = kwp * 1650 * 0.55;
+            const annualSave = kwp * BS_SETTINGS.get('yieldBase') * BS_SETTINGS.get('crm.roughTariff');
             const roi = total > 0 ? (annualSave / total) * 100 : 0;
             const p25 = (annualSave * 25) - total;
 

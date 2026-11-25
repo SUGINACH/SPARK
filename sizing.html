@@ -5,6 +5,7 @@
 <script src="seed-data.js"></script>
 <script src="fake-sheets.js"></script>
 <script src="gas-shim.js"></script>
+<script src="settings.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שלב 2 - המלצת גודל מערכת - בראשית סולאר</title>
@@ -139,7 +140,7 @@
                 <span class="info-tip">ⓘ<span class="tip-popover">
                     <span class="tip-title">למה אין שדה "הספק מבוקש"?</span>
                     ההספק עצמו הוא <b>תוצאה</b> של החיפוש (בכפוף למגבלות כאן), לא קלט - האלגוריתם בודק טווח גדלים ובוחר את זה עם התשואה הטובה ביותר שעדיין עומד בשטח הגג/מגבלת החיבור/התקציב שהזנתם.
-                    <div class="tip-formula">שטח גג (מ"ר) = הספק × 5.5</div>
+                    <div class="tip-formula">שטח גג (מ"ר) = הספק × <span data-bs-setting="roof.m2PerKwpNew">5.5</span></div>
                     <div class="tip-inputs">סטנדרט לפאנלים מודרניים (שלב 1 משתמש ביחס נפרד וניתן-לעריכה, למערכת קיימת/ישנה).</div>
                 </span></span>
             </label>
@@ -149,7 +150,7 @@
             <label>תקציב מקסימלי (₪, אופציונלי)</label>
             <input type="number" id="rec_budget" placeholder="השאר ריק אם אין הגבלה">
             <input type="hidden" id="calc_targetKw" value="0">
-            <p style="font-size:0.85em; color:#7f8c8d; margin:10px 0 0;">שטח גג הנדרש לתוצאה שתומלץ (5.5 מ"ר לקוו"ט): <strong id="roofAreaDisplay">-</strong> מ"ר</p>
+            <p style="font-size:0.85em; color:#7f8c8d; margin:10px 0 0;">שטח גג הנדרש לתוצאה שתומלץ (<span data-bs-setting="roof.m2PerKwpNew">5.5</span> מ"ר לקוו"ט): <strong id="roofAreaDisplay">-</strong> מ"ר</p>
         </div>
         <div class="calc-card">
             <label>כיוון אופטימלי (1.0 = דרום, 0.85 = מזרח/מערב)</label>
@@ -367,54 +368,16 @@
     // (חולץ לפי קואורדינטות מדויקות מה-PDF, לא לפי סדר טקסט - כל שורה אומתה:
     // חורף+קיץ+מעבר=100%, שפל+פסגה=100% בכל עונה, חול+שישי-שבת=100%)
     // ====================================================================
-    const CONSUMPTION_DISTRIBUTION = {
-        'בית פרטי': { label: 'בית פרטי', desc: 'תנודתי (בוקר/ערב). שיא מיזוג בקיץ ודודי חשמל וחימום בחורף. פעילות מלאה בסופי שבוע.', winter: 0.35, summer: 0.45, transition: 0.20, sunHours: 0.30, offpeakWinter: 0.65, peakWinter: 0.35, offpeakSummer: 0.60, peakSummer: 0.40, weekday: 0.71, weekend: 0.29 },
-        'משרד ציבורי/מסחרי': { label: 'משרד ציבורי/מסחרי', desc: 'עומס צהריים מרכזי (08:00-17:30). אפס צריכה בסופי שבוע וערבים.', winter: 0.30, summer: 0.45, transition: 0.25, sunHours: 0.75, offpeakWinter: 0.85, peakWinter: 0.15, offpeakSummer: 0.80, peakSummer: 0.20, weekday: 0.92, weekend: 0.08 },
-        'מוסד לימודי (יסודי/תיכון)': { label: 'מוסד לימודי (יסודי/תיכון)', desc: 'סגור ביולי-אוגוסט. שיא צריכה בחורף ומעבר. מתרוקן אחה"צ. מגבלות קרינה סביבתיות.', winter: 0.45, summer: 0.15, transition: 0.40, sunHours: 0.85, offpeakWinter: 0.95, peakWinter: 0.05, offpeakSummer: 0.95, peakSummer: 0.05, weekday: 0.95, weekend: 0.05 },
-        'מוסד אקדמי (אוניברסיטה/מכללה)': { label: 'מוסד אקדמי (אוניברסיטה/מכללה)', desc: 'עבודה רציפה כולל מעבדות מחקר, סמסטר קיץ דליל וספריות פתוחות בערב.', winter: 0.35, summer: 0.35, transition: 0.30, sunHours: 0.65, offpeakWinter: 0.80, peakWinter: 0.20, offpeakSummer: 0.75, peakSummer: 0.25, weekday: 0.88, weekend: 0.12 },
-        'ישיבה/פנימייה': { label: 'ישיבה / פנימייה', desc: 'פעילות 24/7 סביב בית המדרש וחדרי אוכל. חופשות (בין הזמנים) קוטעות שיאים. שבת עמוסה.', winter: 0.35, summer: 0.40, transition: 0.25, sunHours: 0.45, offpeakWinter: 0.70, peakWinter: 0.30, offpeakSummer: 0.75, peakSummer: 0.25, weekday: 0.70, weekend: 0.30 },
-        'בית כנסת': { label: 'בית כנסת', desc: 'עומסי קיצון קצרים (Spikes). צריכת שיא בסופי שבוע ובשעות תפילה (ערב). שפל מוחלט במעבר.', winter: 0.35, summer: 0.45, transition: 0.20, sunHours: 0.25, offpeakWinter: 0.80, peakWinter: 0.20, offpeakSummer: 0.70, peakSummer: 0.30, weekday: 0.40, weekend: 0.60 },
-        'מלון תיירות ונופש': { label: 'מלון תיירות ונופש', desc: 'עומס בסיס חזק וקבוע למתקני המלון. שיא הקיץ בתיירות. זינוק צריכה אנושית אחה"צ וערב.', winter: 0.30, summer: 0.45, transition: 0.25, sunHours: 0.45, offpeakWinter: 0.75, peakWinter: 0.25, offpeakSummer: 0.70, peakSummer: 0.30, weekday: 0.65, weekend: 0.35 },
-        'מתחמי אירוח/צימרים': { label: 'מתחמי אירוח / צימרים', desc: 'פעילות ממוקדת בסופי שבוע ובעונת הקיץ בלבד. ריק כמעט לחלוטין בימי חול חורפיים ומעבר.', winter: 0.25, summer: 0.55, transition: 0.20, sunHours: 0.40, offpeakWinter: 0.70, peakWinter: 0.30, offpeakSummer: 0.65, peakSummer: 0.35, weekday: 0.35, weekend: 0.65 },
-        'עסק קמעונאי (סופרמרקט/פארם)': { label: 'עסק קמעונאי (סופרמרקט/פארם)', desc: 'שעות פעילות ארוכות מאד (22:00). חללי קירור מסחריים כבדים בקיץ. שביתה בסופי שבוע (כשר).', winter: 0.30, summer: 0.45, transition: 0.25, sunHours: 0.50, offpeakWinter: 0.75, peakWinter: 0.25, offpeakSummer: 0.70, peakSummer: 0.30, weekday: 0.85, weekend: 0.15 },
-        'עסק תעשייתי (משמרת יום)': { label: 'עסק תעשייתי (משמרת יום)', desc: 'מנועים ומדחסים בפעילות יום, אדישות יחסית לאקלים אך עם צורכי קירור מכונות. סיום לפני שעות פסגה.', winter: 0.32, summer: 0.38, transition: 0.30, sunHours: 0.80, offpeakWinter: 0.90, peakWinter: 0.10, offpeakSummer: 0.85, peakSummer: 0.15, weekday: 0.95, weekend: 0.05 }
-    };
+    const CONSUMPTION_DISTRIBUTION = BS_SETTINGS.propertyTypes();
 
     // יחס שטח גג לפאנלים מודרניים (החלטה H4): 5.5 מ"ר לקוו"ט. קבוע יחיד לשימוש כל הלוגיקה והתצוגה.
-    const ROOF_M2_PER_KWP_NEW = 5.5;
+    const ROOF_M2_PER_KWP_NEW = BS_SETTINGS.get('roof.m2PerKwpNew');
 
     // מצב משותף של הדף. הוכרז במפורש (D23): קודם נוצר כמשתנה גלובלי משתמע רק בהשמה, וקריאה לפני ההשמה
     // (למשל לחיצה על סימולציה בלי נתוני שלב 1) זרקה ReferenceError במקום להציג הודעה ידידותית.
     let globalRawSeries = null;          // סדרת הצריכה השעתית מעמודה 30 (נטענת ב-bootstrapStage2)
     let globalHourlySimResult = null;    // תוצאת סימולציית האגירה האחרונה
-    const CALC_CONSTANTS = {
-        staircase: { p15: 15, p100: 100, p300: 300, p630: 630, t15: 0.48, t100: 0.3936, t300: 0.3437, t630: 0.2844, disc: 1 },
-        storageT100Factor: 0.95, // "מחשבון כולל אגירה" מפעיל הנחה של 5% על מדרגת 15-100 קוו"ט כשיש אגירה
-        tou: {
-            winter_peak: 0.9774, winter_low: 0.4022,
-            transition_peak: 0.4293, transition_low: 0.3945,
-            summer_peak: 1.4597, summer_low: 0.4358
-        },
-        // "תעריף משלים" — טבלה נפרדת מהתעו"ז הרשמי לעיל, שהיא זו שבפועל קובעת את שווי הפסגה
-        // לחישוב ערך הארביטראז' מהאגירה במקור (מאומת מול קבצי ה-Excel המקוריים). מפוצלת לפי
-        // גודל המערכת (עד/מעל 300 קוט"ט).
-        compTariff: {
-            upTo300:  { winter: 0.932,  summer: 1.3424, transition: 0.3721 },
-            above300: { winter: 0.8339, summer: 1.2011, transition: 0.3329 }
-        },
-        transitionCompFromSource: 0.55, // התעריף שמופיע במקור בפועל לעונת המעבר (במקום נוסחת הבלנד העקבית)
-        urbanPremium: 0.06,
-        urbanPremiumYears: 17,   // בקובץ המקור הפרמיה מיושמת בשנים 1-17 בלבד, לא ל-25 שנה
-        yieldBase: 1600,
-        degradation: 0.0025,     // לינארי (לא מצטבר): שנה1=100%, שנה n = 1-0.0025*(n-1)
-        battery: { dod: 0.95, effCharge: 0.93, effDischarge: 0.94, cRate: 0.2 },
-        vatRate: 0.18,
-        discountRate: 0.035,
-        privateTaxExemption: 27900,
-        privateTaxRate: 0.10,
-        privateTaxFlatCap: 120000, // תקרת מסלול המס המופחת (10% מהשקל הראשון) - טרם אומת מול רו"ח, ר' תכנית ההשלמה
-        replacements: { inverterYear: 14, inverterCostPct: 0.15, batteryYear: 15, batteryCostPct: 0.60 }
-    };
+    const CALC_CONSTANTS = BS_SETTINGS.calcConstants();
     // ====================================================================
     // לוח עברי + זמני ישיבה + שקיעה — מנוע מאומת מול 4 נקודות ייחוס בלתי-תלויות
     // (ר"ה תשפ"ה/תשפ"ו, ט' באב תשפ"ה, פורים תשפ"ד). נדרש לחישוב זמן חורף/קיץ/אלול
@@ -526,7 +489,7 @@
         const Y=dateObj.getFullYear(), M=dateObj.getMonth()+1, D=dateObj.getDate();
         const jd0 = hc_g2j(Y,M,D) - 0.5;
         const tz = 2 + (hc_israelDst(Y,M,D)?1:0);
-        const ss = hc_sunEvent(jd0, lat||32.0853, lon||34.7818, 90.78, false);
+        const ss = hc_sunEvent(jd0, lat||BS_SETTINGS.get('location.lat'), lon||BS_SETTINGS.get('location.lon'), 90.78, false);
         if(ss===null) return '—';
         const total = Math.round(((ss+tz)%24+24)%24*3600);
         const h=Math.floor(total/3600), mnt=Math.floor((total%3600)/60);
@@ -592,8 +555,21 @@
         CALC_CONSTANTS.urbanPremium = (parseFloat(document.getElementById('cfg_urban_premium').value) || 0) / 100;
         CALC_CONSTANTS.urbanPremiumYears = parseInt(document.getElementById('cfg_urban_years').value) || 0;
         CALC_CONSTANTS.yieldBase = parseFloat(document.getElementById('cfg_yield_base').value) || 0;
+        // לוח ההגדרות הוא מקור האמת: שומרים גם שם (מקומי ושרת), כך שהשינוי נשאר אחרי רענון ובדפים האחרים
+        try {
+            BS_SETTINGS.saveValues({
+                'tou.summer_peak': CALC_CONSTANTS.tou.summer_peak, 'tou.summer_low': CALC_CONSTANTS.tou.summer_low,
+                'tou.winter_peak': CALC_CONSTANTS.tou.winter_peak, 'tou.winter_low': CALC_CONSTANTS.tou.winter_low,
+                'tou.transition_peak': CALC_CONSTANTS.tou.transition_peak, 'tou.transition_low': CALC_CONSTANTS.tou.transition_low,
+                'staircase.t15': CALC_CONSTANTS.staircase.t15, 'staircase.t100': CALC_CONSTANTS.staircase.t100,
+                'staircase.t300': CALC_CONSTANTS.staircase.t300, 'staircase.t630': CALC_CONSTANTS.staircase.t630,
+                'discountRate': CALC_CONSTANTS.discountRate, 'degradation': CALC_CONSTANTS.degradation,
+                'urbanPremium': CALC_CONSTANTS.urbanPremium, 'urbanPremiumYears': CALC_CONSTANTS.urbanPremiumYears,
+                'yieldBase': CALC_CONSTANTS.yieldBase
+            });
+        } catch (e) { /* לוח ההגדרות לא זמין: נשארים עם עדכון לסימולציה הנוכחית בלבד */ }
         closeSettingsModal();
-        alert('ההגדרות עודכנו בהצלחה ויישמרו לסימולציה הנוכחית.');
+        alert('ההגדרות עודכנו ונשמרו בלוח ההגדרות (⚙️). לדפים אחרים שכבר פתוחים יש לרענן.');
     }
     window.onclick = function (event) {
         if (event.target == document.getElementById('settingsModal')) closeSettingsModal();
@@ -623,9 +599,7 @@
 
     // רשימת חגים ידועה (מרוכזת סביב חגי תשרי בעיקר) - שימוש בהערכה, לא מקיפה לכל השנה.
     // לכיסוי מלא ומדויק יותר של כל חגי ישראל בכל עונה מומלץ לשלב עתידית API כמו Hebcal.
-    const knownHolidays = [
-        "2020-09-18", "2020-09-19", "2020-09-20", "2020-09-27", "2020-09-28", "2021-09-06", "2021-09-07", "2021-09-08", "2021-09-15", "2021-09-16", "2021-09-20", "2021-09-21", "2021-09-27", "2021-09-28", "2022-06-04", "2022-06-05", "2022-09-25", "2022-09-26", "2022-09-27", "2023-09-15", "2023-09-16", "2023-09-17", "2023-09-24", "2023-09-25", "2023-09-29", "2023-09-30", "2024-06-11", "2024-06-12", "2025-06-01", "2025-06-02", "2025-09-22", "2025-09-23", "2025-09-24", "2026-09-11", "2026-09-12", "2026-09-13", "2026-09-20", "2026-09-21", "2026-09-25", "2026-09-26", "2027-06-10", "2027-06-11", "2028-09-20", "2028-09-21", "2028-09-22", "2028-09-29", "2028-09-30", "2029-09-09", "2029-09-10", "2029-09-11", "2029-09-18", "2029-09-19", "2029-09-23", "2029-09-24", "2029-09-30", "2030-06-06", "2030-06-07", "2030-09-27", "2030-09-28", "2030-09-29"
-    ];
+    const knownHolidays = BS_SETTINGS.knownHolidays();
     function isKnownHoliday(dateObj) {
         const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         return knownHolidays.includes(dateStr);
@@ -1021,7 +995,7 @@
         const mid = Math.floor(sorted.length / 2);
         return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
     }
-    function calculateTrimmedMean(arr, pct = 0.15) {
+    function calculateTrimmedMean(arr, pct = BS_SETTINGS.get('stats.trimFraction')) {
         if (arr.length === 0) return 0;
         const sorted = [...arr].sort((a, b) => a - b);
         const cut = Math.round(sorted.length * pct);
@@ -1036,9 +1010,9 @@
         const useShabbat = document.getElementById('useStorageShabbat').checked;
         const targetKw = parseFloat(document.getElementById('calc_targetKw').value) || 0;
         let suggestion;
-        if (useHoliday) suggestion = (shabbatLoad * 2.2) / dod;
-        else if (useShabbat) suggestion = (shabbatLoad * 1.2) / dod;
-        else suggestion = targetKw * 0.75;
+        if (useHoliday) suggestion = (shabbatLoad * BS_SETTINGS.get('storage.factorHoliday')) / dod;
+        else if (useShabbat) suggestion = (shabbatLoad * BS_SETTINGS.get('storage.factorShabbat')) / dod;
+        else suggestion = targetKw * BS_SETTINGS.get('storage.factorNoBackup');
         document.getElementById('actualBatteryKwh').value = suggestion.toFixed(1);
         if (parseFloat(document.getElementById('inverterPowerKw').value) === 0) applySuggestedInverterPower();
     }
@@ -1055,8 +1029,9 @@
         let peakNote = '';
         if (globalRawSeries && globalRawSeries.length) {
             const peakKwh = Math.max(...globalRawSeries.map(p => p.kwh));
-            fromConsumptionPeak = peakKwh * 1.15;
-            peakNote = ` (פיק צריכה בפועל משלב 1: ${peakKwh.toFixed(1)} קוו"ט × 1.15 מרווח ביטחון = ${fromConsumptionPeak.toFixed(1)} קוו"ט)`;
+            const peakMargin = BS_SETTINGS.get('inverter.peakMargin');
+            fromConsumptionPeak = peakKwh * peakMargin;
+            peakNote = ` (פיק צריכה בפועל משלב 1: ${peakKwh.toFixed(1)} קוו"ט × ${peakMargin} מרווח ביטחון = ${fromConsumptionPeak.toFixed(1)} קוו"ט)`;
         }
         const finalValue = Math.max(fromBatteryRate, fromConsumptionPeak);
         document.getElementById('inverterPowerKw').value = finalValue.toFixed(1);
@@ -1177,9 +1152,9 @@
                 const trackFlat = taxable > 0 ? taxableCapped * CALC_CONSTANTS.privateTaxRate : 0;
                 tax = taxable > 0 ? Math.min(trackExemption, trackFlat) : 0;
             } else {
-                const depreciation = year <= 4 ? capex * 0.25 : 0;
+                const depreciation = year <= BS_SETTINGS.get('corpTax.depreciationYears') ? capex * BS_SETTINGS.get('corpTax.depreciationRate') : 0;
                 const taxable = revenue - annualOpex - depreciation - financing;
-                if (taxable > 0) tax = taxable * 0.23;
+                if (taxable > 0) tax = taxable * BS_SETTINGS.get('corpTax.rate');
             }
 
             const netProject = revenue - annualOpex - replacement;
@@ -1257,12 +1232,12 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
         const maxByRoof = roofArea ? roofArea/ROOF_M2_PER_KWP_NEW : Infinity;
         const maxByConn = connLimit || Infinity;
         const maxByBudget = budget ? budget/baseInputs.capexPV : Infinity;
-        const maxKw = Math.min(maxByRoof, maxByConn, maxByBudget, 630 - baseInputs.p0);
+        const maxKw = Math.min(maxByRoof, maxByConn, maxByBudget, CALC_CONSTANTS.staircase.p630 - baseInputs.p0);
         if(!isFinite(maxKw) || maxKw < 1){
             statusEl.innerHTML = '<span style="color:#c0392b">לא ניתן לגזור גודל מערכת מהנתונים שהוזנו.</span>';
             return;
         }
-        const minKw = Math.min(3, maxKw);
+        const minKw = Math.min(BS_SETTINGS.get('search.minPvKw'), maxKw);
 
         // --- שלב א: חיפוש גודל פאנלים מיטבי (ללא אגירה) ---
         let bestPv = null;
@@ -1298,13 +1273,13 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
                 // תוקן (D12): estShabbatLoad הוא אנרגיה (קוט"ש ליום שבת, כפי שמייצר שלב 1 ומשתמשים בו applySuggestedBattery ו-runFinancialModel),
                 // לא הספק. קודם הוכפל במספר שעות גיבוי (25.5/50) ונתן רצפה גבוהה פי עשרות. אותו גורם בטיחות כמו ב-applySuggestedBattery:
                 // 1.2 לשבת, 2.2 לשבת+חג, מחולק ב-DoD.
-                const shabbatFactor = baseInputs.useStorageHoliday ? 2.2 : 1.2;
+                const shabbatFactor = baseInputs.useStorageHoliday ? BS_SETTINGS.get('storage.factorHoliday') : BS_SETTINGS.get('storage.factorShabbat');
                 const shabbatKwh = baseInputs.estShabbatLoad * shabbatFactor / CALC_CONSTANTS.battery.dod;
                 floorKwh = Math.max(floorKwh, shabbatKwh);
             }
 
             const typicalPeak = Math.max(seasonStats.winter.trimmed||0, seasonStats.summer.trimmed||0, seasonStats.transition.trimmed||0);
-            const ceilKwh = Math.max(floorKwh*1.2, typicalPeak*1.5, 10);
+            const ceilKwh = Math.max(floorKwh*BS_SETTINGS.get('search.ceilFloorMult'), typicalPeak*BS_SETTINGS.get('search.ceilPeakMult'), BS_SETTINGS.get('search.ceilMinKwh'));
             const step = Math.max(1, Math.round((ceilKwh-floorKwh)/15));
 
             for(let bkwh = Math.max(floorKwh,1); bkwh <= ceilKwh + 1e-9; bkwh += step){
