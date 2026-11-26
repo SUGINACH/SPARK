@@ -23,15 +23,16 @@ const {JSDOM,VirtualConsole}=require('jsdom');const assert=require('assert');
  assert(Math.abs(out.f10-Math.pow(1.10,5))<1e-12); assert(out.back); assert(/פי 1\.276/.test(out.text),'text shows factor 1.276');
  console.log('✅ D3: גורם (1+g)^5 מוחל על הסדרה (5%→1.276, 10%→1.611); סדרת הבסיס לא משתנה; 0% מחזיר את המקור');
  // השפעה על ההמלצה עצמה
- const rec=w.eval(`(function(){
+ const rec=JSON.parse(w.eval(`(function(){
   const $=id=>document.getElementById(id);
-  $('rec_roofArea').value='400'; $('rec_connLimit').value=''; $('useStorageShabbat').checked=true; $('estShabbatLoad').value='100';
+  // חיבור מוגבל ל-15 קוו"ט: הרצפה הרגולטורית נשארת קטנה וגיבוי השבת הוא שקובע את גודל הסוללה
+  $('rec_roofArea').value='400'; $('rec_connLimit').value='15'; $('useStorageShabbat').checked=true; $('estShabbatLoad').value='100'; $('rec_objective').value='npv';
   const res={};
-  for (const g of ['0','8']) { lastRecommendation=null; $('futureGrowthSlider').value=g; onFutureGrowthChange(); try{ findOptimalSystemSize(); }catch(e){ res['err'+g]=String(e.message).slice(0,100);} 
-    const lr = (typeof lastRecommendation!=='undefined')?lastRecommendation:null; res['g'+g]= lr? JSON.parse(JSON.stringify(lr,(k,v)=>typeof v==='object'&&v&&!Array.isArray(v)&&Object.keys(v).length>14?undefined:v)) : null; res['status'+g]=$('recStatus').textContent.slice(0,80);}
-  return res;})()`);
+  for (const g of ['0','8']) { lastRecommendation=null; $('futureGrowthSlider').value=g; onFutureGrowthChange(); try{ findOptimalSystemSize(); }catch(e){ res['err'+g]=String(e.message).slice(0,100);}
+    const lr = lastRecommendation; res['g'+g]= lr && lr.bestBat ? { bestPv:{kw:lr.bestPv.kw}, bestBat:{kwh:lr.bestBat.kwh} } : null; res['status'+g]=$('recStatus').textContent.slice(0,80);}
+  return JSON.stringify(res);})()`));
  console.log('errs:',rec.err0,'|',rec.err8,'| status:',rec.status0,'|',rec.status8);
- const pick=g=>rec['g'+g]&&{pvKw:rec['g'+g].bestPv.kw,batKwh:Math.round(rec['g'+g].bestBat.kwh*10)/10,pvNpv:Math.round(rec['g'+g].bestPv.result.npv)};
+ const pick=g=>rec['g'+g]&&{pvKw:rec['g'+g].bestPv.kw,batKwh:Math.round(rec['g'+g].bestBat.kwh*10)/10};
  console.log('g=0%',JSON.stringify(pick('0')),' g=8%',JSON.stringify(pick('8')));
  assert(rec.g0&&rec.g8,'both runs produced a recommendation');
  assert(pick('8').batKwh>pick('0').batKwh*1.3,'with Shabbat backup binding, growth 8%/yr must raise the battery by about x1.47');

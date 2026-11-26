@@ -7,6 +7,7 @@
 <script src="gas-shim.js"></script>
 <script src="settings.js"></script>
 <script src="holidays.js"></script>
+<script src="solar-model.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שלב 1 - ניתוח והעשרת נתוני צריכה - בראשית סולאר</title>
@@ -1762,42 +1763,8 @@
     // תפוקה שנתית = קוו"ט × תפוקה שנתית לקוו"ט (הגדרות) × כיוון × הצללה, מפוזרת לחודשים לפי מקדמי עונתיות (הגדרות)
     // ולשעות היום לפי עקומת sin בין זריחה לשקיעה (חישוב NOAA, כמו השקיעה ביום עברי). נשמרת לשלב 2 בעמודה 32, עם סימון "estimated".
     // ========================================================================
-    function getSunriseSunsetLocalHours(dateObj) {
-        const Y = dateObj.getFullYear(), M = dateObj.getMonth() + 1, D = dateObj.getDate();
-        const jd0 = hc_g2j(Y, M, D) - 0.5, tz = 2 + (hc_israelDst(Y, M, D) ? 1 : 0);
-        const lat = BS_SETTINGS.get('location.lat'), lon = BS_SETTINGS.get('location.lon');
-        const sr = hc_sunEvent(jd0, lat, lon, 90.833, true), ss = hc_sunEvent(jd0, lat, lon, 90.833, false);
-        if (sr === null || ss === null) return null;
-        return { sr: ((sr + tz) % 24 + 24) % 24, ss: ((ss + tz) % 24 + 24) % 24 };
-    }
-
     function estimatePastProductionGrid(gridStart, nDays, kw, azimuth, shading) {
-        const annual = kw * BS_SETTINGS.get('yieldBase') * azimuth * shading;
-        const factors = [];
-        for (let m = 1; m <= 12; m++) factors.push(BS_SETTINGS.get('prodEst.month' + String(m).padStart(2, '0')));
-        const nominalDays = [31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        const norm = factors.reduce((s, f, i) => s + f * nominalDays[i], 0);   // שנה שלמה מסתכמת בדיוק לתפוקה השנתית
-        const k = BS_SETTINGS.get('prodEst.shapeExponent');
-        const y = gridStart.getFullYear(), mo = gridStart.getMonth(), d0 = gridStart.getDate();
-        const out = new Array(nDays * 24).fill(0);
-        for (let d = 0; d < nDays; d++) {
-            const day = new Date(y, mo, d0 + d);
-            const sun = getSunriseSunsetLocalHours(day);
-            if (!sun || sun.ss <= sun.sr) continue;
-            const len = sun.ss - sun.sr, daily = annual * factors[day.getMonth()] / norm;
-            const w = new Array(24).fill(0);
-            let tot = 0;
-            for (let h = 0; h < 24; h++) {
-                const a = Math.max(h, sun.sr), b = Math.min(h + 1, sun.ss);
-                if (b <= a) continue;
-                const steps = 6;
-                let acc = 0;
-                for (let s = 0; s < steps; s++) { const tt = a + (b - a) * (s + 0.5) / steps; acc += Math.pow(Math.sin(Math.PI * (tt - sun.sr) / len), k) * (b - a) / steps; }
-                w[h] = acc; tot += acc;
-            }
-            if (tot > 0) for (let h = 0; h < 24; h++) out[d * 24 + h] = daily * w[h] / tot;
-        }
-        return out;
+        return BS_SOLAR.hourlyProductionGrid(gridStart, nDays, kw * BS_SETTINGS.get('yieldBase') * azimuth * shading);
     }
 
     function getPastProductionInputs() {
