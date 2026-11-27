@@ -278,6 +278,25 @@
             הסימולציה מניחה "הסדרה תעריפית" - מסלול בו התפוקה הסולארית נמכרת כולה לרשת (מחושבת בנפרד במנוע ה-25 שנה), והאגירה משמשת לניצול פערי תעו"ז מול הצריכה בפועל: נטענת מהרשת בשעות שפל ומפרקת לצריכה בשעות פסגה. אם המסלול המיועד הוא נטו-מטרינג (צריכה עצמית מהייצור קודם) - יש לציין זאת, כי זהו מודל שונה.
         </p>
         <table class="calc-table" id="hourlySimSummaryTable"><tbody></tbody></table>
+
+        <div id="sizeSweepSection" style="margin-top:28px; display:none;">
+            <h4 style="color:#1a3a5f; font-size:1.05em; margin-bottom:6px;">כל אפשרויות גודל האגירה: חיסכון, רווח ושימוש</h4>
+            <p id="sizeSweepNote" style="font-size:0.85em; color:#7f8c8d; background:#f4f8fb; border-right:3px solid #3498db; padding:10px 12px; border-radius:4px; margin:0 0 14px;"></p>
+            <div id="sizeSweepCubes" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; margin-bottom:22px;"></div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:20px;">
+                <div>
+                    <h5 style="color:#1a3a5f; margin:0 0 6px;">חיסכון שנתי מול תוספת שולית לכל קוט"ש נוסף</h5>
+                    <div id="sizeSweepChartCombo" style="background:white;border-radius:8px;padding:10px;"></div>
+                </div>
+                <div>
+                    <h5 style="color:#1a3a5f; margin:0 0 6px;">רווח (NPV ב-25 שנה) ושימוש (מחזורי טעינה בשנה)</h5>
+                    <div id="sizeSweepChartProfit" style="background:white;border-radius:8px;padding:10px;"></div>
+                </div>
+            </div>
+            <h5 style="color:#1a3a5f; margin:18px 0 6px;">יחס חיסכון מול הגודל המינימלי שנבדק</h5>
+            <div id="sizeSweepChartRatio" style="background:white;border-radius:8px;padding:10px;"></div>
+            <div style="text-align:center; margin-top:12px;"><button type="button" class="calc-btn calc-btn-transfer" style="max-width:320px;" onclick="exportSizeSweepCsv()">📥 ייצוא טבלת הגדלים (CSV)</button></div>
+        </div>
         <div style="margin-top:20px;">
             <h4 style="color:#1a3a5f; font-size:1em;">פילוח חודשי (קוט"ש)</h4>
             <div id="hourlySimMonthlyChart" style="background:white;border-radius:8px;padding:10px;"></div>
@@ -684,7 +703,7 @@
         el.textContent = kw > 0 ? (kw * ROOF_M2_PER_KWP_NEW).toFixed(0) : '-';
     }
 
-    function runBatteryDispatchSimulation(series, stepHours, batteryUsableKwh, rangeStart, rangeEnd, maxRateKwOverride) {
+    function runBatteryDispatchSimulation(series, stepHours, batteryUsableKwh, rangeStart, rangeEnd, maxRateKwOverride, lite) {   // lite: בלי פילוח חודשי ובלי נתוני יום לדוגמה (לסריקת גדלים)
         const batteryNominalKwh = batteryUsableKwh > 0 ? batteryUsableKwh / CALC_CONSTANTS.battery.dod : 0;
         const reserveKwh = batteryNominalKwh - batteryUsableKwh;
         const maxRateKw = (maxRateKwOverride && maxRateKwOverride > 0) ? maxRateKwOverride : Math.max(batteryNominalKwh * CALC_CONSTANTS.battery.cRate, 0.1);
@@ -745,16 +764,18 @@
             totals.costWithBattery += imported * tariff;
             if (charged > 0) totals.costWithBattery += (charged / effCharge) * tariff;
 
-            const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            if (!monthly[mKey]) monthly[mKey] = { consumption: 0, imported: 0, charged: 0, discharged: 0, peakConsumption: 0, unmetPeak: 0, baselineCost: 0, costWithBattery: 0 };
-            const mo = monthly[mKey];
-            mo.consumption += consumption; mo.imported += imported; mo.charged += charged; mo.discharged += discharged;
-            mo.baselineCost += consumption * tariff; mo.costWithBattery += imported * tariff + (charged > 0 ? (charged / effCharge) * tariff : 0);
-            if (isPeak) { mo.peakConsumption += consumption; mo.unmetPeak += Math.max(0, consumption - discharged); }
+            if (!lite) {
+                const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthly[mKey]) monthly[mKey] = { consumption: 0, imported: 0, charged: 0, discharged: 0, peakConsumption: 0, unmetPeak: 0, baselineCost: 0, costWithBattery: 0 };
+                const mo = monthly[mKey];
+                mo.consumption += consumption; mo.imported += imported; mo.charged += charged; mo.discharged += discharged;
+                mo.baselineCost += consumption * tariff; mo.costWithBattery += imported * tariff + (charged > 0 ? (charged / effCharge) * tariff : 0);
+                if (isPeak) { mo.peakConsumption += consumption; mo.unmetPeak += Math.max(0, consumption - discharged); }
 
-            const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            if (!dailySamples[dKey]) dailySamples[dKey] = [];
-            dailySamples[dKey].push({ hour: d.getHours() + d.getMinutes() / 60, consumption, soc, charged, discharged, imported, isPeak, season });
+                const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (!dailySamples[dKey]) dailySamples[dKey] = [];
+                dailySamples[dKey].push({ hour: d.getHours() + d.getMinutes() / 60, consumption, soc, charged, discharged, imported, isPeak, season });
+            }
         }
 
         totals.batteryArbitrageValue = totals.baselineCost - totals.costWithBattery;
@@ -929,12 +950,16 @@
         const rangeStart = new Date(Math.min(...sortedDates));
         const rangeEnd = new Date(Math.max(...sortedDates));
         let actualBatteryKwh = Math.max(0, parseFloat(document.getElementById('actualBatteryKwh').value) || 0);
+        let simForInfoOnly = false;   // אגירה לא משתלמת: מוצגת הסימולציה לעיון בלבד, בלי לכתוב את הגודל לשדה
         if (actualBatteryKwh <= 0) {
             // לא מבקשים מהמשתמש לנחש גודל: משתמשים בגודל המיטבי שנמצא בהמלצה (ואם עוד לא רצה המלצה, מריצים אותה כעת).
             if (!lastRecommendation) { try { findOptimalSystemSize(); } catch (e) { /* ההודעה מוצגת בסעיף ההמלצה */ } }
             if (lastRecommendation && lastRecommendation.bestBat) {
                 actualBatteryKwh = Math.round(lastRecommendation.bestBat.kwh);
                 document.getElementById('actualBatteryKwh').value = actualBatteryKwh;
+            } else if (lastRecommendation && lastRecommendation.batteryNotWorth && lastRecommendation.bestBatCand) {
+                actualBatteryKwh = Math.round(lastRecommendation.bestBatCand.kwh);
+                simForInfoOnly = true;
             } else {
                 errEl.textContent = (lastRecommendation && lastRecommendation.batteryNotWorth)
                     ? 'לפי הסימולציה אגירה אינה משתלמת בנתונים אלה (ר\' "שקיפות מלאה" בהמלצה). אפשר להזין גודל ידנית כדי לבדוק בכל זאת.'
@@ -964,6 +989,10 @@
                 }
 
                 renderHourlySimResults(globalHourlySimResult, actualBatteryKwh);
+                try {
+                    renderSizeSweep(actualBatteryKwh);
+                    if (simForInfoOnly) document.getElementById('sizeSweepNote').insertAdjacentHTML('afterbegin', '<b style="color:#c0392b;">אגירה אינה משתלמת בנתונים אלה (ר\' ההמלצה). מוצגים כל הגדלים וסימולציה של הגודל הטוב ביותר שנבדק, לעיון בלבד: הגודל לא נקבע בשדה האגירה.</b><br>');
+                } catch (sweepErr) { console.error('size sweep', sweepErr); document.getElementById('sizeSweepSection').style.display = 'none'; }
                 document.getElementById('hourlySimResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (err) {
                 errEl.textContent = 'שגיאה בהרצת הסימולציה: ' + err.message;
@@ -973,6 +1002,180 @@
             btn.textContent = originalBtnText;
         }, 30);
     });
+
+    // ====================================================================
+    // כל אפשרויות גודל האגירה: חיסכון, רווח ושימוש
+    // שחזור הגרף מגרסת Red (קוביות גדלים + חיסכון מצטבר מול תוספת שולית + יחס חיסכון), עם תוספות: רווח (NPV) ושימוש (מחזורי טעינה).
+    // כל גודל נבדק בסימולציה שעתית על הצריכה בפועל, באותו מנוע שמשמש את ההמלצה.
+    // ====================================================================
+    let lastSizeSweep = null;
+
+    function buildSizeSweep(chosenKwh) {
+        const objective = document.getElementById('rec_objective').value;
+        const rec = (typeof lastRecommendation !== 'undefined') ? lastRecommendation : null;
+        const base = gatherBaseInputsForSearch();
+        const zeroExport = !!base.zeroExport;
+        const peakDayCounts = computeSeasonalPeakDayCounts(base.reportYear);
+        const pvKw = parseFloat(document.getElementById('calc_targetKw').value) || (rec ? rec.bestPv.kw : 0);
+        const inverterKw = Math.max(0, parseFloat(document.getElementById('inverterPowerKw').value) || 0);
+        const range = getSeriesRange(), stepHours = detectStepHours(globalRawSeries);
+        const yieldPerKw = CALC_CONSTANTS.yieldBase * base.azimuth * base.shading;
+        const prep = zeroExport ? prepareSelfConsumptionData() : null;
+        if (zeroExport && !prep) throw new Error('ללא הזרמה נדרשים נתוני צריכה שעתיים');
+        const ss = computeSeasonPeakStatsFromRawSeries();
+        const typicalPeak = ss ? Math.max(ss.winter.trimmed || 0, ss.summer.trimmed || 0, ss.transition.trimmed || 0) : 0;
+
+        // טווח: 20 גדלים מחולקים שווה עד תקרה שנגזרת מהצריכה ומההמלצה, ובנוסף הגודל שנבחר והגודל המומלץ
+        let maxSize = Math.max(10, typicalPeak * 2, chosenKwh * 1.2, rec && rec.bestBat ? rec.bestBat.kwh * 1.4 : 0, rec && rec.bestBatCand ? rec.bestBatCand.kwh * 1.4 : 0);
+        if (zeroExport) maxSize = Math.max(maxSize, Math.min(prep.dailyAvgLoad, 400));
+        const sizeSet = new Set();
+        for (let i = 0; i < 20; i++) sizeSet.add(Math.round((maxSize / 20 + (maxSize - maxSize / 20) * i / 19) * 10) / 10);
+        if (chosenKwh > 0) sizeSet.add(Math.round(chosenKwh * 10) / 10);
+        if (rec && rec.bestBat) sizeSet.add(Math.round(rec.bestBat.kwh * 10) / 10);
+        const sizes = [...sizeSet].sort((a, b) => a - b);
+
+        const tariff = pvKw > 0 ? (calcStaircaseTariff(base.p0, base.p0 + pvKw, true) ?? calcStaircaseTariff(base.p0, base.p0 + pvKw, false)) : null;
+        const floorKwh = (!zeroExport && pvKw > 0) ? (pvKw * 800 - pvKw * 79) / 115 : 0;
+        const fin = (kwh, annual) => {
+            if (!(pvKw > 0) || tariff === null) return null;
+            const inputs = Object.assign({}, base, { targetKw: pvKw });
+            return zeroExport ? runFinancialModel(pvKw, kwh, tariff, inputs, peakDayCounts, undefined, annual) : runFinancialModel(pvKw, kwh, tariff, inputs, peakDayCounts, annual);
+        };
+
+        // קו בסיס: ללא אגירה
+        const baseSc = zeroExport ? simulateSelfConsumption(prep, pvKw, yieldPerKw, 0, inverterKw) : null;
+        const baseAnnual = baseSc ? baseSc.annualValue : 0;
+        const noBatResult = fin(0, baseAnnual);
+
+        const rows = sizes.map(kwh => {
+            let annualTotal, cycles, peakCoverage = null;
+            if (zeroExport) {
+                const sc = simulateSelfConsumption(prep, pvKw, yieldPerKw, kwh, inverterKw);
+                annualTotal = sc.annualValue; cycles = kwh > 0 ? sc.dischargedKwh / kwh : 0;
+            } else {
+                const sim = runBatteryDispatchSimulation(globalRawSeries, stepHours, kwh, range.start, range.end, inverterKw, true);
+                const hours = sim.totals.stepCount * stepHours, ann = hours > 0 ? 8760 / hours : 1;
+                annualTotal = sim.totals.batteryArbitrageValue * ann; cycles = sim.totals.annualCycles * ann; peakCoverage = sim.totals.peakCoveragePct;
+            }
+            const result = fin(kwh, annualTotal);
+            const annualValue = annualTotal - baseAnnual;   // תרומת האגירה בלבד
+            return { kwh, annualValue, cycles, peakCoverage, npv: result ? recScore(result, 'npv') : null, irr: result ? result.irrEquity : null,
+                     score: result ? recScore(result, objective) : annualValue, belowFloor: kwh < floorKwh - 0.1, marginal: 0 };   // סבילות עיגול: גדלים מעוגלים ל-0.1 קוט"ש
+        });
+        rows.forEach((r, i) => {
+            const prev = i === 0 ? { kwh: 0, annualValue: 0 } : rows[i - 1];
+            r.marginal = (r.annualValue - prev.annualValue) / Math.max(1e-9, r.kwh - prev.kwh);
+        });
+        const eligible = rows.filter(r => !r.belowFloor);
+        const pool = eligible.length ? eligible : rows;
+        let best = pool[0];
+        pool.forEach(r => { if (r.score > best.score + 1e-9) best = r; });
+        return { rows, pvKw, zeroExport, objective, best, floorKwh, chosenKwh, noBatNpv: noBatResult ? recScore(noBatResult, 'npv') : null, baseAnnual };
+    }
+
+    // גרף SVG כללי: עמודות (ציר ימני) וקווים (ציר שמאלי) מעל ציר גודל, עם סימון גדלים
+    function svgSizeChart(cfg) {
+        const w = 780, h = 320, padL = 74, padR = cfg.bars ? 70 : 24, padT = 26, padB = 54;
+        const plotW = w - padL - padR, plotH = h - padT - padB, n = cfg.labels.length, slot = plotW / n;
+        const lineVals = [].concat(...cfg.lines.map(l => l.data.filter(v => v !== null && isFinite(v))));
+        let lMin = Math.min(0, ...lineVals), lMax = Math.max(1, ...lineVals);
+        if (lMax === lMin) lMax = lMin + 1;
+        const barVals = cfg.bars ? cfg.bars.data.filter(v => v !== null && isFinite(v)) : [];
+        const bMax = Math.max(1, ...barVals);
+        const yL = v => padT + plotH - (v - lMin) / (lMax - lMin) * plotH;
+        const yR = v => padT + plotH - Math.max(0, v) / bMax * plotH;
+        const xAt = i => padL + (i + 0.5) * slot;
+        const fmtN = v => Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : (Math.abs(v) >= 10 ? Math.round(v) : (Math.round(v * 10) / 10)).toString();
+        let g = '';
+        for (let i = 0; i <= 4; i++) {
+            const val = lMin + (lMax - lMin) * i / 4, y = yL(val);
+            g += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#eef2f5"/><text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="10" fill="#2980b9" text-anchor="end">${fmtN(val)}</text>`;
+            if (cfg.bars) g += `<text x="${w - padR + 8}" y="${(padT + plotH - plotH * i / 4 + 4).toFixed(1)}" font-size="10" fill="#27ae60">${fmtN(bMax * i / 4)}</text>`;
+        }
+        if (lMin < 0) g += `<line x1="${padL}" y1="${yL(0).toFixed(1)}" x2="${w - padR}" y2="${yL(0).toFixed(1)}" stroke="#95a5a6" stroke-dasharray="4 3"/>`;
+        let bars = '';
+        if (cfg.bars) cfg.bars.data.forEach((v, i) => { if (v === null || !isFinite(v)) return; const bw = slot * 0.55, y = yR(v);
+            bars += `<rect x="${(xAt(i) - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT + plotH - y).toFixed(1)}" fill="${cfg.bars.color}" opacity="0.55"><title>${cfg.labels[i]} קוט"ש: ${fmtN(v)}</title></rect>`; });
+        let lines = '';
+        cfg.lines.forEach(l => {
+            const pts = l.data.map((v, i) => (v === null || !isFinite(v)) ? null : `${xAt(i).toFixed(1)},${yL(v).toFixed(1)}`).filter(Boolean);
+            if (pts.length > 1) lines += `<polyline points="${pts.join(' ')}" fill="none" stroke="${l.color}" stroke-width="2.5"/>`;
+            l.data.forEach((v, i) => { if (v !== null && isFinite(v)) lines += `<circle cx="${xAt(i).toFixed(1)}" cy="${yL(v).toFixed(1)}" r="3" fill="${l.color}"><title>${cfg.labels[i]} קוט"ש: ${fmtN(v)}</title></circle>`; });
+        });
+        let marks = '';
+        (cfg.marks || []).forEach(m => { const x = xAt(m.i).toFixed(1);
+            marks += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + plotH}" stroke="${m.color}" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${x}" y="${padT - 8}" font-size="11" font-weight="bold" fill="${m.color}" text-anchor="middle">${m.label}</text>`; });
+        const every = Math.max(1, Math.ceil(n / 11));
+        let xl = '';
+        cfg.labels.forEach((lb, i) => { if (i % every === 0 || i === n - 1) xl += `<text x="${xAt(i).toFixed(1)}" y="${h - padB + 16}" font-size="10" fill="#7f8c8d" text-anchor="middle">${Math.round(lb * 10) / 10}</text>`; });
+        const legend = [...(cfg.bars ? [`<span style="color:${cfg.bars.color}">▮ ${cfg.bars.name} (ציר ימין)</span>`] : []), ...cfg.lines.map(l => `<span style="color:${l.color}">● ${l.name} (ציר שמאל)</span>`)].join('&nbsp;&nbsp;&nbsp;');
+        return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:100%;" xmlns="http://www.w3.org/2000/svg">${g}${bars}${lines}${marks}${xl}
+            <text x="${padL + plotW / 2}" y="${h - 6}" font-size="11" fill="#7f8c8d" text-anchor="middle">גודל אגירה (קוט"ש שמיש)</text></svg>
+            <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:6px; font-size:0.82em; margin-top:4px;">${legend}</div>`;
+    }
+
+    function renderSizeSweep(chosenKwh) {
+        const sw = buildSizeSweep(chosenKwh);
+        lastSizeSweep = sw;
+        const { rows, best, pvKw, zeroExport, floorKwh } = sw;
+        const hasNpv = rows.some(r => r.npv !== null);
+        const minSaving = Math.min(...rows.map(r => r.annualValue));
+        const ratioBase = rows.find(r => r.annualValue > 0);
+        const chosenIdx = chosenKwh > 0 ? rows.findIndex(r => Math.abs(r.kwh - Math.round(chosenKwh * 10) / 10) < 1e-6) : -1;
+        const bestIdx = rows.indexOf(best);
+        const money = n => '₪' + Math.round(n).toLocaleString();
+
+        document.getElementById('sizeSweepNote').innerHTML =
+            (zeroExport
+                ? 'מצב "ללא הזרמה": כל גודל נבדק בסימולציה שעתית של צריכה עצמית (ייצור מוערך + אגירה). החיסכון המוצג הוא <b>תרומת האגירה בלבד</b> מעבר למערכת ללא אגירה.'
+                : 'כל גודל נבדק בסימולציה שעתית על הצריכה בפועל: טעינה בשעות שפל ופריקה לצריכה בשעות פסגה. החיסכון המוצג הוא <b>תרומת האגירה בלבד</b>.') +
+            (hasNpv ? ` הרווח (NPV) הוא של <b>כל המערכת</b> (${pvKw.toFixed(1)} קוו"ט פאנלים + אגירה בגודל זה) בשיעור ${(BS_SETTINGS.get('search.hurdleRate') * 100).toFixed(1)}%; ללא אגירה: ${money(sw.noBatNpv)}.`
+                         : ' לא הוגדר גודל פאנלים (הריצו "מצא גודל מערכת מומלץ") ולכן הרווח (NPV) אינו מחושב.') +
+            ` הגודל המיטבי לפי הקריטריון שנבחר (${{ npv: 'NPV', irr: 'IRR', profit: 'רווח כולל' }[sw.objective]}): <b>${best.kwh.toFixed(0)} קוט"ש</b>.` +
+            (floorKwh > 0 ? ` גדלים מתחת ל-${floorKwh.toFixed(0)} קוט"ש מסומנים: מתחת לרצפה הרגולטורית למדרגת התעריף עם אגירה.` : '');
+
+        document.getElementById('sizeSweepCubes').innerHTML = rows.map((r, i) => {
+            const border = i === bestIdx ? 'border:2px solid #27ae60;' : (i === chosenIdx ? 'border:2px solid #3498db;' : 'border:1px solid #dcdde1;');
+            const tag = (i === bestIdx ? '<div style="color:#27ae60;font-weight:bold;font-size:0.78em;">★ המיטבי</div>' : '') + (i === chosenIdx ? '<div style="color:#3498db;font-weight:bold;font-size:0.78em;">נבחר להרצה</div>' : '');
+            const ratio = ratioBase ? r.annualValue / ratioBase.annualValue : null;
+            return `<div style="${border} border-radius:8px; padding:10px; background:#fff; ${r.belowFloor ? 'opacity:0.55;' : ''}">${tag}
+                <div style="font-size:1.15em;font-weight:800;color:#1a3a5f;">${r.kwh.toFixed(1)} <span style="font-size:0.6em;font-weight:normal;">קוט"ש</span></div>
+                <div style="font-size:0.88em;">חיסכון שנתי: <b>${money(r.annualValue)}</b></div>
+                ${r.npv !== null ? `<div style="font-size:0.88em;">רווח (NPV): <b style="color:${r.npv >= 0 ? '#1e8449' : '#c0392b'}">${money(r.npv)}</b></div>` : ''}
+                <div style="font-size:0.8em;color:#7f8c8d;">שימוש: ${r.cycles.toFixed(0)} מחזורים בשנה${r.peakCoverage !== null ? ` · כיסוי פסגה ${r.peakCoverage.toFixed(0)}%` : ''}</div>
+                ${ratio !== null ? `<div style="font-size:0.75em;color:#8e44ad;">יחס חיסכון לגודל הקטן ביותר: ×${ratio.toFixed(2)}</div>` : ''}
+                ${r.belowFloor ? '<div style="font-size:0.75em;color:#c0392b;">מתחת לרצפה הרגולטורית</div>' : ''}</div>`;
+        }).join('');
+
+        const labels = rows.map(r => r.kwh);
+        const marks = [{ i: bestIdx, label: '★ מיטבי', color: '#27ae60' }];
+        if (chosenIdx >= 0 && chosenIdx !== bestIdx) marks.push({ i: chosenIdx, label: 'נבחר', color: '#3498db' });
+        document.getElementById('sizeSweepChartCombo').innerHTML = svgSizeChart({
+            labels, marks,
+            bars: { data: rows.map(r => r.marginal), color: '#2ecc71', name: 'תוספת חיסכון לקוט"ש נוסף (₪)' },
+            lines: [{ data: rows.map(r => r.annualValue), color: '#2980b9', name: 'חיסכון שנתי מצטבר מהאגירה (₪)' }]
+        });
+        document.getElementById('sizeSweepChartProfit').innerHTML = svgSizeChart({
+            labels, marks,
+            bars: { data: rows.map(r => r.cycles), color: '#e67e22', name: 'שימוש: מחזורי טעינה בשנה' },
+            lines: hasNpv ? [{ data: rows.map(r => r.npv), color: '#8e44ad', name: 'רווח NPV של המערכת (₪)' }]
+                          : [{ data: rows.map(r => r.annualValue), color: '#2980b9', name: 'חיסכון שנתי מהאגירה (₪)' }]
+        });
+        document.getElementById('sizeSweepChartRatio').innerHTML = svgSizeChart({
+            labels, marks,
+            lines: [{ data: rows.map(r => ratioBase ? +(r.annualValue / ratioBase.annualValue).toFixed(3) : null), color: '#8e44ad', name: 'יחס חיסכון (× לעומת הגודל הקטן ביותר עם חיסכון חיובי)' }]
+        });
+        document.getElementById('sizeSweepSection').style.display = 'block';
+    }
+
+    function exportSizeSweepCsv() {
+        if (!lastSizeSweep) { alert('יש להריץ קודם את הסימולציה.'); return; }
+        const head = ['גודל אגירה (קוט"ש)', 'חיסכון שנתי מהאגירה (₪)', 'תוספת שולית לקוט"ש (₪)', 'NPV של המערכת (₪)', 'IRR (%)', 'מחזורי טעינה בשנה', 'כיסוי פסגה (%)', 'מתחת לרצפה רגולטורית'];
+        const lines = [head.join(',')].concat(lastSizeSweep.rows.map(r => [r.kwh, Math.round(r.annualValue), Math.round(r.marginal), r.npv === null ? '' : Math.round(r.npv), r.irr === null ? '' : r.irr.toFixed(1), r.cycles.toFixed(0), r.peakCoverage === null ? '' : r.peakCoverage.toFixed(0), r.belowFloor ? 'כן' : ''].join(',')));
+        const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bereshit-battery-size-sweep.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+    }
 
     function applySimResultsToCalculator() {
         if (!globalHourlySimResult) return;
@@ -1303,7 +1506,7 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
         const nominal = batUsable > 0 ? batUsable / dod : 0, reserve = nominal - batUsable;
         const rate = (maxRateKw && maxRateKw > 0) ? maxRateKw : Math.max(nominal * CALC_CONSTANTS.battery.cRate, 0.1);
         const scale = pvKw * annualYieldPerKw;
-        let soc = reserve, base = 0, cost = 0, selfKwh = 0, curtailed = 0, produced = 0;
+        let soc = reserve, base = 0, cost = 0, selfKwh = 0, curtailed = 0, produced = 0, dischargedKwh = 0;
         for (let i = 0; i < prep.n; i++) {
             if (!prep.seen[i]) continue;
             const load = prep.load[i], prod = prep.unit[i] * scale, tar = prep.tariff[i];
@@ -1319,14 +1522,14 @@ function fmtCurrency(n) { return '₪' + Number(n).toLocaleString('en-US', { max
                 }
                 if (prep.peak[i] && imported > 0) {
                     const deliver = Math.min(imported, rate, Math.max(0, soc - reserve) * effD);
-                    soc -= deliver / effD; imported -= deliver; selfKwh += deliver;
+                    soc -= deliver / effD; imported -= deliver; selfKwh += deliver; dischargedKwh += deliver;
                 }
             }
             curtailed += surplus; produced += prod;
             cost += imported * tar;
         }
         const f = prep.annualFactor;
-        return { annualValue: (base - cost) * f, selfConsumedKwh: selfKwh * f, curtailedKwh: curtailed * f, producedKwh: produced * f, baselineCost: base * f };
+        return { annualValue: (base - cost) * f, selfConsumedKwh: selfKwh * f, curtailedKwh: curtailed * f, producedKwh: produced * f, baselineCost: base * f, dischargedKwh: dischargedKwh * f };
     }
 
     // הערך השנתי של אגירה מסימולציית פריקה/טעינה שעתית על הצריכה בפועל (מנורמל לשנה)
